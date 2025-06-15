@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="referrer" content="no-referrer" />
+    <title>イベント - スタートアップコネクト</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Noto Sans JP", sans-serif;
+      }
+      .scrollbar-thin::-webkit-scrollbar {
+        width: 5px;
+      }
+      .scrollbar-thin::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+      .scrollbar-thin::-webkit-scrollbar-thumb {
+        background: #d1d5db;
+        border-radius: 5px;
+      }
+      .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+        background: #9ca3af;
+      }
+      .skeleton {
+        animation: shimmer 1.5s infinite;
+        background: linear-gradient(
+          90deg,
+          #f0f0f0 25%,
+          #e0e0e0 50%,
+          #f0f0f0 75%
+        );
+        background-size: 200% 100%;
+      }
+      @keyframes shimmer {
+        0% {
+          background-position: 200% 0;
+        }
+        100% {
+          background-position: -200% 0;
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 min-h-screen">
+    <!-- ナビゲーションバー -->
+    <header class="bg-white shadow-md sticky top-0 z-20">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+          <div class="flex items-center">
+            <div class="flex-shrink-0 flex items-center">
+              <a href="index.html">
+                <svg
+                  class="h-8 w-8 text-blue-600"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+              </a>
+              <a
+                href="dashboard.html"
+                class="ml-2 text-xl font-bold text-gray-800"
+                >スタートアップコネクト</a
+              >
+            </div>
+            <nav class="hidden md:ml-6 md:flex space-x-4">
+              <a
+                href="dashboard.html"
+                class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >ホーム</a
+              >
+              <a
+                href="search.html"
+                class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >検索</a
+              >
+              <a
+                href="messages.html"
+                class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >メッセージ</a
+              >
+              <a
+                href="groups.html"
+                class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >グループ</a
+              >
+              <a
+                href="events.html"
+                class="bg-blue-50 text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >イベント</a
+              >
+            </nav>
+          </div>
+          <div class="hidden md:flex items-center">
+            <button
+              type="button"
+              id="notification-button"
+              class="relative p-1 rounded-full text-gray-500 hover:text-blue-600 focus:outline-none"
+            >
+              <span class="sr-only">通知を見る</span>
+              <svg
+                class="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                ></path>
+              </svg>
+              <span
+                id="notification-dot"
+                class="hidden absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500"
+              ></span>
+            </button>
+
+            <div class="ml-3 relative">
+              <div class="flex items-center">
+                <button
+                  type="button"
+                  class="bg-gray-800 flex text-sm rounded-full focus:outline-none"
+                  id="user-menu-button"
+                >
+                  <span class="sr-only">メニューを開く</span>
+                  <img
+                    id="user-avatar"
+                    class="h-8 w-8 rounded-full object-cover"
+                    src="/api/placeholder/32/32"
+                    alt="プロフィール"
+                  />
+                </button>
+                <div class="ml-2 hidden md:block">
+                  <div id="user-name" class="text-sm font-medium text-gray-800">
+                    -
+                  </div>
+                  <div id="user-location" class="text-xs text-gray-500">-</div>
+                </div>
+              </div>
+
+              <div
+                id="user-menu"
+                class="hidden origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-30"
+              >
+                <a
+                  href="profile.html"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >プロフィール</a
+                >
+                <a
+                  href="settings.html"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >設定</a
+                >
+                <a
+                  href="#"
+                  id="logout-link"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >ログアウト</a
+                >
+              </div>
+            </div>
+          </div>
+
+          <div class="flex md:hidden items-center">
+            <button
+              type="button"
+              class="mobile-menu-button text-gray-500 hover:text-blue-600 focus:outline-none"
+            >
+              <svg
+                class="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 6h16M4 12h16M4 18h16"
+                ></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- モバイルメニュー -->
+      <div class="mobile-menu hidden md:hidden bg-white border-t">
+        <a
+          href="dashboard.html"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >ホーム</a
+        >
+        <a
+          href="search.html"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >検索</a
+        >
+        <a
+          href="messages.html"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >メッセージ</a
+        >
+        <a
+          href="groups.html"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >グループ</a
+        >
+        <a href="events.html" class="block px-4 py-2 bg-blue-50 text-blue-600"
+          >イベント</a
+        >
+        <div class="border-t border-gray-200 my-1"></div>
+        <a
+          href="profile.html"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >プロフィール</a
+        >
+        <a
+          href="settings.html"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >設定</a
+        >
+        <a
+          href="#"
+          class="logout-link-mobile block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >ログアウト</a
+        >
+      </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">イベント</h1>
+        <button
+          id="create-event-btn"
+          class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition duration-200 flex items-center"
+        >
+          <svg
+            class="h-5 w-5 mr-1"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+            />
+          </svg>
+          イベントを作成
+        </button>
+      </div>
+
+      <!-- フィルターセクション -->
+      <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div>
+            <label
+              for="event-type"
+              class="block text-sm font-medium text-gray-700 mb-1"
+              >イベントタイプ</label
+            >
+            <select
+              id="event-type"
+              class="w-full border border-gray-300 rounded-md py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">すべてのイベント</option>
+              <option value="pitch">ピッチコンテスト</option>
+              <option value="networking">ネットワーキング</option>
+              <option value="seminar">セミナー・勉強会</option>
+              <option value="hackathon">ハッカソン</option>
+              <option value="workshop">ワークショップ</option>
+              <option value="conference">カンファレンス</option>
+            </select>
+          </div>
+          <div>
+            <label
+              for="event-location-filter"
+              class="block text-sm font-medium text-gray-700 mb-1"
+              >開催地域</label
+            >
+            <select
+              id="event-location-filter"
+              class="w-full border border-gray-300 rounded-md py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">すべての地域</option>
+              <option value="online">オンライン</option>
+              <option value="tokyo">東京</option>
+              <option value="osaka">大阪</option>
+              <option value="other">その他</option>
+            </select>
+          </div>
+          <div>
+            <label
+              for="event-date-filter"
+              class="block text-sm font-medium text-gray-700 mb-1"
+              >開催日</label
+            >
+            <select
+              id="event-date-filter"
+              class="w-full border border-gray-300 rounded-md py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">すべての日程</option>
+              <option value="today">今日</option>
+              <option value="this-week">今週</option>
+              <option value="this-month">今月</option>
+              <option value="next-month">来月</option>
+            </select>
+          </div>
+          <div class="flex items-end">
+            <button
+              id="search-events-btn"
+              class="bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700 transition duration-200 w-full"
+            >
+              検索
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- イベント一覧 -->
+      <div class="mb-6">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-bold text-gray-800">イベント一覧</h2>
+          <div class="text-sm text-gray-600">
+            <span id="events-count">0</span>件のイベント
+          </div>
+        </div>
+
+        <!-- ローディング表示 -->
+        <div
+          id="loading-events"
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
+          <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div class="skeleton h-48 w-full"></div>
+            <div class="p-4">
+              <div class="skeleton h-6 w-3/4 mb-2"></div>
+              <div class="skeleton h-4 w-1/2 mb-4"></div>
+              <div class="skeleton h-4 w-full mb-2"></div>
+              <div class="skeleton h-4 w-2/3"></div>
+            </div>
+          </div>
+          <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div class="skeleton h-48 w-full"></div>
+            <div class="p-4">
+              <div class="skeleton h-6 w-3/4 mb-2"></div>
+              <div class="skeleton h-4 w-1/2 mb-4"></div>
+              <div class="skeleton h-4 w-full mb-2"></div>
+              <div class="skeleton h-4 w-2/3"></div>
+            </div>
+          </div>
+          <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div class="skeleton h-48 w-full"></div>
+            <div class="p-4">
+              <div class="skeleton h-6 w-3/4 mb-2"></div>
+              <div class="skeleton h-4 w-1/2 mb-4"></div>
+              <div class="skeleton h-4 w-full mb-2"></div>
+              <div class="skeleton h-4 w-2/3"></div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          id="events-container"
+          class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
+          <!-- イベントカードがここに動的に生成される -->
+        </div>
+
+        <!-- 結果なし表示 -->
+        <div id="no-events" class="hidden text-center py-12">
+          <svg
+            class="mx-auto h-12 w-12 text-gray-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+            />
+          </svg>
+          <h3 class="mt-2 text-sm font-medium text-gray-900">
+            イベントがありません
+          </h3>
+          <p class="mt-1 text-sm text-gray-500">
+            条件に合うイベントが見つかりませんでした。
+          </p>
+        </div>
+      </div>
+    </main>
+
+    <!-- イベント作成モーダル -->
+    <div id="create-event-modal" class="fixed inset-0 z-40 hidden">
+      <div class="absolute inset-0 bg-gray-900 bg-opacity-50"></div>
+      <div
+        class="relative max-w-2xl mx-auto mt-10 mb-10 bg-white rounded-lg shadow-xl overflow-y-auto max-h-[90vh]"
+      >
+        <div class="p-6">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-semibold text-gray-900">イベントを作成</h3>
+            <button id="close-modal" class="text-gray-400 hover:text-gray-500">
+              <svg
+                class="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <form id="create-event-form">
+            <div class="space-y-6">
+              <div>
+                <label
+                  for="event-title"
+                  class="block text-sm font-medium text-gray-700 mb-1"
+                  >イベント名 <span class="text-red-600">*</span></label
+                >
+                <input
+                  type="text"
+                  id="event-title"
+                  name="event-title"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="イベントのタイトルを入力してください"
+                  required
+                />
+              </div>
+
+              <div>
+                <label
+                  for="event-description"
+                  class="block text-sm font-medium text-gray-700 mb-1"
+                  >イベント説明 <span class="text-red-600">*</span></label
+                >
+                <textarea
+                  id="event-description"
+                  name="event-description"
+                  rows="4"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="イベントの説明を入力してください"
+                  required
+                ></textarea>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label
+                    for="event-category"
+                    class="block text-sm font-medium text-gray-700 mb-1"
+                    >イベントタイプ <span class="text-red-600">*</span></label
+                  >
+                  <select
+                    id="event-category"
+                    name="event-category"
+                    class="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="">選択してください</option>
+                    <option value="pitch">ピッチコンテスト</option>
+                    <option value="networking">ネットワーキング</option>
+                    <option value="seminar">セミナー・勉強会</option>
+                    <option value="hackathon">ハッカソン</option>
+                    <option value="workshop">ワークショップ</option>
+                    <option value="conference">カンファレンス</option>
+                  </select>
+                </div>
+                <div>
+                  <label
+                    for="event-format"
+                    class="block text-sm font-medium text-gray-700 mb-1"
+                    >開催形式 <span class="text-red-600">*</span></label
+                  >
+                  <select
+                    id="event-format"
+                    name="event-format"
+                    class="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="">選択してください</option>
+                    <option value="offline">オフライン</option>
+                    <option value="online">オンライン</option>
+                    <option value="hybrid">ハイブリッド</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label
+                    for="event-date"
+                    class="block text-sm font-medium text-gray-700 mb-1"
+                    >開催日 <span class="text-red-600">*</span></label
+                  >
+                  <input
+                    type="date"
+                    id="event-date"
+                    name="event-date"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label
+                    for="event-start-time"
+                    class="block text-sm font-medium text-gray-700 mb-1"
+                    >開始時間 <span class="text-red-600">*</span></label
+                  >
+                  <input
+                    type="time"
+                    id="event-start-time"
+                    name="event-start-time"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label
+                    for="event-end-time"
+                    class="block text-sm font-medium text-gray-700 mb-1"
+                    >終了時間 <span class="text-red-600">*</span></label
+                  >
+                  <input
+                    type="time"
+                    id="event-end-time"
+                    name="event-end-time"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div id="location-fields">
+                <label
+                  for="event-venue"
+                  class="block text-sm font-medium text-gray-700 mb-1"
+                  >開催場所 <span class="text-red-600">*</span></label
+                >
+                <input
+                  type="text"
+                  id="event-venue"
+                  name="event-venue"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
+                  placeholder="会場名を入力してください"
+                />
+                <input
+                  type="text"
+                  id="event-address"
+                  name="event-address"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="住所を入力してください"
+                />
+              </div>
+
+              <div id="online-fields" class="hidden">
+                <label
+                  for="event-url"
+                  class="block text-sm font-medium text-gray-700 mb-1"
+                  >配信URL <span class="text-red-600">*</span></label
+                >
+                <input
+                  type="url"
+                  id="event-url"
+                  name="event-url"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="ZoomやTeamsなどのURLを入力してください"
+                />
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label
+                    for="event-max-attendees"
+                    class="block text-sm font-medium text-gray-700 mb-1"
+                    >定員</label
+                  >
+                  <input
+                    type="number"
+                    id="event-max-attendees"
+                    name="event-max-attendees"
+                    min="1"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="例：50"
+                  />
+                </div>
+                <div>
+                  <label
+                    for="event-fee"
+                    class="block text-sm font-medium text-gray-700 mb-1"
+                    >参加費</label
+                  >
+                  <div class="flex">
+                    <input
+                      type="number"
+                      id="event-fee"
+                      name="event-fee"
+                      min="0"
+                      class="w-full px-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="例：2000"
+                    />
+                    <span
+                      class="inline-flex items-center px-3 py-2 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500"
+                      >円</span
+                    >
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label
+                  for="event-image"
+                  class="block text-sm font-medium text-gray-700 mb-1"
+                  >イベント画像</label
+                >
+                <div class="flex items-center justify-center w-full">
+                  <label
+                    class="flex flex-col w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:bg-gray-50"
+                  >
+                    <div
+                      class="flex flex-col items-center justify-center pt-5 pb-6"
+                    >
+                      <svg
+                        class="w-8 h-8 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                      </svg>
+                      <p class="pt-1 text-sm text-gray-500">
+                        画像をアップロード
+                      </p>
+                      <p class="text-xs text-gray-500">
+                        PNG, JPG, GIF（最大2MB）
+                      </p>
+                    </div>
+                    <input
+                      id="event-image"
+                      name="event-image"
+                      type="file"
+                      class="hidden"
+                      accept="image/*"
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-8 flex justify-end space-x-3">
+              <button
+                type="button"
+                id="cancel-create-event"
+                class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-50 transition duration-200"
+              >
+                キャンセル
+              </button>
+              <button
+                type="submit"
+                id="submit-event"
+                class="px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 transition duration-200"
+              >
+                作成する
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- フッター -->
+    <footer class="bg-gray-100 py-6 mt-12">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center text-gray-500 text-sm">
+          <p>&copy; 2024 スタートアップコネクト. All rights reserved.</p>
+          <div class="mt-2 space-x-4">
+            <a href="#" class="text-gray-500 hover:text-gray-700">利用規約</a>
+            <a href="#" class="text-gray-500 hover:text-gray-700"
+              >プライバシーポリシー</a
+            >
+            <a href="#" class="text-gray-500 hover:text-gray-700"
+              >お問い合わせ</a
+            >
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // Supabase設定
+      const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.__ENV__;
+      const supabase = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+      );
+
+      // グローバル変数
+      let currentUser = null;
+      let userProfile = null;
+      let allEvents = [];
+      let participatingEvents = new Set();
+
+      // イベントタイプのマッピング
+      const eventTypeNames = {
+        pitch: "ピッチコンテスト",
+        networking: "ネットワーキング",
+        seminar: "セミナー・勉強会",
+        hackathon: "ハッカソン",
+        workshop: "ワークショップ",
+        conference: "カンファレンス",
+      };
+
+      const eventTypeColors = {
+        pitch: "red",
+        networking: "purple",
+        seminar: "blue",
+        hackathon: "green",
+        workshop: "yellow",
+        conference: "indigo",
+      };
+
+      // 地域名マッピング
+      const locationNames = {
+        hokkaido: "北海道",
+        aomori: "青森県",
+        iwate: "岩手県",
+        miyagi: "宮城県",
+        akita: "秋田県",
+        yamagata: "山形県",
+        fukushima: "福島県",
+        ibaraki: "茨城県",
+        tochigi: "栃木県",
+        gunma: "群馬県",
+        saitama: "埼玉県",
+        chiba: "千葉県",
+        tokyo: "東京都",
+        kanagawa: "神奈川県",
+        niigata: "新潟県",
+        toyama: "富山県",
+        ishikawa: "石川県",
+        fukui: "福井県",
+        yamanashi: "山梨県",
+        nagano: "長野県",
+        gifu: "岐阜県",
+        shizuoka: "静岡県",
+        aichi: "愛知県",
+        mie: "三重県",
+        shiga: "滋賀県",
+        kyoto: "京都府",
+        osaka: "大阪府",
+        hyogo: "兵庫県",
+        nara: "奈良県",
+        wakayama: "和歌山県",
+        tottori: "鳥取県",
+        shimane: "島根県",
+        okayama: "岡山県",
+        hiroshima: "広島県",
+        yamaguchi: "山口県",
+        tokushima: "徳島県",
+        kagawa: "香川県",
+        ehime: "愛媛県",
+        kochi: "高知県",
+        fukuoka: "福岡県",
+        saga: "佐賀県",
+        nagasaki: "長崎県",
+        kumamoto: "熊本県",
+        oita: "大分県",
+        miyazaki: "宮崎県",
+        kagoshima: "鹿児島県",
+        okinawa: "沖縄県",
+      };
+
+      // ページ読み込み時の初期化
+      window.addEventListener("load", async () => {
+        await checkAuth();
+        await loadEvents();
+        await loadParticipatingEvents();
+        setupRealtimeSubscriptions();
+      });
+
+      // 認証チェック
+      async function checkAuth() {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) {
+          window.location.href = "login.html";
+          return;
+        }
+        currentUser = user;
+        await loadUserProfile();
+      }
+
+      // ユーザープロフィール読み込み
+      async function loadUserProfile() {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", currentUser.id)
+          .single();
+
+        if (profile) {
+          userProfile = profile;
+          updateUserInfo(profile);
+        }
+      }
+
+      // ユーザー情報更新
+      function updateUserInfo(profile) {
+        document.getElementById(
+          "user-name"
+        ).textContent = `${profile.last_name} ${profile.first_name}`;
+        document.getElementById("user-location").textContent =
+          locationNames[profile.location] || profile.location;
+        if (profile.profile_image_url) {
+          document.getElementById("user-avatar").src =
+            profile.profile_image_url;
+        }
+      }
+
+      // イベント一覧読み込み
+      async function loadEvents() {
+        showLoading();
+        const { data: events, error } = await supabase
+          .from("events")
+          .select(
+            `
+                    *,
+                    organizer:profiles!events_organizer_id_fkey(*),
+                    participants:event_participants(count)
+                `
+          )
+          .gte("event_date", new Date().toISOString().split("T")[0])
+          .order("event_date", { ascending: true });
+
+        if (error) {
+          console.error("Error loading events:", error);
+          showNoEvents();
+          return;
+        }
+
+        allEvents = events || [];
+        displayEvents(allEvents);
+        hideLoading();
+      }
+
+      // 参加イベント読み込み
+      async function loadParticipatingEvents() {
+        const { data: participations } = await supabase
+          .from("event_participants")
+          .select("event_id")
+          .eq("user_id", currentUser.id);
+
+        if (participations) {
+          participatingEvents = new Set(participations.map((p) => p.event_id));
+        }
+      }
+
+      // イベント表示
+      function displayEvents(events) {
+        const container = document.getElementById("events-container");
+        const countElement = document.getElementById("events-count");
+
+        countElement.textContent = events.length;
+
+        if (events.length === 0) {
+          showNoEvents();
+          return;
+        }
+
+        container.innerHTML = "";
+        container.classList.remove("hidden");
+        document.getElementById("no-events").classList.add("hidden");
+
+        events.forEach((event) => {
+          const eventCard = createEventCard(event);
+          container.appendChild(eventCard);
+        });
+      }
+
+      // イベントカード作成
+      function createEventCard(event) {
+        const isParticipating = participatingEvents.has(event.id);
+        const participantCount = event.participants?.[0]?.count || 0;
+        const eventDate = new Date(event.event_date);
+        const eventColor = eventTypeColors[event.event_type] || "gray";
+
+        const card = document.createElement("div");
+        card.className =
+          "bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition duration-200";
+
+        // 残り席数の計算
+        const remainingSeats = event.max_attendees
+          ? event.max_attendees - participantCount
+          : null;
+        const isFull = remainingSeats !== null && remainingSeats <= 0;
+
+        card.innerHTML = `
+                <div class="relative">
+                    <img src="${
+                      event.image_url || "/api/placeholder/400/200"
+                    }" alt="${event.title}" class="w-full h-48 object-cover">
+                    <div class="absolute top-0 right-0 mt-2 mr-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-${eventColor}-100 text-${eventColor}-800">
+                            ${
+                              eventTypeNames[event.event_type] ||
+                              event.event_type
+                            }
+                        </span>
+                    </div>
+                    ${
+                      event.format === "online"
+                        ? `
+                        <div class="absolute top-0 left-0 mt-2 ml-2">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">オンライン</span>
+                        </div>
+                    `
+                        : ""
+                    }
+                </div>
+                <div class="p-4">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <h3 class="text-lg font-medium text-gray-900 line-clamp-2">${
+                              event.title
+                            }</h3>
+                            <p class="text-sm text-gray-600">主催: ${
+                              event.organizer?.last_name
+                            } ${event.organizer?.first_name}</p>
+                        </div>
+                        <div class="bg-blue-100 rounded flex flex-col items-center justify-center p-2 ml-2">
+                            <span class="text-xs font-bold text-blue-800">${
+                              eventDate.getMonth() + 1
+                            }月</span>
+                            <span class="text-lg font-bold text-blue-800">${eventDate.getDate()}</span>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="flex items-center mb-2">
+                            <svg class="h-4 w-4 text-gray-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span class="text-sm text-gray-600">${
+                              event.start_time
+                            } - ${event.end_time}</span>
+                        </div>
+                        <div class="flex items-center mb-2">
+                            <svg class="h-4 w-4 text-gray-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                ${
+                                  event.format === "online"
+                                    ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />'
+                                    : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />'
+                                }
+                            </svg>
+                            <span class="text-sm text-gray-600">${
+                              event.format === "online"
+                                ? "オンライン"
+                                : event.location
+                            }</span>
+                        </div>
+                    </div>
+                    <p class="mt-2 text-sm text-gray-600 line-clamp-3">${
+                      event.description
+                    }</p>
+                    <div class="mt-4 flex items-center justify-between">
+                        <div class="flex gap-2">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              event.fee && event.fee > 0
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-green-100 text-green-800"
+                            }">
+                                ${
+                                  event.fee && event.fee > 0
+                                    ? `参加費 ${event.fee.toLocaleString()}円`
+                                    : "参加費無料"
+                                }
+                            </span>
+                            ${
+                              remainingSeats !== null
+                                ? `
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                  isFull
+                                    ? "bg-red-100 text-red-800"
+                                    : "bg-yellow-100 text-yellow-800"
+                                }">
+                                    ${
+                                      isFull
+                                        ? "満席"
+                                        : `残り${remainingSeats}席`
+                                    }
+                                </span>
+                            `
+                                : ""
+                            }
+                        </div>
+                        <div class="text-xs text-gray-500">
+                            ${participantCount}人参加
+                        </div>
+                    </div>
+                    <div class="mt-4 flex space-x-2">
+                        ${
+                          isParticipating
+                            ? `
+                            <button onclick="leaveEvent('${event.id}')" class="flex-1 border border-red-600 text-red-600 py-2 rounded-lg font-medium hover:bg-red-50 transition duration-200">
+                                参加取消
+                            </button>
+                        `
+                            : `
+                            <button onclick="joinEvent('${
+                              event.id
+                            }')" class="flex-1 bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition duration-200 ${
+                                isFull ? "opacity-50 cursor-not-allowed" : ""
+                              }" ${isFull ? "disabled" : ""}>
+                                ${isFull ? "満席" : "参加する"}
+                            </button>
+                        `
+                        }
+                        <button onclick="viewEventDetails('${
+                          event.id
+                        }')" class="flex items-center justify-center px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition duration-200">
+                            詳細
+                        </button>
+                    </div>
+                </div>
+            `;
+
+        return card;
+      }
+
+      // イベント参加
+      async function joinEvent(eventId) {
+        const { error } = await supabase.from("event_participants").insert({
+          event_id: eventId,
+          user_id: currentUser.id,
+        });
+
+        if (error) {
+          console.error("Error joining event:", error);
+          alert("参加に失敗しました。もう一度お試しください。");
+          return;
+        }
+
+        participatingEvents.add(eventId);
+        await loadEvents(); // 再読み込みして更新
+
+        // 主催者に通知を送信
+        const event = allEvents.find((e) => e.id === eventId);
+        if (event && event.organizer_id !== currentUser.id) {
+          await supabase.from("notifications").insert({
+            user_id: event.organizer_id,
+            type: "event_join",
+            title: "イベント参加",
+            content: `${userProfile.last_name} ${userProfile.first_name}さんがあなたのイベント「${event.title}」に参加しました`,
+            related_id: eventId,
+          });
+        }
+      }
+
+      // イベント参加取消
+      async function leaveEvent(eventId) {
+        const { error } = await supabase
+          .from("event_participants")
+          .delete()
+          .eq("event_id", eventId)
+          .eq("user_id", currentUser.id);
+
+        if (error) {
+          console.error("Error leaving event:", error);
+          alert("参加取消に失敗しました。もう一度お試しください。");
+          return;
+        }
+
+        participatingEvents.delete(eventId);
+        await loadEvents(); // 再読み込みして更新
+      }
+
+      // イベント詳細表示
+      function viewEventDetails(eventId) {
+        // イベント詳細ページへの遷移（実装時）
+        console.log("View event details:", eventId);
+      }
+
+      // イベント作成
+      async function createEvent(formData) {
+        const eventData = {
+          title: formData.get("event-title"),
+          description: formData.get("event-description"),
+          event_type: formData.get("event-category"),
+          format: formData.get("event-format"),
+          event_date: formData.get("event-date"),
+          start_time: formData.get("event-start-time"),
+          end_time: formData.get("event-end-time"),
+          location: formData.get("event-venue") || null,
+          address: formData.get("event-address") || null,
+          online_url: formData.get("event-url") || null,
+          max_attendees: parseInt(formData.get("event-max-attendees")) || null,
+          fee: parseInt(formData.get("event-fee")) || 0,
+          organizer_id: currentUser.id,
+        };
+
+        // 画像アップロード処理
+        const imageFile = formData.get("event-image");
+        if (imageFile && imageFile.size > 0) {
+          const fileExt = imageFile.name.split(".").pop();
+          const fileName = `${currentUser.id}_${Date.now()}.${fileExt}`;
+          const filePath = `events/${fileName}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from("event-images")
+            .upload(filePath, imageFile);
+
+          if (!uploadError) {
+            const { data } = supabase.storage
+              .from("event-images")
+              .getPublicUrl(filePath);
+            eventData.image_url = data.publicUrl;
+          }
+        }
+
+        const { error } = await supabase.from("events").insert(eventData);
+
+        if (error) {
+          console.error("Error creating event:", error);
+          throw new Error("イベントの作成に失敗しました");
+        }
+      }
+
+      // イベント検索・フィルタリング
+      function filterEvents() {
+        const typeFilter = document.getElementById("event-type").value;
+        const locationFilter = document.getElementById(
+          "event-location-filter"
+        ).value;
+        const dateFilter = document.getElementById("event-date-filter").value;
+
+        let filteredEvents = allEvents;
+
+        // タイプフィルター
+        if (typeFilter) {
+          filteredEvents = filteredEvents.filter(
+            (event) => event.event_type === typeFilter
+          );
+        }
+
+        // 地域フィルター
+        if (locationFilter) {
+          if (locationFilter === "online") {
+            filteredEvents = filteredEvents.filter(
+              (event) => event.format === "online"
+            );
+          } else {
+            filteredEvents = filteredEvents.filter(
+              (event) =>
+                event.location &&
+                event.location.toLowerCase().includes(locationFilter)
+            );
+          }
+        }
+
+        // 日付フィルター
+        if (dateFilter) {
+          const now = new Date();
+          const today = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate()
+          );
+
+          filteredEvents = filteredEvents.filter((event) => {
+            const eventDate = new Date(event.event_date);
+
+            switch (dateFilter) {
+              case "today":
+                return eventDate.getTime() === today.getTime();
+              case "this-week":
+                const weekStart = new Date(today);
+                weekStart.setDate(today.getDate() - today.getDay());
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekStart.getDate() + 6);
+                return eventDate >= weekStart && eventDate <= weekEnd;
+              case "this-month":
+                return (
+                  eventDate.getMonth() === today.getMonth() &&
+                  eventDate.getFullYear() === today.getFullYear()
+                );
+              case "next-month":
+                const nextMonth = new Date(today);
+                nextMonth.setMonth(today.getMonth() + 1);
+                return (
+                  eventDate.getMonth() === nextMonth.getMonth() &&
+                  eventDate.getFullYear() === nextMonth.getFullYear()
+                );
+              default:
+                return true;
+            }
+          });
+        }
+
+        displayEvents(filteredEvents);
+      }
+
+      // リアルタイム更新設定
+      function setupRealtimeSubscriptions() {
+        supabase
+          .channel("events-channel")
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "events",
+            },
+            () => {
+              loadEvents();
+            }
+          )
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "event_participants",
+            },
+            () => {
+              loadEvents();
+              loadParticipatingEvents();
+            }
+          )
+          .subscribe();
+      }
+
+      // UI制御関数
+      function showLoading() {
+        document.getElementById("loading-events").classList.remove("hidden");
+        document.getElementById("events-container").classList.add("hidden");
+        document.getElementById("no-events").classList.add("hidden");
+      }
+
+      function hideLoading() {
+        document.getElementById("loading-events").classList.add("hidden");
+      }
+
+      function showNoEvents() {
+        document.getElementById("no-events").classList.remove("hidden");
+        document.getElementById("events-container").classList.add("hidden");
+        hideLoading();
+      }
+
+      // イベントリスナー設定
+      document
+        .querySelector(".mobile-menu-button")
+        .addEventListener("click", function () {
+          document.querySelector(".mobile-menu").classList.toggle("hidden");
+        });
+
+      document
+        .getElementById("user-menu-button")
+        .addEventListener("click", function () {
+          document.getElementById("user-menu").classList.toggle("hidden");
+        });
+
+      window.addEventListener("click", function (e) {
+        if (!document.getElementById("user-menu-button").contains(e.target)) {
+          document.getElementById("user-menu").classList.add("hidden");
+        }
+      });
+
+      // イベント作成モーダル
+      document
+        .getElementById("create-event-btn")
+        .addEventListener("click", function () {
+          document
+            .getElementById("create-event-modal")
+            .classList.remove("hidden");
+        });
+
+      document
+        .getElementById("close-modal")
+        .addEventListener("click", function () {
+          document.getElementById("create-event-modal").classList.add("hidden");
+        });
+
+      document
+        .getElementById("cancel-create-event")
+        .addEventListener("click", function () {
+          document.getElementById("create-event-modal").classList.add("hidden");
+        });
+
+      // 開催形式によるフォーム項目の表示/非表示
+      document
+        .getElementById("event-format")
+        .addEventListener("change", function () {
+          const locationFields = document.getElementById("location-fields");
+          const onlineFields = document.getElementById("online-fields");
+
+          if (this.value === "online") {
+            locationFields.classList.add("hidden");
+            onlineFields.classList.remove("hidden");
+          } else if (this.value === "offline") {
+            locationFields.classList.remove("hidden");
+            onlineFields.classList.add("hidden");
+          } else if (this.value === "hybrid") {
+            locationFields.classList.remove("hidden");
+            onlineFields.classList.remove("hidden");
+          }
+        });
+
+      // イベント作成フォーム送信
+      document
+        .getElementById("create-event-form")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const submitButton = document.getElementById("submit-event");
+          submitButton.disabled = true;
+          submitButton.textContent = "作成中...";
+
+          try {
+            const formData = new FormData(this);
+            await createEvent(formData);
+
+            document
+              .getElementById("create-event-modal")
+              .classList.add("hidden");
+            this.reset();
+            await loadEvents();
+
+            alert("イベントが作成されました！");
+          } catch (error) {
+            console.error("Error:", error);
+            alert(error.message || "イベントの作成に失敗しました");
+          } finally {
+            submitButton.disabled = false;
+            submitButton.textContent = "作成する";
+          }
+        });
+
+      // 検索ボタン
+      document
+        .getElementById("search-events-btn")
+        .addEventListener("click", filterEvents);
+
+      // フィルター変更時の自動検索
+      ["event-type", "event-location-filter", "event-date-filter"].forEach(
+        (id) => {
+          document.getElementById(id).addEventListener("change", filterEvents);
+        }
+      );
+
+      // ログアウト
+      document
+        .getElementById("logout-link")
+        .addEventListener("click", async (e) => {
+          e.preventDefault();
+          await supabase.auth.signOut();
+          window.location.href = "login.html?message=logout";
+        });
+
+      document
+        .querySelector(".logout-link-mobile")
+        .addEventListener("click", async (e) => {
+          e.preventDefault();
+          await supabase.auth.signOut();
+          window.location.href = "login.html?message=logout";
+        });
+
+      // グローバル関数として公開（HTML内のonclickで使用）
+      window.joinEvent = joinEvent;
+      window.leaveEvent = leaveEvent;
+      window.viewEventDetails = viewEventDetails;
+    </script>
+  </body>
+</html>

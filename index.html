@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="referrer" content="no-referrer" />
+    <title>
+      スタートアップコネクト -
+      起業家とビジネスパートナーをつなぐプラットフォーム
+    </title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Noto Sans JP", sans-serif;
+      }
+      .gradient-bg {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      }
+      .feature-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      }
+      @keyframes float {
+        0% {
+          transform: translateY(0px);
+        }
+        50% {
+          transform: translateY(-20px);
+        }
+        100% {
+          transform: translateY(0px);
+        }
+      }
+      .floating {
+        animation: float 6s ease-in-out infinite;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50">
+    <!-- ナビゲーションバー -->
+    <nav class="bg-white shadow-md fixed w-full top-0 z-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+          <div class="flex items-center">
+            <div class="flex-shrink-0 flex items-center">
+              <svg
+                class="h-8 w-8 text-blue-600"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+              <span class="ml-2 text-xl font-bold text-gray-800"
+                >スタートアップコネクト</span
+              >
+            </div>
+          </div>
+          <div class="hidden md:flex items-center space-x-4">
+            <a
+              href="#features"
+              class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+              >特徴</a
+            >
+            <a
+              href="#how-it-works"
+              class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+              >使い方</a
+            >
+            <a
+              href="#pricing"
+              class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+              >料金プラン</a
+            >
+            <a
+              href="#testimonials"
+              class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+              >利用者の声</a
+            >
+            <a
+              href="login.html"
+              class="text-blue-600 hover:text-blue-700 px-3 py-2 rounded-md text-sm font-medium"
+              >ログイン</a
+            >
+            <a
+              href="register.html"
+              class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition duration-200"
+              >無料で始める</a
+            >
+          </div>
+          <div class="flex md:hidden items-center">
+            <button
+              type="button"
+              class="mobile-menu-button text-gray-500 hover:text-blue-600 focus:outline-none"
+            >
+              <svg
+                class="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- モバイルメニュー -->
+      <div class="mobile-menu hidden md:hidden bg-white border-t">
+        <a
+          href="#features"
+          class="block px-4 py-2 text-gray-600 hover:bg-gray-100"
+          >特徴</a
+        >
+        <a
+          href="#how-it-works"
+          class="block px-4 py-2 text-gray-600 hover:bg-gray-100"
+          >使い方</a
+        >
+        <a
+          href="#pricing"
+          class="block px-4 py-2 text-gray-600 hover:bg-gray-100"
+          >料金プラン</a
+        >
+        <a
+          href="#testimonials"
+          class="block px-4 py-2 text-gray-600 hover:bg-gray-100"
+          >利用者の声</a
+        >
+        <a
+          href="login.html"
+          class="block px-4 py-2 text-gray-600 hover:bg-gray-100"
+          >ログイン</a
+        >
+        <a
+          href="register.html"
+          class="block px-4 py-2 text-blue-600 hover:bg-gray-100"
+          >無料で始める</a
+        >
+      </div>
+    </nav>
+
+    <!-- ヒーローセクション -->
+    <section class="gradient-bg text-white pt-24 pb-20">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+          <h1 class="text-4xl md:text-5xl font-bold mb-4">
+            夢を共に実現する<br />
+            最高のパートナーと出会う
+          </h1>
+          <p class="text-xl md:text-2xl mb-8 opacity-90">
+            スタートアップコネクトは、起業家とビジネスパートナーを<br
+              class="hidden md:block"
+            />
+            つなぐ日本最大級のマッチングプラットフォームです
+          </p>
+          <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a
+              href="register.html"
+              class="bg-white text-purple-700 px-8 py-4 rounded-lg font-bold text-lg hover:bg-gray-100 transition duration-200 shadow-lg"
+            >
+              無料で始める
+            </a>
+            <a
+              href="#how-it-works"
+              class="border-2 border-white text-white px-8 py-4 rounded-lg font-bold text-lg hover:bg-white hover:text-purple-700 transition duration-200"
+            >
+              詳しく見る
+            </a>
+          </div>
+        </div>
+        <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+          <div>
+            <div class="text-4xl font-bold mb-2">10,000+</div>
+            <div class="text-lg opacity-90">登録ユーザー</div>
+          </div>
+          <div>
+            <div class="text-4xl font-bold mb-2">500+</div>
+            <div class="text-lg opacity-90">成功したマッチング</div>
+          </div>
+          <div>
+            <div class="text-4xl font-bold mb-2">50+</div>
+            <div class="text-lg opacity-90">立ち上がったスタートアップ</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 特徴セクション -->
+    <section id="features" class="py-20">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
+            スタートアップコネクトの特徴
+          </h2>
+          <p class="text-lg text-gray-600">
+            起業家とパートナーを効率的につなぐ、充実した機能をご用意しています
+          </p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div class="feature-card bg-white rounded-lg shadow-sm p-6">
+            <div
+              class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4"
+            >
+              <svg
+                class="h-6 w-6 text-blue-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">
+              高度な検索機能
+            </h3>
+            <p class="text-gray-600">
+              スキル、地域、業界など、詳細な条件で理想のパートナーを検索できます。
+            </p>
+          </div>
+          <div class="feature-card bg-white rounded-lg shadow-sm p-6">
+            <div
+              class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4"
+            >
+              <svg
+                class="h-6 w-6 text-green-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                />
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">
+              リアルタイムチャット
+            </h3>
+            <p class="text-gray-600">
+              気になる相手とすぐにコミュニケーションを開始。グループチャットも可能です。
+            </p>
+          </div>
+          <div class="feature-card bg-white rounded-lg shadow-sm p-6">
+            <div
+              class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4"
+            >
+              <svg
+                class="h-6 w-6 text-purple-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                />
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">
+              コミュニティ機能
+            </h3>
+            <p class="text-gray-600">
+              同じ興味・関心を持つ起業家たちとグループを作成し、情報交換できます。
+            </p>
+          </div>
+          <div class="feature-card bg-white rounded-lg shadow-sm p-6">
+            <div
+              class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mb-4"
+            >
+              <svg
+                class="h-6 w-6 text-yellow-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">
+              イベント管理
+            </h3>
+            <p class="text-gray-600">
+              ピッチイベントやネットワーキングイベントの開催・参加が簡単にできます。
+            </p>
+          </div>
+          <div class="feature-card bg-white rounded-lg shadow-sm p-6">
+            <div
+              class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-4"
+            >
+              <svg
+                class="h-6 w-6 text-red-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                />
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">安全な環境</h3>
+            <p class="text-gray-600">
+              本人確認機能やレポート機能により、安心してビジネスパートナーを探せます。
+            </p>
+          </div>
+          <div class="feature-card bg-white rounded-lg shadow-sm p-6">
+            <div
+              class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4"
+            >
+              <svg
+                class="h-6 w-6 text-indigo-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                />
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">
+              AIマッチング
+            </h3>
+            <p class="text-gray-600">
+              AIが最適なパートナー候補を提案。効率的なマッチングを実現します。
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 使い方セクション -->
+    <section id="how-it-works" class="py-20 bg-gray-100">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
+            かんたん3ステップで始められます
+          </h2>
+          <p class="text-lg text-gray-600">
+            登録から実際のマッチングまで、シンプルなプロセスです
+          </p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div class="text-center">
+            <div
+              class="w-20 h-20 bg-blue-600 text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4"
+            >
+              1
+            </div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">
+              プロフィール作成
+            </h3>
+            <p class="text-gray-600">
+              あなたのスキルや経験、探しているパートナーの条件を登録します。
+            </p>
+          </div>
+          <div class="text-center">
+            <div
+              class="w-20 h-20 bg-blue-600 text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4"
+            >
+              2
+            </div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">
+              パートナー検索
+            </h3>
+            <p class="text-gray-600">
+              条件に合うパートナーを検索し、気になる相手にメッセージを送ります。
+            </p>
+          </div>
+          <div class="text-center">
+            <div
+              class="w-20 h-20 bg-blue-600 text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4"
+            >
+              3
+            </div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">
+              ビジネス開始
+            </h3>
+            <p class="text-gray-600">
+              相性の良いパートナーと出会い、一緒にビジネスをスタートします。
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 料金プランセクション -->
+    <section id="pricing" class="py-20">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
+            シンプルな料金プラン
+          </h2>
+          <p class="text-lg text-gray-600">
+            あなたのニーズに合わせて選べる料金プランをご用意しています
+          </p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">
+              フリープラン
+            </h3>
+            <div class="text-4xl font-bold text-gray-800 mb-4">
+              ¥0<span class="text-lg font-normal text-gray-600">/月</span>
+            </div>
+            <ul class="space-y-3 mb-8">
+              <li class="flex items-center text-gray-600">
+                <svg
+                  class="h-5 w-5 text-green-500 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                基本的なプロフィール作成
+              </li>
+              <li class="flex items-center text-gray-600">
+                <svg
+                  class="h-5 w-5 text-green-500 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                月5件までメッセージ送信
+              </li>
+              <li class="flex items-center text-gray-600">
+                <svg
+                  class="h-5 w-5 text-green-500 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                グループ参加（3グループまで）
+              </li>
+            </ul>
+            <a
+              href="register.html"
+              class="block w-full text-center bg-gray-100 text-gray-700 px-4 py-3 rounded-lg font-medium hover:bg-gray-200 transition duration-200"
+            >
+              無料で始める
+            </a>
+          </div>
+          <div
+            class="bg-gradient-to-b from-blue-600 to-blue-700 rounded-lg shadow-lg p-8 text-white transform scale-105"
+          >
+            <div
+              class="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-yellow-400 text-gray-800 px-4 py-1 rounded-full text-sm font-bold"
+            >
+              おすすめ
+            </div>
+            <h3 class="text-xl font-semibold mb-2">プロプラン</h3>
+            <div class="text-4xl font-bold mb-4">
+              ¥2,980<span class="text-lg font-normal opacity-90">/月</span>
+            </div>
+            <ul class="space-y-3 mb-8">
+              <li class="flex items-center">
+                <svg
+                  class="h-5 w-5 text-white mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                無制限のメッセージ送信
+              </li>
+              <li class="flex items-center">
+                <svg
+                  class="h-5 w-5 text-white mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                高度な検索フィルター
+              </li>
+              <li class="flex items-center">
+                <svg
+                  class="h-5 w-5 text-white mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                AIマッチング機能
+              </li>
+              <li class="flex items-center">
+                <svg
+                  class="h-5 w-5 text-white mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                無制限のグループ参加
+              </li>
+            </ul>
+            <a
+              href="register.html"
+              class="block w-full text-center bg-white text-blue-600 px-4 py-3 rounded-lg font-medium hover:bg-gray-100 transition duration-200"
+            >
+              プロプランで始める
+            </a>
+          </div>
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">
+              エンタープライズ
+            </h3>
+            <div class="text-4xl font-bold text-gray-800 mb-4">
+              ¥9,800<span class="text-lg font-normal text-gray-600">/月</span>
+            </div>
+            <ul class="space-y-3 mb-8">
+              <li class="flex items-center text-gray-600">
+                <svg
+                  class="h-5 w-5 text-green-500 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                プロプランの全機能
+              </li>
+              <li class="flex items-center text-gray-600">
+                <svg
+                  class="h-5 w-5 text-green-500 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                専任のサポート担当
+              </li>
+              <li class="flex items-center text-gray-600">
+                <svg
+                  class="h-5 w-5 text-green-500 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                カスタムイベント開催
+              </li>
+              <li class="flex items-center text-gray-600">
+                <svg
+                  class="h-5 w-5 text-green-500 mr-2"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                APIアクセス
+              </li>
+            </ul>
+            <a
+              href="#"
+              class="block w-full text-center bg-gray-100 text-gray-700 px-4 py-3 rounded-lg font-medium hover:bg-gray-200 transition duration-200"
+            >
+              お問い合わせ
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 利用者の声セクション -->
+    <section id="testimonials" class="py-20 bg-gray-100">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
+            利用者の声
+          </h2>
+          <p class="text-lg text-gray-600">
+            スタートアップコネクトで出会い、成功を収めた起業家たち
+          </p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center mb-4">
+              <img
+                src="https://randomuser.me/api/portraits/men/32.jpg"
+                alt="田中 健太"
+                class="w-12 h-12 rounded-full mr-4"
+              />
+              <div>
+                <h4 class="font-semibold text-gray-800">田中 健太</h4>
+                <p class="text-sm text-gray-600">EdTech起業家</p>
+              </div>
+            </div>
+            <p class="text-gray-600 italic">
+              "エンジニアのパートナーを探していたところ、理想的な人材と出会えました。今では一緒に教育アプリを開発し、多くの学生に使ってもらっています。"
+            </p>
+          </div>
+          <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center mb-4">
+              <img
+                src="https://randomuser.me/api/portraits/women/44.jpg"
+                alt="山田 恵子"
+                class="w-12 h-12 rounded-full mr-4"
+              />
+              <div>
+                <h4 class="font-semibold text-gray-800">山田 恵子</h4>
+                <p class="text-sm text-gray-600">環境テック創業者</p>
+              </div>
+            </div>
+            <p class="text-gray-600 italic">
+              "同じビジョンを持つ仲間を見つけることができ、今では5人のチームで環境問題の解決に取り組んでいます。グループ機能が特に役立ちました。"
+            </p>
+          </div>
+          <div class="bg-white rounded-lg shadow-sm p-6">
+            <div class="flex items-center mb-4">
+              <img
+                src="https://randomuser.me/api/portraits/men/22.jpg"
+                alt="佐藤 太郎"
+                class="w-12 h-12 rounded-full mr-4"
+              />
+              <div>
+                <h4 class="font-semibold text-gray-800">佐藤 太郎</h4>
+                <p class="text-sm text-gray-600">Fintech CEO</p>
+              </div>
+            </div>
+            <p class="text-gray-600 italic">
+              "投資家向けのピッチイベントで知り合ったCTOと意気投合し、半年後には資金調達に成功しました。このプラットフォームがなければ今の成功はありません。"
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTAセクション -->
+    <section class="gradient-bg text-white py-20">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-3xl md:text-4xl font-bold mb-4">
+          今すぐ始めて、理想のパートナーを見つけよう
+        </h2>
+        <p class="text-xl mb-8 opacity-90">
+          登録は無料。あなたのビジネスアイデアを実現する仲間が待っています。
+        </p>
+        <a
+          href="register.html"
+          class="inline-block bg-white text-purple-700 px-8 py-4 rounded-lg font-bold text-lg hover:bg-gray-100 transition duration-200 shadow-lg"
+        >
+          無料で登録する
+        </a>
+      </div>
+    </section>
+
+    <!-- フッター -->
+    <footer class="bg-gray-800 text-gray-300 py-12">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div>
+            <div class="flex items-center mb-4">
+              <svg
+                class="h-8 w-8 text-blue-400"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+              <span class="ml-2 text-xl font-bold text-white"
+                >スタートアップコネクト</span
+              >
+            </div>
+            <p class="text-sm">
+              起業家とビジネスパートナーをつなぐ、日本最大級のマッチングプラットフォーム
+            </p>
+          </div>
+          <div>
+            <h3 class="text-white font-semibold mb-4">サービス</h3>
+            <ul class="space-y-2 text-sm">
+              <li><a href="#" class="hover:text-white">パートナー検索</a></li>
+              <li><a href="#" class="hover:text-white">グループ機能</a></li>
+              <li><a href="#" class="hover:text-white">イベント</a></li>
+              <li><a href="#" class="hover:text-white">料金プラン</a></li>
+            </ul>
+          </div>
+          <div>
+            <h3 class="text-white font-semibold mb-4">サポート</h3>
+            <ul class="space-y-2 text-sm">
+              <li><a href="#" class="hover:text-white">ヘルプセンター</a></li>
+              <li><a href="#" class="hover:text-white">よくある質問</a></li>
+              <li><a href="#" class="hover:text-white">お問い合わせ</a></li>
+              <li><a href="#" class="hover:text-white">利用規約</a></li>
+            </ul>
+          </div>
+          <div>
+            <h3 class="text-white font-semibold mb-4">フォローする</h3>
+            <div class="flex space-x-4">
+              <a href="#" class="hover:text-white">
+                <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"
+                  />
+                </svg>
+              </a>
+              <a href="#" class="hover:text-white">
+                <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"
+                  />
+                </svg>
+              </a>
+              <a href="#" class="hover:text-white">
+                <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"
+                  />
+                </svg>
+              </a>
+            </div>
+            <div class="mt-4">
+              <p class="text-sm mb-2">ニュースレターに登録</p>
+              <form class="flex">
+                <input
+                  type="email"
+                  placeholder="メールアドレス"
+                  class="bg-gray-700 text-white px-4 py-2 rounded-l-lg flex-1 focus:outline-none focus:bg-gray-600"
+                />
+                <button
+                  type="submit"
+                  class="bg-blue-600 text-white px-4 py-2 rounded-r-lg hover:bg-blue-700 transition duration-200"
+                >
+                  登録
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+        <div class="mt-8 pt-8 border-t border-gray-700 text-center text-sm">
+          <p>&copy; 2024 スタートアップコネクト. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // モバイルメニューの表示/非表示
+      document
+        .querySelector(".mobile-menu-button")
+        .addEventListener("click", function () {
+          document.querySelector(".mobile-menu").classList.toggle("hidden");
+        });
+
+      // スムーススクロール
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute("href"));
+          if (target) {
+            const offsetTop = target.offsetTop - 80;
+            window.scrollTo({
+              top: offsetTop,
+              behavior: "smooth",
+            });
+          }
+        });
+      });
+
+      // スクロール時のナビゲーションバーの影
+      window.addEventListener("scroll", function () {
+        const nav = document.querySelector("nav");
+        if (window.scrollY > 0) {
+          nav.classList.add("shadow-lg");
+        } else {
+          nav.classList.remove("shadow-lg");
+        }
+      });
+    </script>
+  </body>
+</html>

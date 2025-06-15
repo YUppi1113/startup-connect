@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="referrer" content="no-referrer" />
+    <title>プロフィール編集 - スタートアップコネクト</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Noto Sans JP", sans-serif;
+      }
+      .skeleton {
+        animation: shimmer 1.5s infinite;
+        background: linear-gradient(
+          90deg,
+          #f0f0f0 25%,
+          #e0e0e0 50%,
+          #f0f0f0 75%
+        );
+        background-size: 200% 100%;
+      }
+      @keyframes shimmer {
+        0% {
+          background-position: 200% 0;
+        }
+        100% {
+          background-position: -200% 0;
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 min-h-screen">
+    <!-- ナビゲーションバー -->
+    <header class="bg-white shadow-md sticky top-0 z-20">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+          <div class="flex items-center">
+            <div class="flex-shrink-0 flex items-center">
+              <a href="index.html">
+                <svg
+                  class="h-8 w-8 text-blue-600"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+              </a>
+              <a
+                href="dashboard.html"
+                class="ml-2 text-xl font-bold text-gray-800"
+                >スタートアップコネクト</a
+              >
+            </div>
+            <nav class="hidden md:ml-6 md:flex space-x-4">
+              <a
+                href="dashboard.html"
+                class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >ホーム</a
+              >
+              <a
+                href="search.html"
+                class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >検索</a
+              >
+              <a
+                href="messages.html"
+                class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >メッセージ</a
+              >
+              <a
+                href="groups.html"
+                class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >グループ</a
+              >
+              <a
+                href="events.html"
+                class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >イベント</a
+              >
+            </nav>
+          </div>
+          <div class="hidden md:flex items-center">
+            <button
+              type="button"
+              id="notification-button"
+              class="relative p-1 rounded-full text-gray-500 hover:text-blue-600 focus:outline-none"
+            >
+              <span class="sr-only">通知を見る</span>
+              <svg
+                class="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                ></path>
+              </svg>
+              <span
+                id="notification-dot"
+                class="hidden absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500"
+              ></span>
+            </button>
+
+            <div class="ml-3 relative">
+              <div class="flex items-center">
+                <button
+                  type="button"
+                  class="bg-gray-800 flex text-sm rounded-full focus:outline-none"
+                  id="user-menu-button"
+                >
+                  <span class="sr-only">メニューを開く</span>
+                  <img
+                    id="user-avatar"
+                    class="h-8 w-8 rounded-full object-cover"
+                    src="/api/placeholder/32/32"
+                    alt="プロフィール"
+                  />
+                </button>
+                <div class="ml-2 hidden md:block">
+                  <div id="user-name" class="text-sm font-medium text-gray-800">
+                    -
+                  </div>
+                  <div id="user-location" class="text-xs text-gray-500">-</div>
+                </div>
+              </div>
+
+              <div
+                id="user-menu"
+                class="hidden origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-30"
+              >
+                <a
+                  href="profile.html"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 bg-gray-50"
+                  >プロフィール</a
+                >
+                <a
+                  href="settings.html"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >設定</a
+                >
+                <a
+                  href="#"
+                  id="logout-link"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >ログアウト</a
+                >
+              </div>
+            </div>
+          </div>
+
+          <div class="flex md:hidden items-center">
+            <button
+              type="button"
+              class="mobile-menu-button text-gray-500 hover:text-blue-600 focus:outline-none"
+            >
+              <svg
+                class="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 6h16M4 12h16M4 18h16"
+                ></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- モバイルメニュー -->
+      <div class="mobile-menu hidden md:hidden bg-white border-t">
+        <a
+          href="dashboard.html"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >ホーム</a
+        >
+        <a
+          href="search.html"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >検索</a
+        >
+        <a
+          href="messages.html"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >メッセージ</a
+        >
+        <a
+          href="groups.html"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >グループ</a
+        >
+        <a
+          href="events.html"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >イベント</a
+        >
+        <div class="border-t border-gray-200 my-1"></div>
+        <a href="profile.html" class="block px-4 py-2 bg-gray-50 text-gray-700"
+          >プロフィール</a
+        >
+        <a
+          href="settings.html"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >設定</a
+        >
+        <a
+          href="#"
+          class="logout-link-mobile block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >ログアウト</a
+        >
+      </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">プロフィール編集</h1>
+        <p class="text-gray-600">
+          あなたのプロフィール情報を編集できます。他のユーザーに表示される情報です。
+        </p>
+      </div>
+
+      <!-- 成功メッセージ -->
+      <div
+        id="success-message"
+        class="hidden bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4"
+        role="alert"
+      >
+        <span class="block sm:inline">プロフィールが更新されました。</span>
+      </div>
+
+      <!-- エラーメッセージ -->
+      <div
+        id="error-message"
+        class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
+        role="alert"
+      >
+        <span class="block sm:inline" id="error-text"></span>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-sm">
+        <form id="profile-form">
+          <!-- 基本情報セクション -->
+          <div class="p-6 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">基本情報</h2>
+
+            <div class="mb-6">
+              <label class="block text-sm font-medium text-gray-700 mb-2"
+                >プロフィール画像</label
+              >
+              <div class="flex items-center space-x-4">
+                <div
+                  id="profile-image-preview"
+                  class="h-24 w-24 bg-gray-200 rounded-full overflow-hidden flex items-center justify-center"
+                >
+                  <img
+                    id="current-profile-image"
+                    src="/api/placeholder/96/96"
+                    alt="プロフィール画像"
+                    class="h-full w-full object-cover hidden"
+                  />
+                  <svg
+                    id="profile-image-placeholder"
+                    class="h-12 w-12 text-gray-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <label
+                    class="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition duration-200"
+                  >
+                    画像を変更
+                    <input
+                      type="file"
+                      id="profile-image-input"
+                      class="hidden"
+                      accept="image/*"
+                    />
+                  </label>
+                  <p class="text-xs text-gray-500 mt-1">
+                    推奨サイズ: 400x400px、最大2MB
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label
+                  for="last_name"
+                  class="block text-sm font-medium text-gray-700 mb-1"
+                  >姓 <span class="text-red-600">*</span></label
+                >
+                <input
+                  type="text"
+                  id="last_name"
+                  name="last_name"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <div>
+                <label
+                  for="first_name"
+                  class="block text-sm font-medium text-gray-700 mb-1"
+                  >名 <span class="text-red-600">*</span></label
+                >
+                <input
+                  type="text"
+                  id="first_name"
+                  name="first_name"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div>
+                <label
+                  for="location"
+                  class="block text-sm font-medium text-gray-700 mb-1"
+                  >地域 <span class="text-red-600">*</span></label
+                >
+                <select
+                  id="location"
+                  name="location"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                >
+                  <option value="">選択してください</option>
+                  <option value="hokkaido">北海道</option>
+                  <option value="aomori">青森県</option>
+                  <option value="iwate">岩手県</option>
+                  <option value="miyagi">宮城県</option>
+                  <option value="akita">秋田県</option>
+                  <option value="yamagata">山形県</option>
+                  <option value="fukushima">福島県</option>
+                  <option value="ibaraki">茨城県</option>
+                  <option value="tochigi">栃木県</option>
+                  <option value="gunma">群馬県</option>
+                  <option value="saitama">埼玉県</option>
+                  <option value="chiba">千葉県</option>
+                  <option value="tokyo">東京都</option>
+                  <option value="kanagawa">神奈川県</option>
+                  <option value="niigata">新潟県</option>
+                  <option value="toyama">富山県</option>
+                  <option value="ishikawa">石川県</option>
+                  <option value="fukui">福井県</option>
+                  <option value="yamanashi">山梨県</option>
+                  <option value="nagano">長野県</option>
+                  <option value="gifu">岐阜県</option>
+                  <option value="shizuoka">静岡県</option>
+                  <option value="aichi">愛知県</option>
+                  <option value="mie">三重県</option>
+                  <option value="shiga">滋賀県</option>
+                  <option value="kyoto">京都府</option>
+                  <option value="osaka">大阪府</option>
+                  <option value="hyogo">兵庫県</option>
+                  <option value="nara">奈良県</option>
+                  <option value="wakayama">和歌山県</option>
+                  <option value="tottori">鳥取県</option>
+                  <option value="shimane">島根県</option>
+                  <option value="okayama">岡山県</option>
+                  <option value="hiroshima">広島県</option>
+                  <option value="yamaguchi">山口県</option>
+                  <option value="tokushima">徳島県</option>
+                  <option value="kagawa">香川県</option>
+                  <option value="ehime">愛媛県</option>
+                  <option value="kochi">高知県</option>
+                  <option value="fukuoka">福岡県</option>
+                  <option value="saga">佐賀県</option>
+                  <option value="nagasaki">長崎県</option>
+                  <option value="kumamoto">熊本県</option>
+                  <option value="oita">大分県</option>
+                  <option value="miyazaki">宮崎県</option>
+                  <option value="kagoshima">鹿児島県</option>
+                  <option value="okinawa">沖縄県</option>
+                </select>
+              </div>
+              <div>
+                <label
+                  for="age_range"
+                  class="block text-sm font-medium text-gray-700 mb-1"
+                  >年齢層 <span class="text-red-600">*</span></label
+                >
+                <select
+                  id="age_range"
+                  name="age_range"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                >
+                  <option value="">選択してください</option>
+                  <option value="10s">10代</option>
+                  <option value="20s">20代</option>
+                  <option value="30s">30代</option>
+                  <option value="40s">40代</option>
+                  <option value="50s">50代</option>
+                  <option value="60s">60代以上</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- スキル・専門分野セクション -->
+          <div class="p-6 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">
+              スキル・専門分野
+            </h2>
+
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >スキル・専門分野（複数選択可）
+              <span class="text-red-600">*</span></label
+            >
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div class="flex items-center">
+                <input
+                  type="checkbox"
+                  id="skill_tech"
+                  name="skills[]"
+                  value="tech"
+                  class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label for="skill_tech" class="ml-2 block text-sm text-gray-700"
+                  >テクノロジー・IT</label
+                >
+              </div>
+              <div class="flex items-center">
+                <input
+                  type="checkbox"
+                  id="skill_marketing"
+                  name="skills[]"
+                  value="marketing"
+                  class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label
+                  for="skill_marketing"
+                  class="ml-2 block text-sm text-gray-700"
+                  >マーケティング</label
+                >
+              </div>
+              <div class="flex items-center">
+                <input
+                  type="checkbox"
+                  id="skill_sales"
+                  name="skills[]"
+                  value="sales"
+                  class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label
+                  for="skill_sales"
+                  class="ml-2 block text-sm text-gray-700"
+                  >営業・セールス</label
+                >
+              </div>
+              <div class="flex items-center">
+                <input
+                  type="checkbox"
+                  id="skill_finance"
+                  name="skills[]"
+                  value="finance"
+                  class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label
+                  for="skill_finance"
+                  class="ml-2 block text-sm text-gray-700"
+                  >財務・会計</label
+                >
+              </div>
+              <div class="flex items-center">
+                <input
+                  type="checkbox"
+                  id="skill_design"
+                  name="skills[]"
+                  value="design"
+                  class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label
+                  for="skill_design"
+                  class="ml-2 block text-sm text-gray-700"
+                  >デザイン</label
+                >
+              </div>
+              <div class="flex items-center">
+                <input
+                  type="checkbox"
+                  id="skill_hr"
+                  name="skills[]"
+                  value="hr"
+                  class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label for="skill_hr" class="ml-2 block text-sm text-gray-700"
+                  >人事・組織開発</label
+                >
+              </div>
+              <div class="flex items-center">
+                <input
+                  type="checkbox"
+                  id="skill_legal"
+                  name="skills[]"
+                  value="legal"
+                  class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label
+                  for="skill_legal"
+                  class="ml-2 block text-sm text-gray-700"
+                  >法務・知財</label
+                >
+              </div>
+              <div class="flex items-center">
+                <input
+                  type="checkbox"
+                  id="skill_planning"
+                  name="skills[]"
+                  value="planning"
+                  class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label
+                  for="skill_planning"
+                  class="ml-2 block text-sm text-gray-700"
+                  >企画・戦略</label
+                >
+              </div>
+              <div class="flex items-center">
+                <input
+                  type="checkbox"
+                  id="skill_other"
+                  name="skills[]"
+                  value="other"
+                  class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label
+                  for="skill_other"
+                  class="ml-2 block text-sm text-gray-700"
+                  >その他</label
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- 自己紹介セクション -->
+          <div class="p-6 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">自己紹介</h2>
+
+            <div class="mb-4">
+              <label
+                for="bio"
+                class="block text-sm font-medium text-gray-700 mb-1"
+                >自己紹介文 <span class="text-red-600">*</span></label
+              >
+              <textarea
+                id="bio"
+                name="bio"
+                rows="4"
+                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="あなたの経歴や強み、スキルセットについて記入してください"
+                required
+              ></textarea>
+              <p class="mt-1 text-xs text-gray-500">※300文字以内</p>
+            </div>
+
+            <div>
+              <label
+                for="linkedin_url"
+                class="block text-sm font-medium text-gray-700 mb-1"
+                >LinkedInプロフィールURL（任意）</label
+              >
+              <input
+                type="url"
+                id="linkedin_url"
+                name="linkedin_url"
+                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="https://linkedin.com/in/username"
+              />
+            </div>
+          </div>
+
+          <!-- 起業情報セクション -->
+          <div class="p-6 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">起業情報</h2>
+
+            <div class="mb-4">
+              <label
+                for="startup_status"
+                class="block text-sm font-medium text-gray-700 mb-1"
+                >現在の起業ステータス <span class="text-red-600">*</span></label
+              >
+              <select
+                id="startup_status"
+                name="startup_status"
+                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="">選択してください</option>
+                <option value="idea">アイデア構想中</option>
+                <option value="planning">事業計画作成中</option>
+                <option value="prototype">プロトタイプ開発中</option>
+                <option value="mvp">MVPローンチ済み</option>
+                <option value="growth">成長フェーズ</option>
+                <option value="partner">パートナー探し中</option>
+                <option value="investor">投資家探し中</option>
+              </select>
+            </div>
+
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-700 mb-2"
+                >興味のある業界分野（複数選択可）
+                <span class="text-red-600">*</span></label
+              >
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div class="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="industry_fintech"
+                    name="industries[]"
+                    value="fintech"
+                    class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label
+                    for="industry_fintech"
+                    class="ml-2 block text-sm text-gray-700"
+                    >Fintech</label
+                  >
+                </div>
+                <div class="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="industry_healthtech"
+                    name="industries[]"
+                    value="healthtech"
+                    class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label
+                    for="industry_healthtech"
+                    class="ml-2 block text-sm text-gray-700"
+                    >Healthtech</label
+                  >
+                </div>
+                <div class="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="industry_edtech"
+                    name="industries[]"
+                    value="edtech"
+                    class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label
+                    for="industry_edtech"
+                    class="ml-2 block text-sm text-gray-700"
+                    >Edtech</label
+                  >
+                </div>
+                <div class="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="industry_ecommerce"
+                    name="industries[]"
+                    value="ecommerce"
+                    class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label
+                    for="industry_ecommerce"
+                    class="ml-2 block text-sm text-gray-700"
+                    >Eコマース</label
+                  >
+                </div>
+                <div class="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="industry_ai"
+                    name="industries[]"
+                    value="ai"
+                    class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label
+                    for="industry_ai"
+                    class="ml-2 block text-sm text-gray-700"
+                    >AI・機械学習</label
+                  >
+                </div>
+                <div class="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="industry_saas"
+                    name="industries[]"
+                    value="saas"
+                    class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label
+                    for="industry_saas"
+                    class="ml-2 block text-sm text-gray-700"
+                    >SaaS</label
+                  >
+                </div>
+                <div class="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="industry_iot"
+                    name="industries[]"
+                    value="iot"
+                    class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label
+                    for="industry_iot"
+                    class="ml-2 block text-sm text-gray-700"
+                    >IoT・ハードウェア</label
+                  >
+                </div>
+                <div class="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="industry_cleantech"
+                    name="industries[]"
+                    value="cleantech"
+                    class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label
+                    for="industry_cleantech"
+                    class="ml-2 block text-sm text-gray-700"
+                    >環境・クリーンテック</label
+                  >
+                </div>
+                <div class="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="industry_other"
+                    name="industries[]"
+                    value="other"
+                    class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label
+                    for="industry_other"
+                    class="ml-2 block text-sm text-gray-700"
+                    >その他</label
+                  >
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label
+                for="business_idea"
+                class="block text-sm font-medium text-gray-700 mb-1"
+                >ビジネスアイデアの概要（任意）</label
+              >
+              <textarea
+                id="business_idea"
+                name="business_idea"
+                rows="4"
+                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="現在検討中のビジネスアイデアがあれば、簡潔に記入してください。"
+              ></textarea>
+              <p class="mt-1 text-xs text-gray-500">※500文字以内</p>
+            </div>
+
+            <div>
+              <label
+                for="looking_for"
+                class="block text-sm font-medium text-gray-700 mb-1"
+                >探しているパートナー・スキル
+                <span class="text-red-600">*</span></label
+              >
+              <textarea
+                id="looking_for"
+                name="looking_for"
+                rows="3"
+                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="どのようなスキルや経験を持つパートナーを探しているか記入してください"
+                required
+              ></textarea>
+              <p class="mt-1 text-xs text-gray-500">※200文字以内</p>
+            </div>
+          </div>
+
+          <!-- ボタンセクション -->
+          <div class="p-6">
+            <div class="flex justify-end space-x-3">
+              <button
+                type="button"
+                onclick="window.location.href='dashboard.html'"
+                class="px-6 py-2 border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-50 transition duration-200"
+              >
+                キャンセル
+              </button>
+              <button
+                type="submit"
+                id="save-button"
+                class="px-6 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 transition duration-200"
+              >
+                保存する
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </main>
+
+    <!-- フッター -->
+    <footer class="bg-gray-100 py-6 mt-12">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center text-gray-500 text-sm">
+          <p>&copy; 2024 スタートアップコネクト. All rights reserved.</p>
+          <div class="mt-2 space-x-4">
+            <a href="#" class="text-gray-500 hover:text-gray-700">利用規約</a>
+            <a href="#" class="text-gray-500 hover:text-gray-700"
+              >プライバシーポリシー</a
+            >
+            <a href="#" class="text-gray-500 hover:text-gray-700"
+              >お問い合わせ</a
+            >
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // Supabase設定
+      const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.__ENV__;
+      const supabase = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+      );
+
+      // グローバル変数
+      let currentUser = null;
+      let userProfile = null;
+      let startupInfo = null;
+      let profileImageFile = null;
+
+      // 地域名マッピング
+      const locationNames = {
+        hokkaido: "北海道",
+        aomori: "青森県",
+        iwate: "岩手県",
+        miyagi: "宮城県",
+        akita: "秋田県",
+        yamagata: "山形県",
+        fukushima: "福島県",
+        ibaraki: "茨城県",
+        tochigi: "栃木県",
+        gunma: "群馬県",
+        saitama: "埼玉県",
+        chiba: "千葉県",
+        tokyo: "東京都",
+        kanagawa: "神奈川県",
+        niigata: "新潟県",
+        toyama: "富山県",
+        ishikawa: "石川県",
+        fukui: "福井県",
+        yamanashi: "山梨県",
+        nagano: "長野県",
+        gifu: "岐阜県",
+        shizuoka: "静岡県",
+        aichi: "愛知県",
+        mie: "三重県",
+        shiga: "滋賀県",
+        kyoto: "京都府",
+        osaka: "大阪府",
+        hyogo: "兵庫県",
+        nara: "奈良県",
+        wakayama: "和歌山県",
+        tottori: "鳥取県",
+        shimane: "島根県",
+        okayama: "岡山県",
+        hiroshima: "広島県",
+        yamaguchi: "山口県",
+        tokushima: "徳島県",
+        kagawa: "香川県",
+        ehime: "愛媛県",
+        kochi: "高知県",
+        fukuoka: "福岡県",
+        saga: "佐賀県",
+        nagasaki: "長崎県",
+        kumamoto: "熊本県",
+        oita: "大分県",
+        miyazaki: "宮崎県",
+        kagoshima: "鹿児島県",
+        okinawa: "沖縄県",
+      };
+
+      // ページ読み込み時の初期化
+      window.addEventListener("load", async () => {
+        await checkAuth();
+        await loadUserData();
+      });
+
+      // 認証チェック
+      async function checkAuth() {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) {
+          window.location.href = "login.html";
+          return;
+        }
+        currentUser = user;
+      }
+
+      // ユーザーデータ読み込み
+      async function loadUserData() {
+        // プロフィール情報を取得
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", currentUser.id)
+          .single();
+
+        if (profile) {
+          userProfile = profile;
+          updateUserInfo(profile);
+          populateProfileForm(profile);
+        }
+
+        // 起業情報を取得
+        const { data: startup } = await supabase
+          .from("startup_info")
+          .select("*")
+          .eq("user_id", currentUser.id)
+          .single();
+
+        if (startup) {
+          startupInfo = startup;
+          populateStartupForm(startup);
+        }
+      }
+
+      // ユーザー情報更新
+      function updateUserInfo(profile) {
+        document.getElementById(
+          "user-name"
+        ).textContent = `${profile.last_name} ${profile.first_name}`;
+        document.getElementById("user-location").textContent =
+          locationNames[profile.location] || profile.location;
+        if (profile.profile_image_url) {
+          document.getElementById("user-avatar").src =
+            profile.profile_image_url;
+        }
+      }
+
+      // プロフィールフォームに値を設定
+      function populateProfileForm(profile) {
+        document.getElementById("last_name").value = profile.last_name || "";
+        document.getElementById("first_name").value = profile.first_name || "";
+        document.getElementById("location").value = profile.location || "";
+        document.getElementById("age_range").value = profile.age_range || "";
+        document.getElementById("bio").value = profile.bio || "";
+        document.getElementById("linkedin_url").value =
+          profile.linkedin_url || "";
+
+        // プロフィール画像
+        if (profile.profile_image_url) {
+          document.getElementById("current-profile-image").src =
+            profile.profile_image_url;
+          document
+            .getElementById("current-profile-image")
+            .classList.remove("hidden");
+          document
+            .getElementById("profile-image-placeholder")
+            .classList.add("hidden");
+        }
+
+        // スキル
+        if (profile.skills && profile.skills.length > 0) {
+          profile.skills.forEach((skill) => {
+            const checkbox = document.getElementById(`skill_${skill}`);
+            if (checkbox) checkbox.checked = true;
+          });
+        }
+      }
+
+      // 起業情報フォームに値を設定
+      function populateStartupForm(startup) {
+        document.getElementById("startup_status").value =
+          startup.startup_status || "";
+        document.getElementById("business_idea").value =
+          startup.business_idea || "";
+        document.getElementById("looking_for").value =
+          startup.looking_for || "";
+
+        // 業界
+        if (startup.industries && startup.industries.length > 0) {
+          startup.industries.forEach((industry) => {
+            const checkbox = document.getElementById(`industry_${industry}`);
+            if (checkbox) checkbox.checked = true;
+          });
+        }
+      }
+
+      // プロフィール画像のプレビュー
+      document
+        .getElementById("profile-image-input")
+        .addEventListener("change", function (e) {
+          const file = e.target.files[0];
+          if (file) {
+            if (file.size > 2 * 1024 * 1024) {
+              // 2MB制限
+              showError("画像ファイルは2MB以下にしてください。");
+              e.target.value = "";
+              return;
+            }
+
+            profileImageFile = file;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+              document.getElementById("current-profile-image").src =
+                e.target.result;
+              document
+                .getElementById("current-profile-image")
+                .classList.remove("hidden");
+              document
+                .getElementById("profile-image-placeholder")
+                .classList.add("hidden");
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+
+      // フォーム送信処理
+      document
+        .getElementById("profile-form")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const saveButton = document.getElementById("save-button");
+          saveButton.disabled = true;
+          saveButton.textContent = "保存中...";
+
+          try {
+            // プロフィール画像のアップロード
+            let profileImageUrl = userProfile?.profile_image_url;
+            if (profileImageFile) {
+              const fileExt = profileImageFile.name.split(".").pop();
+              const fileName = `${currentUser.id}_${Date.now()}.${fileExt}`;
+              const filePath = `${currentUser.id}/${fileName}`;
+
+              const { error: uploadError } = await supabase.storage
+                .from("profile-images")
+                .upload(filePath, profileImageFile);
+
+              if (uploadError) {
+                throw new Error("プロフィール画像のアップロードに失敗しました");
+              }
+
+              const { data } = supabase.storage
+                .from("profile-images")
+                .getPublicUrl(filePath);
+              profileImageUrl = data.publicUrl;
+            }
+
+            // スキルの収集
+            const skills = Array.from(
+              document.querySelectorAll('input[name="skills[]"]:checked')
+            ).map((cb) => cb.value);
+
+            if (skills.length === 0) {
+              throw new Error("少なくとも1つのスキルを選択してください");
+            }
+
+            // プロフィール情報の更新
+            const profileData = {
+              first_name: document.getElementById("first_name").value,
+              last_name: document.getElementById("last_name").value,
+              location: document.getElementById("location").value,
+              age_range: document.getElementById("age_range").value,
+              bio: document.getElementById("bio").value,
+              linkedin_url:
+                document.getElementById("linkedin_url").value || null,
+              profile_image_url: profileImageUrl,
+              skills: skills,
+            };
+
+            const { error: profileError } = await supabase
+              .from("profiles")
+              .update(profileData)
+              .eq("id", currentUser.id);
+
+            if (profileError) {
+              throw new Error("プロフィール情報の保存に失敗しました");
+            }
+
+            // 業界の収集
+            const industries = Array.from(
+              document.querySelectorAll('input[name="industries[]"]:checked')
+            ).map((cb) => cb.value);
+
+            if (industries.length === 0) {
+              throw new Error("少なくとも1つの業界を選択してください");
+            }
+
+            // 起業情報の更新または作成
+            const startupData = {
+              user_id: currentUser.id,
+              startup_status: document.getElementById("startup_status").value,
+              industries: industries,
+              business_idea:
+                document.getElementById("business_idea").value || null,
+              looking_for: document.getElementById("looking_for").value,
+            };
+
+            if (startupInfo) {
+              // 更新
+              const { error: startupError } = await supabase
+                .from("startup_info")
+                .update(startupData)
+                .eq("user_id", currentUser.id);
+
+              if (startupError) {
+                throw new Error("起業情報の保存に失敗しました");
+              }
+            } else {
+              // 新規作成
+              const { error: startupError } = await supabase
+                .from("startup_info")
+                .insert(startupData);
+
+              if (startupError) {
+                throw new Error("起業情報の保存に失敗しました");
+              }
+            }
+
+            showSuccess();
+            profileImageFile = null;
+
+            // ユーザー情報を更新
+            updateUserInfo(profileData);
+          } catch (error) {
+            console.error("Error saving profile:", error);
+            showError(error.message || "保存に失敗しました");
+          } finally {
+            saveButton.disabled = false;
+            saveButton.textContent = "保存する";
+          }
+        });
+
+      // 成功メッセージ表示
+      function showSuccess() {
+        const successDiv = document.getElementById("success-message");
+        successDiv.classList.remove("hidden");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        setTimeout(() => {
+          successDiv.classList.add("hidden");
+        }, 3000);
+      }
+
+      // エラーメッセージ表示
+      function showError(message) {
+        const errorDiv = document.getElementById("error-message");
+        const errorText = document.getElementById("error-text");
+        errorText.textContent = message;
+        errorDiv.classList.remove("hidden");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        setTimeout(() => {
+          errorDiv.classList.add("hidden");
+        }, 5000);
+      }
+
+      // イベントリスナー設定
+      document
+        .querySelector(".mobile-menu-button")
+        .addEventListener("click", function () {
+          document.querySelector(".mobile-menu").classList.toggle("hidden");
+        });
+
+      document
+        .getElementById("user-menu-button")
+        .addEventListener("click", function () {
+          document.getElementById("user-menu").classList.toggle("hidden");
+        });
+
+      window.addEventListener("click", function (e) {
+        if (!document.getElementById("user-menu-button").contains(e.target)) {
+          document.getElementById("user-menu").classList.add("hidden");
+        }
+      });
+
+      // ログアウト
+      document
+        .getElementById("logout-link")
+        .addEventListener("click", async (e) => {
+          e.preventDefault();
+          await supabase.auth.signOut();
+          window.location.href = "login.html?message=logout";
+        });
+
+      document
+        .querySelector(".logout-link-mobile")
+        .addEventListener("click", async (e) => {
+          e.preventDefault();
+          await supabase.auth.signOut();
+          window.location.href = "login.html?message=logout";
+        });
+    </script>
+  </body>
+</html>

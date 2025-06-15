@@ -1,0 +1,2056 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="referrer" content="no-referrer" />
+    <title>グループチャット - スタートアップコネクト</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Noto Sans JP", sans-serif;
+      }
+      .scrollbar-thin::-webkit-scrollbar {
+        width: 5px;
+      }
+      .scrollbar-thin::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+      .scrollbar-thin::-webkit-scrollbar-thumb {
+        background: #d1d5db;
+        border-radius: 5px;
+      }
+      .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+        background: #9ca3af;
+      }
+      .chat-height {
+        height: calc(100vh - 200px);
+      }
+      .messages-height {
+        height: calc(100vh - 300px);
+      }
+      .skeleton {
+        animation: shimmer 1.5s infinite;
+        background: linear-gradient(
+          90deg,
+          #f0f0f0 25%,
+          #e0e0e0 50%,
+          #f0f0f0 75%
+        );
+        background-size: 200% 100%;
+      }
+      @keyframes shimmer {
+        0% {
+          background-position: 200% 0;
+        }
+        100% {
+          background-position: -200% 0;
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 min-h-screen">
+    <!-- ナビゲーションバー -->
+    <header class="bg-white shadow-md sticky top-0 z-20">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+          <div class="flex items-center">
+            <div class="flex-shrink-0 flex items-center">
+              <a href="index.html">
+                <svg
+                  class="h-8 w-8 text-blue-600"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+              </a>
+              <a href="index.html" class="ml-2 text-xl font-bold text-gray-800"
+                >スタートアップコネクト</a
+              >
+            </div>
+            <nav class="hidden md:ml-6 md:flex space-x-4">
+              <a
+                href="dashboard.html"
+                class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >ホーム</a
+              >
+              <a
+                href="search.html"
+                class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >検索</a
+              >
+              <a
+                href="messages.html"
+                class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >メッセージ</a
+              >
+              <a
+                href="groups.html"
+                class="bg-blue-50 text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >グループ</a
+              >
+              <a
+                href="events.html"
+                class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >イベント</a
+              >
+            </nav>
+          </div>
+          <div class="hidden md:flex items-center">
+            <button
+              type="button"
+              id="notification-button"
+              class="relative p-1 rounded-full text-gray-500 hover:text-blue-600 focus:outline-none"
+            >
+              <span class="sr-only">通知を見る</span>
+              <svg
+                class="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                ></path>
+              </svg>
+              <span
+                id="notification-dot"
+                class="hidden absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500"
+              ></span>
+            </button>
+
+            <div class="ml-3 relative">
+              <div class="flex items-center">
+                <button
+                  type="button"
+                  class="bg-gray-800 flex text-sm rounded-full focus:outline-none"
+                  id="user-menu-button"
+                  aria-expanded="false"
+                  aria-haspopup="true"
+                >
+                  <span class="sr-only">メニューを開く</span>
+                  <img
+                    id="user-avatar"
+                    class="h-8 w-8 rounded-full object-cover"
+                    src="/api/placeholder/32/32"
+                    alt="プロフィール"
+                  />
+                </button>
+                <div class="ml-2 hidden md:block">
+                  <div id="user-name" class="text-sm font-medium text-gray-800">
+                    -
+                  </div>
+                  <div id="user-location" class="text-xs text-gray-500">-</div>
+                </div>
+              </div>
+
+              <div
+                id="user-menu"
+                class="hidden origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-30"
+                role="menu"
+              >
+                <a
+                  href="profile.html"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  role="menuitem"
+                  >プロフィール</a
+                >
+                <a
+                  href="settings.html"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  role="menuitem"
+                  >設定</a
+                >
+                <a
+                  href="#"
+                  id="logout-link"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  role="menuitem"
+                  >ログアウト</a
+                >
+              </div>
+            </div>
+          </div>
+
+          <div class="flex md:hidden items-center">
+            <button
+              type="button"
+              class="mobile-menu-button text-gray-500 hover:text-blue-600 focus:outline-none"
+            >
+              <svg
+                class="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 6h16M4 12h16M4 18h16"
+                ></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- モバイルメニュー -->
+      <div class="mobile-menu hidden md:hidden bg-white border-t">
+        <a
+          href="dashboard.html"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >ホーム</a
+        >
+        <a
+          href="search.html"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >検索</a
+        >
+        <a
+          href="messages.html"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >メッセージ</a
+        >
+        <a href="groups.html" class="block px-4 py-2 bg-blue-50 text-blue-600"
+          >グループ</a
+        >
+        <a
+          href="events.html"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >イベント</a
+        >
+        <div class="border-t border-gray-200 my-1"></div>
+        <a
+          href="profile.html"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >プロフィール</a
+        >
+        <a
+          href="settings.html"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >設定</a
+        >
+        <a
+          href="#"
+          class="logout-link-mobile block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >ログアウト</a
+        >
+      </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">グループチャット</h1>
+        <button
+          id="create-group-btn"
+          class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition duration-200 flex items-center"
+        >
+          <svg
+            class="h-5 w-5 mr-1"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 4v16m8-8H4"
+            ></path>
+          </svg>
+          新規グループを作成
+        </button>
+      </div>
+
+      <!-- グループチャットセクション -->
+      <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div class="flex flex-col md:flex-row h-full">
+          <!-- モバイル用のトグルボタン -->
+          <div
+            class="md:hidden flex justify-between items-center p-4 border-b border-gray-200"
+          >
+            <button
+              id="toggle-group-list"
+              class="text-gray-600 hover:text-blue-600"
+            >
+              <svg
+                class="h-6 w-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 6h16M4 12h16M4 18h16"
+                ></path>
+              </svg>
+            </button>
+            <h2 class="text-lg font-medium text-gray-900">グループチャット</h2>
+            <button
+              id="toggle-group-info"
+              class="text-gray-600 hover:text-blue-600"
+            >
+              <svg
+                class="h-6 w-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                ></path>
+              </svg>
+            </button>
+          </div>
+
+          <!-- グループリスト -->
+          <div
+            id="group-list"
+            class="w-full md:w-80 lg:w-96 border-r border-gray-200 flex flex-col"
+          >
+            <div class="p-4 border-b border-gray-200">
+              <div class="relative">
+                <input
+                  type="text"
+                  id="search-groups"
+                  class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="グループを検索"
+                />
+                <div
+                  class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+                >
+                  <svg
+                    class="h-5 w-5 text-gray-400"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <div
+              id="groups-list-container"
+              class="overflow-y-auto scrollbar-thin chat-height"
+            >
+              <!-- ローディング状態 -->
+              <div id="groups-loading" class="p-4">
+                <div class="space-y-3">
+                  <div class="flex items-center space-x-3">
+                    <div class="skeleton w-12 h-12 rounded-full"></div>
+                    <div class="flex-1">
+                      <div class="skeleton h-4 w-3/4 mb-2"></div>
+                      <div class="skeleton h-3 w-1/2"></div>
+                    </div>
+                  </div>
+                  <div class="flex items-center space-x-3">
+                    <div class="skeleton w-12 h-12 rounded-full"></div>
+                    <div class="flex-1">
+                      <div class="skeleton h-4 w-3/4 mb-2"></div>
+                      <div class="skeleton h-3 w-1/2"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- 実際のグループリスト -->
+              <div id="groups-content" class="hidden">
+                <!-- グループ一覧がここに動的に生成される -->
+              </div>
+              <!-- グループなし -->
+              <div id="no-groups" class="hidden p-4 text-center text-gray-500">
+                <svg
+                  class="mx-auto h-12 w-12 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                  />
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">
+                  グループがありません
+                </h3>
+                <p class="mt-1 text-sm text-gray-500">
+                  新しいグループを作成して会話を始めましょう。
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- チャット本文 -->
+          <div id="chat-content" class="flex-1 flex flex-col">
+            <!-- グループ未選択状態 -->
+            <div
+              id="no-group-selected"
+              class="flex-1 flex items-center justify-center text-gray-500"
+            >
+              <div class="text-center">
+                <svg
+                  class="mx-auto h-16 w-16 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                  />
+                </svg>
+                <h3 class="mt-4 text-lg font-medium text-gray-900">
+                  グループを選択してください
+                </h3>
+                <p class="mt-2 text-sm text-gray-500">
+                  左側のリストからグループを選択するか、新しいグループを作成してください。
+                </p>
+              </div>
+            </div>
+
+            <!-- アクティブなグループチャット -->
+            <div id="active-group-chat" class="hidden flex-1 flex flex-col">
+              <div
+                class="flex items-center justify-between p-4 border-b border-gray-200"
+              >
+                <div class="flex items-center">
+                  <div
+                    id="group-icon"
+                    class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center"
+                  >
+                    <svg
+                      class="h-6 w-6 text-blue-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                      />
+                    </svg>
+                  </div>
+                  <div class="ml-3">
+                    <h3 id="group-name" class="font-medium text-gray-900"></h3>
+                    <div id="group-member-count" class="text-xs text-gray-500">
+                      -
+                    </div>
+                  </div>
+                </div>
+                <div class="flex">
+                  <button
+                    type="button"
+                    class="p-2 text-gray-500 hover:text-blue-600 rounded-full"
+                    title="通知設定"
+                  >
+                    <svg
+                      class="h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    class="p-2 text-gray-500 hover:text-blue-600 rounded-full"
+                  >
+                    <svg
+                      class="h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    id="show-group-info"
+                    type="button"
+                    class="p-2 text-gray-500 hover:text-blue-600 rounded-full md:hidden lg:block"
+                  >
+                    <svg
+                      class="h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- メッセージ表示エリア -->
+              <div
+                id="messages-container"
+                class="flex-1 overflow-y-auto p-4 scrollbar-thin messages-height"
+              >
+                <!-- メッセージがここに動的に生成される -->
+              </div>
+
+              <!-- メッセージ入力エリア -->
+              <div class="border-t border-gray-200 p-4">
+                <div class="flex items-center">
+                  <button
+                    type="button"
+                    id="attach-file-btn"
+                    class="p-2 text-gray-500 hover:text-blue-600 rounded-full"
+                  >
+                    <svg
+                      class="h-6 w-6"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+                      ></path>
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    id="attach-image-btn"
+                    class="p-2 text-gray-500 hover:text-blue-600 rounded-full"
+                  >
+                    <svg
+                      class="h-6 w-6"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      ></path>
+                    </svg>
+                  </button>
+                  <div class="flex-1 mx-2">
+                    <input
+                      type="text"
+                      id="message-input"
+                      class="w-full px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="メッセージを入力..."
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    id="send-message-btn"
+                    class="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition duration-200"
+                  >
+                    <svg
+                      class="h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M5 12h14M12 5l7 7-7 7"
+                      />
+                    </svg>
+                  </button>
+                  <input
+                    type="file"
+                    id="file-input"
+                    class="hidden"
+                    accept="*/*"
+                  />
+                  <input
+                    type="file"
+                    id="image-input"
+                    class="hidden"
+                    accept="image/*"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- グループ情報サイドバー -->
+          <div
+            id="group-info"
+            class="hidden lg:block w-80 border-l border-gray-200"
+          >
+            <div class="p-4 border-b border-gray-200">
+              <h3 class="font-medium text-gray-900">グループ情報</h3>
+            </div>
+            <div id="group-info-content" class="p-4">
+              <!-- グループ情報がここに動的に生成される -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- 新規グループ作成モーダル -->
+    <div id="create-group-modal" class="fixed inset-0 z-30 hidden">
+      <div class="absolute inset-0 bg-gray-900 bg-opacity-50"></div>
+      <div
+        class="relative max-w-lg mx-auto mt-20 bg-white rounded-lg shadow-xl"
+      >
+        <div class="p-6">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-semibold text-gray-900">
+              新規グループを作成
+            </h3>
+            <button id="close-modal" class="text-gray-400 hover:text-gray-500">
+              <svg
+                class="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <form id="create-group-form">
+            <div class="mb-6">
+              <label
+                for="group-name"
+                class="block text-sm font-medium text-gray-700 mb-1"
+                >グループ名 <span class="text-red-600">*</span></label
+              >
+              <input
+                type="text"
+                id="group-name-input"
+                name="group-name"
+                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="グループ名を入力してください"
+                required
+              />
+            </div>
+
+            <div class="mb-6">
+              <label
+                for="group-description"
+                class="block text-sm font-medium text-gray-700 mb-1"
+                >グループの説明 <span class="text-red-600">*</span></label
+              >
+              <textarea
+                id="group-description"
+                name="group-description"
+                rows="3"
+                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="グループの目的や活動内容を入力してください"
+                required
+              ></textarea>
+            </div>
+
+            <div class="mb-6">
+              <label class="block text-sm font-medium text-gray-700 mb-1"
+                >カテゴリ <span class="text-red-600">*</span></label
+              >
+              <div class="grid grid-cols-2 gap-3">
+                <div class="flex items-center">
+                  <input
+                    type="radio"
+                    id="category-tech"
+                    name="category"
+                    value="tech"
+                    class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    checked
+                  />
+                  <label
+                    for="category-tech"
+                    class="ml-2 block text-sm text-gray-700"
+                    >テクノロジー</label
+                  >
+                </div>
+                <div class="flex items-center">
+                  <input
+                    type="radio"
+                    id="category-finance"
+                    name="category"
+                    value="finance"
+                    class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  />
+                  <label
+                    for="category-finance"
+                    class="ml-2 block text-sm text-gray-700"
+                    >金融・投資</label
+                  >
+                </div>
+                <div class="flex items-center">
+                  <input
+                    type="radio"
+                    id="category-health"
+                    name="category"
+                    value="health"
+                    class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  />
+                  <label
+                    for="category-health"
+                    class="ml-2 block text-sm text-gray-700"
+                    >健康・医療</label
+                  >
+                </div>
+                <div class="flex items-center">
+                  <input
+                    type="radio"
+                    id="category-education"
+                    name="category"
+                    value="education"
+                    class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  />
+                  <label
+                    for="category-education"
+                    class="ml-2 block text-sm text-gray-700"
+                    >教育</label
+                  >
+                </div>
+                <div class="flex items-center">
+                  <input
+                    type="radio"
+                    id="category-environment"
+                    name="category"
+                    value="environment"
+                    class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  />
+                  <label
+                    for="category-environment"
+                    class="ml-2 block text-sm text-gray-700"
+                    >環境・エネルギー</label
+                  >
+                </div>
+                <div class="flex items-center">
+                  <input
+                    type="radio"
+                    id="category-other"
+                    name="category"
+                    value="other"
+                    class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  />
+                  <label
+                    for="category-other"
+                    class="ml-2 block text-sm text-gray-700"
+                    >その他</label
+                  >
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-6">
+              <label
+                for="group-members"
+                class="block text-sm font-medium text-gray-700 mb-1"
+                >メンバーを招待</label
+              >
+              <div class="relative">
+                <input
+                  type="text"
+                  id="group-members"
+                  name="group-members"
+                  class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="ユーザー名または名前で検索"
+                />
+                <div
+                  class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+                >
+                  <svg
+                    class="h-5 w-5 text-gray-400"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                </div>
+              </div>
+              <div
+                id="member-suggestions"
+                class="mt-2 hidden border border-gray-300 rounded-md max-h-48 overflow-y-auto"
+              >
+                <!-- メンバー候補がここに表示される -->
+              </div>
+              <div id="selected-members" class="mt-2 flex flex-wrap gap-2">
+                <!-- 選択されたメンバーがここに表示される -->
+              </div>
+              <p class="mt-1 text-xs text-gray-500">
+                ※グループ作成後でもメンバーを追加できます
+              </p>
+            </div>
+
+            <div class="mb-6">
+              <div class="flex items-center">
+                <input
+                  type="checkbox"
+                  id="group-private"
+                  name="group-private"
+                  class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label
+                  for="group-private"
+                  class="ml-2 block text-sm text-gray-700"
+                  >非公開グループにする（招待されたメンバーのみ参加可能）</label
+                >
+              </div>
+            </div>
+
+            <div class="flex justify-end space-x-3">
+              <button
+                type="button"
+                id="cancel-create-group"
+                class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-50 transition duration-200"
+              >
+                キャンセル
+              </button>
+              <button
+                type="submit"
+                id="submit-create-group"
+                class="px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 transition duration-200"
+              >
+                作成する
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- フッター -->
+    <footer class="bg-gray-100 py-6 mt-12">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center text-gray-500 text-sm">
+          <p>&copy; 2024 スタートアップコネクト. All rights reserved.</p>
+          <div class="mt-2 space-x-4">
+            <a href="#" class="text-gray-500 hover:text-gray-700">利用規約</a>
+            <a href="#" class="text-gray-500 hover:text-gray-700"
+              >プライバシーポリシー</a
+            >
+            <a href="#" class="text-gray-500 hover:text-gray-700"
+              >お問い合わせ</a
+            >
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // Supabase設定
+      const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.__ENV__;
+      const supabase = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+      );
+
+      // グローバル変数
+      let currentUser = null;
+      let userProfile = null;
+      let currentGroup = null;
+      let groups = [];
+      let currentMessages = [];
+      let selectedMembers = [];
+      let groupMembers = new Map();
+
+      // 地域名マッピング
+      const locationNames = {
+        hokkaido: "北海道",
+        aomori: "青森県",
+        iwate: "岩手県",
+        miyagi: "宮城県",
+        akita: "秋田県",
+        yamagata: "山形県",
+        fukushima: "福島県",
+        ibaraki: "茨城県",
+        tochigi: "栃木県",
+        gunma: "群馬県",
+        saitama: "埼玉県",
+        chiba: "千葉県",
+        tokyo: "東京都",
+        kanagawa: "神奈川県",
+        niigata: "新潟県",
+        toyama: "富山県",
+        ishikawa: "石川県",
+        fukui: "福井県",
+        yamanashi: "山梨県",
+        nagano: "長野県",
+        gifu: "岐阜県",
+        shizuoka: "静岡県",
+        aichi: "愛知県",
+        mie: "三重県",
+        shiga: "滋賀県",
+        kyoto: "京都府",
+        osaka: "大阪府",
+        hyogo: "兵庫県",
+        nara: "奈良県",
+        wakayama: "和歌山県",
+        tottori: "鳥取県",
+        shimane: "島根県",
+        okayama: "岡山県",
+        hiroshima: "広島県",
+        yamaguchi: "山口県",
+        tokushima: "徳島県",
+        kagawa: "香川県",
+        ehime: "愛媛県",
+        kochi: "高知県",
+        fukuoka: "福岡県",
+        saga: "佐賀県",
+        nagasaki: "長崎県",
+        kumamoto: "熊本県",
+        oita: "大分県",
+        miyazaki: "宮崎県",
+        kagoshima: "鹿児島県",
+        okinawa: "沖縄県",
+      };
+
+      const categoryColors = {
+        tech: "blue",
+        finance: "green",
+        health: "red",
+        education: "purple",
+        environment: "yellow",
+        other: "gray",
+      };
+
+      const categoryNames = {
+        tech: "テクノロジー",
+        finance: "金融・投資",
+        health: "健康・医療",
+        education: "教育",
+        environment: "環境・エネルギー",
+        other: "その他",
+      };
+
+      // ページ読み込み時の初期化
+      window.addEventListener("load", async () => {
+        await checkAuth();
+        await loadGroups();
+        setupRealtimeSubscriptions();
+
+        // URLパラメータから特定のグループを開く
+        const urlParams = new URLSearchParams(window.location.search);
+        const groupId = urlParams.get("id");
+        if (groupId) {
+          await selectGroup(groupId);
+        }
+      });
+
+      // 認証チェック
+      async function checkAuth() {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) {
+          window.location.href = "login.html";
+          return;
+        }
+        currentUser = user;
+        await loadUserProfile();
+      }
+
+      // ユーザープロフィール読み込み
+      async function loadUserProfile() {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", currentUser.id)
+          .single();
+
+        if (profile) {
+          userProfile = profile;
+          updateUserInfo(profile);
+        }
+      }
+
+      // ユーザー情報更新
+      function updateUserInfo(profile) {
+        document.getElementById(
+          "user-name"
+        ).textContent = `${profile.last_name} ${profile.first_name}`;
+        document.getElementById("user-location").textContent =
+          locationNames[profile.location] || profile.location;
+        if (profile.profile_image_url) {
+          document.getElementById("user-avatar").src =
+            profile.profile_image_url;
+        }
+      }
+
+      // グループ一覧読み込み
+      async function loadGroups() {
+        showLoadingGroups();
+
+        // 参加しているグループを取得
+        const { data: memberGroups } = await supabase
+          .from("group_members")
+          .select(
+            `
+                    group_id,
+                    groups!inner(
+                        *,
+                        group_messages(
+                            *,
+                            user:profiles!group_messages_user_id_fkey(*)
+                        )
+                    )
+                `
+          )
+          .eq("user_id", currentUser.id);
+
+        if (!memberGroups || memberGroups.length === 0) {
+          showNoGroups();
+          return;
+        }
+
+        // 最新メッセージでソート
+        groups = memberGroups
+          .map((item) => item.groups)
+          .sort((a, b) => {
+            const aLatest = a.group_messages?.[0]?.created_at || a.created_at;
+            const bLatest = b.group_messages?.[0]?.created_at || b.created_at;
+            return new Date(bLatest) - new Date(aLatest);
+          });
+
+        displayGroups();
+      }
+
+      // グループ表示
+      function displayGroups() {
+        const container = document.getElementById("groups-content");
+        const loadingElement = document.getElementById("groups-loading");
+        const noGroupsElement = document.getElementById("no-groups");
+
+        loadingElement.classList.add("hidden");
+        noGroupsElement.classList.add("hidden");
+        container.classList.remove("hidden");
+
+        if (groups.length === 0) {
+          showNoGroups();
+          return;
+        }
+
+        container.innerHTML = groups
+          .map((group) => {
+            const isActive = currentGroup?.id === group.id;
+            const latestMessage = group.group_messages?.[0];
+            const color = categoryColors[group.category] || "gray";
+
+            return `
+                    <div class="px-4 py-3 ${
+                      isActive
+                        ? "bg-blue-50 border-l-4 border-blue-600"
+                        : "bg-white"
+                    } flex items-start hover:bg-gray-50 transition duration-150 cursor-pointer" onclick="selectGroup('${
+              group.id
+            }')">
+                        <div class="relative flex-shrink-0">
+                            <div class="w-12 h-12 rounded-full bg-${color}-100 flex items-center justify-center">
+                                <svg class="h-6 w-6 text-${color}-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="ml-3 flex-1">
+                            <div class="flex justify-between items-baseline">
+                                <h3 class="text-sm font-medium text-gray-900">${
+                                  group.name
+                                }</h3>
+                                <span class="text-xs text-gray-500">${
+                                  latestMessage
+                                    ? formatMessageTime(
+                                        latestMessage.created_at
+                                      )
+                                    : ""
+                                }</span>
+                            </div>
+                            ${
+                              latestMessage
+                                ? `
+                                <p class="text-sm text-gray-600 line-clamp-1">
+                                    <span class="font-medium">${latestMessage.user.last_name}:</span> ${latestMessage.content}
+                                </p>
+                            `
+                                : '<p class="text-sm text-gray-500">まだメッセージがありません</p>'
+                            }
+                        </div>
+                    </div>
+                `;
+          })
+          .join("");
+      }
+
+      // グループ選択
+      async function selectGroup(groupId) {
+        const group = groups.find((g) => g.id === groupId);
+        if (!group) return;
+
+        currentGroup = group;
+
+        // UIを更新
+        document.getElementById("no-group-selected").classList.add("hidden");
+        document.getElementById("active-group-chat").classList.remove("hidden");
+
+        // グループ情報を表示
+        updateGroupHeader(group);
+        await loadGroupMembers(groupId);
+        await loadGroupMessages(groupId);
+        updateGroupInfo(group);
+
+        // グループリストを更新
+        displayGroups();
+      }
+
+      // グループヘッダー更新
+      function updateGroupHeader(group) {
+        const color = categoryColors[group.category] || "gray";
+        const iconElement = document.getElementById("group-icon");
+        iconElement.className = `w-10 h-10 rounded-full bg-${color}-100 flex items-center justify-center`;
+        iconElement.innerHTML = `
+                <svg class="h-6 w-6 text-${color}-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+            `;
+
+        document.getElementById("group-name").textContent = group.name;
+      }
+
+      // グループメンバー読み込み
+      async function loadGroupMembers(groupId) {
+        const { data: members } = await supabase
+          .from("group_members")
+          .select(
+            `
+                    user_id,
+                    profiles!inner(*)
+                `
+          )
+          .eq("group_id", groupId);
+
+        if (members) {
+          groupMembers.clear();
+          members.forEach((member) => {
+            groupMembers.set(member.user_id, member.profiles);
+          });
+
+          document.getElementById(
+            "group-member-count"
+          ).textContent = `${members.length}人のメンバー`;
+        }
+      }
+
+      // グループメッセージ読み込み
+      async function loadGroupMessages(groupId) {
+        const { data: messages } = await supabase
+          .from("group_messages")
+          .select(
+            `
+                    *,
+                    user:profiles!group_messages_user_id_fkey(*)
+                `
+          )
+          .eq("group_id", groupId)
+          .order("created_at", { ascending: true });
+
+        currentMessages = messages || [];
+        displayMessages();
+      }
+
+      // メッセージ表示
+      function displayMessages() {
+        const container = document.getElementById("messages-container");
+
+        if (currentMessages.length === 0) {
+          container.innerHTML = `
+                    <div class="flex justify-center items-center h-full text-gray-500">
+                        <div class="text-center">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                            </svg>
+                            <p class="mt-2 text-sm">まだメッセージがありません</p>
+                            <p class="text-xs text-gray-400">最初のメッセージを送信しましょう</p>
+                        </div>
+                    </div>
+                `;
+          return;
+        }
+
+        let html = "";
+        let currentDate = "";
+
+        currentMessages.forEach((message, index) => {
+          const messageDate = new Date(message.created_at).toLocaleDateString(
+            "ja-JP"
+          );
+          const isMyMessage = message.user_id === currentUser.id;
+          const isSystemMessage = message.type === "system";
+
+          // 日付表示
+          if (messageDate !== currentDate) {
+            html += `
+                        <div class="flex justify-center my-4">
+                            <span class="bg-gray-100 text-gray-500 text-xs px-2 py-1 rounded-full">${messageDate}</span>
+                        </div>
+                    `;
+            currentDate = messageDate;
+          }
+
+          // システムメッセージ
+          if (isSystemMessage) {
+            html += `
+                        <div class="flex justify-center my-4">
+                            <div class="bg-gray-100 text-gray-600 text-xs px-3 py-1 rounded-full">
+                                ${message.content}
+                            </div>
+                        </div>
+                    `;
+            return;
+          }
+
+          // 通常のメッセージ
+          if (isMyMessage) {
+            html += `
+                        <div class="flex items-start justify-end mb-4">
+                            <div class="max-w-[80%]">
+                                <div class="flex items-center justify-end">
+                                    <span class="text-xs text-gray-500">${formatTime(
+                                      message.created_at
+                                    )}</span>
+                                    <span class="text-sm font-medium text-gray-900 ml-2">${
+                                      message.user.last_name
+                                    } ${message.user.first_name}</span>
+                                </div>
+                                <div class="bg-blue-600 text-white rounded-lg p-3 mt-1">
+                                    ${
+                                      message.file_url
+                                        ? `
+                                        <div class="mb-2">
+                                            ${
+                                              message.file_url.match(
+                                                /\.(jpg|jpeg|png|gif)$/i
+                                              )
+                                                ? `<img src="${message.file_url}" alt="画像" class="max-w-full rounded">`
+                                                : `<a href="${message.file_url}" target="_blank" class="text-blue-200 underline">📎 ファイルを開く</a>`
+                                            }
+                                        </div>
+                                    `
+                                        : ""
+                                    }
+                                    <p>${message.content}</p>
+                                </div>
+                            </div>
+                            <img src="${
+                              message.user.profile_image_url ||
+                              "/api/placeholder/32/32"
+                            }" alt="${message.user.last_name} ${
+              message.user.first_name
+            }" class="h-8 w-8 rounded-full object-cover ml-2">
+                        </div>
+                    `;
+          } else {
+            const showAvatar =
+              index === 0 ||
+              currentMessages[index - 1].user_id !== message.user_id ||
+              currentMessages[index - 1].type === "system";
+
+            html += `
+                        <div class="flex items-start mb-4">
+                            ${
+                              showAvatar
+                                ? `
+                                <img src="${
+                                  message.user.profile_image_url ||
+                                  "/api/placeholder/32/32"
+                                }" alt="${message.user.last_name} ${
+                                    message.user.first_name
+                                  }" class="h-8 w-8 rounded-full object-cover mr-2">
+                            `
+                                : '<div class="w-10"></div>'
+                            }
+                            <div class="max-w-[80%]">
+                                ${
+                                  showAvatar
+                                    ? `
+                                    <div class="flex items-center">
+                                        <span class="text-sm font-medium text-gray-900 mr-2">${
+                                          message.user.last_name
+                                        } ${message.user.first_name}</span>
+                                        <span class="text-xs text-gray-500">${formatTime(
+                                          message.created_at
+                                        )}</span>
+                                    </div>
+                                `
+                                    : ""
+                                }
+                                <div class="bg-gray-100 rounded-lg p-3 mt-1">
+                                    ${
+                                      message.file_url
+                                        ? `
+                                        <div class="mb-2">
+                                            ${
+                                              message.file_url.match(
+                                                /\.(jpg|jpeg|png|gif)$/i
+                                              )
+                                                ? `<img src="${message.file_url}" alt="画像" class="max-w-full rounded">`
+                                                : `<a href="${message.file_url}" target="_blank" class="text-blue-600 underline">📎 ファイルを開く</a>`
+                                            }
+                                        </div>
+                                    `
+                                        : ""
+                                    }
+                                    <p class="text-gray-800">${
+                                      message.content
+                                    }</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+          }
+        });
+
+        container.innerHTML = html;
+        scrollToBottom();
+      }
+
+      // メッセージ送信
+      async function sendMessage(content, fileUrl = null) {
+        if (!currentGroup || (!content.trim() && !fileUrl)) return;
+
+        const messageData = {
+          group_id: currentGroup.id,
+          user_id: currentUser.id,
+          content: content.trim() || "",
+          file_url: fileUrl,
+          type: "message",
+        };
+
+        const { error } = await supabase
+          .from("group_messages")
+          .insert(messageData);
+
+        if (error) {
+          console.error("Error sending message:", error);
+          alert("メッセージの送信に失敗しました");
+          return;
+        }
+
+        // 入力フィールドをクリア
+        document.getElementById("message-input").value = "";
+
+        // メッセージを再読み込み
+        await loadGroupMessages(currentGroup.id);
+
+        // グループリストを更新
+        await loadGroups();
+      }
+
+      // グループ作成
+      async function createGroup(formData) {
+        const groupData = {
+          name: formData.get("group-name"),
+          description: formData.get("group-description"),
+          category: formData.get("category"),
+          is_private: formData.get("group-private") === "on",
+          admin_id: currentUser.id,
+        };
+
+        // グループを作成
+        const { data: group, error: groupError } = await supabase
+          .from("groups")
+          .insert(groupData)
+          .select()
+          .single();
+
+        if (groupError) {
+          console.error("Supabase groups.insert error:", groupError);
+          throw new Error(
+            `グループの作成に失敗しました: ${groupError.message}`
+          );
+        }
+
+        // 作成者をメンバーに追加
+        const members = [
+          {
+            group_id: group.id,
+            user_id: currentUser.id,
+            role: "admin",
+          },
+        ];
+
+        // 選択されたメンバーを追加
+        selectedMembers.forEach((member) => {
+          members.push({
+            group_id: group.id,
+            user_id: member.id,
+            role: "member",
+          });
+        });
+
+        const { error: memberError } = await supabase
+          .from("group_members")
+          .insert(members);
+
+        if (memberError) {
+          // グループを削除
+          await supabase.from("groups").delete().eq("id", group.id);
+          throw new Error("メンバーの追加に失敗しました");
+        }
+
+        // システムメッセージを追加
+        await supabase.from("group_messages").insert({
+          group_id: group.id,
+          user_id: currentUser.id,
+          content: `${userProfile.last_name} ${userProfile.first_name}さんがグループを作成しました`,
+          type: "system",
+        });
+
+        // 招待されたメンバーに通知
+        const notifications = selectedMembers.map((member) => ({
+          user_id: member.id,
+          type: "group_invite",
+          title: "グループへの招待",
+          content: `${userProfile.last_name} ${userProfile.first_name}さんがあなたを「${group.name}」グループに招待しました`,
+          related_id: group.id,
+        }));
+
+        if (notifications.length > 0) {
+          await supabase.from("notifications").insert(notifications);
+        }
+
+        return group;
+      }
+
+      // グループ情報更新
+      function updateGroupInfo(group) {
+        const container = document.getElementById("group-info-content");
+        const color = categoryColors[group.category] || "gray";
+
+        container.innerHTML = `
+                <div class="flex justify-center">
+                    <div class="w-20 h-20 rounded-full bg-${color}-100 flex items-center justify-center">
+                        <svg class="h-10 w-10 text-${color}-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                    </div>
+                </div>
+                <h3 class="font-medium text-lg text-gray-900 text-center mt-4">${
+                  group.name
+                }</h3>
+                <p class="text-sm text-gray-600 text-center mt-1">作成日: ${new Date(
+                  group.created_at
+                ).toLocaleDateString("ja-JP")}</p>
+                
+                <div class="mt-6">
+                    <h4 class="font-medium text-gray-900 mb-2">グループの説明</h4>
+                    <p class="text-sm text-gray-600">${group.description}</p>
+                </div>
+                
+                <div class="mt-6">
+                    <div class="flex justify-between items-center mb-2">
+                        <h4 class="font-medium text-gray-900">メンバー (${
+                          groupMembers.size
+                        })</h4>
+                        <button id="invite-members-btn" class="text-blue-600 text-sm hover:underline">招待する</button>
+                    </div>
+                    <div class="space-y-3 max-h-60 overflow-y-auto scrollbar-thin">
+                        ${Array.from(groupMembers.values())
+                          .map(
+                            (member) => `
+                            <div class="flex items-center">
+                                <img src="${
+                                  member.profile_image_url ||
+                                  "/api/placeholder/32/32"
+                                }" alt="${member.last_name} ${
+                              member.first_name
+                            }" class="h-8 w-8 rounded-full object-cover">
+                                <div class="ml-2">
+                                    <div class="text-sm font-medium text-gray-900">${
+                                      member.last_name
+                                    } ${member.first_name}</div>
+                                    <div class="text-xs text-gray-500">${
+                                      member.bio
+                                        ? member.bio.substring(0, 20) + "..."
+                                        : ""
+                                    }</div>
+                                </div>
+                            </div>
+                        `
+                          )
+                          .join("")}
+                    </div>
+                </div>
+                
+                <div class="mt-8 flex flex-col gap-2">
+                    <button class="flex items-center justify-center px-4 py-2 border border-blue-600 rounded-lg text-blue-600 font-medium hover:bg-blue-50 transition duration-200">
+                        <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        グループ設定
+                    </button>
+                    <button id="leave-group-btn" class="flex items-center justify-center px-4 py-2 border border-red-500 rounded-lg text-red-500 font-medium hover:bg-red-50 transition duration-200">
+                        <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        グループを退出
+                    </button>
+                </div>
+            `;
+
+        // グループ退出ボタン
+        document
+          .getElementById("leave-group-btn")
+          .addEventListener("click", async () => {
+            if (
+              confirm(
+                "本当にこのグループを退出しますか？再度参加するには招待が必要です。"
+              )
+            ) {
+              await leaveGroup(group.id);
+            }
+          });
+      }
+
+      // グループ退出
+      async function leaveGroup(groupId) {
+        const { error } = await supabase
+          .from("group_members")
+          .delete()
+          .eq("group_id", groupId)
+          .eq("user_id", currentUser.id);
+
+        if (error) {
+          console.error("Error leaving group:", error);
+          alert("グループの退出に失敗しました");
+          return;
+        }
+
+        // システムメッセージを追加
+        await supabase.from("group_messages").insert({
+          group_id: groupId,
+          user_id: currentUser.id,
+          content: `${userProfile.last_name} ${userProfile.first_name}さんがグループを退出しました`,
+          type: "system",
+        });
+
+        // UIをリセット
+        currentGroup = null;
+        document.getElementById("no-group-selected").classList.remove("hidden");
+        document.getElementById("active-group-chat").classList.add("hidden");
+
+        // グループリストを再読み込み
+        await loadGroups();
+      }
+
+      // ユーザー検索（メンバー招待用）
+      async function searchUsers(query) {
+        if (!query.trim()) return [];
+
+        const { data: users } = await supabase
+          .from("profiles")
+          .select("*")
+          .neq("id", currentUser.id)
+          .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%`)
+          .limit(10);
+
+        return users || [];
+      }
+
+      // ファイルアップロード
+      async function uploadFile(file, type = "files") {
+        const fileExt = file.name.split(".").pop();
+        const fileName = `${currentUser.id}_${Date.now()}.${fileExt}`;
+        const filePath = `groups/${currentGroup.id}/${type}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("group-files")
+          .upload(filePath, file);
+
+        if (uploadError) {
+          console.error("Upload error:", uploadError);
+          throw new Error("ファイルのアップロードに失敗しました");
+        }
+
+        const { data } = supabase.storage
+          .from("group-files")
+          .getPublicUrl(filePath);
+
+        return data.publicUrl;
+      }
+
+      // リアルタイム更新設定
+      function setupRealtimeSubscriptions() {
+        // グループメッセージのリアルタイム監視
+        supabase
+          .channel("group-messages-channel")
+          .on(
+            "postgres_changes",
+            {
+              event: "INSERT",
+              schema: "public",
+              table: "group_messages",
+            },
+            (payload) => {
+              if (currentGroup && payload.new.group_id === currentGroup.id) {
+                loadGroupMessages(currentGroup.id);
+              }
+              // グループリストも更新
+              loadGroups();
+            }
+          )
+          .subscribe();
+
+        // グループメンバーのリアルタイム監視
+        supabase
+          .channel("group-members-channel")
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "group_members",
+            },
+            (payload) => {
+              loadGroups();
+              if (
+                currentGroup &&
+                (payload.new?.group_id === currentGroup.id ||
+                  payload.old?.group_id === currentGroup.id)
+              ) {
+                loadGroupMembers(currentGroup.id);
+              }
+            }
+          )
+          .subscribe();
+      }
+
+      // ユーティリティ関数
+      function formatTime(timestamp) {
+        return new Date(timestamp).toLocaleTimeString("ja-JP", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      }
+
+      function formatMessageTime(timestamp) {
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diff = now - date;
+
+        if (diff < 60000) return "今";
+        if (diff < 3600000) return `${Math.floor(diff / 60000)}分前`;
+        if (diff < 86400000) return `${Math.floor(diff / 3600000)}時間前`;
+        if (diff < 604800000) return `${Math.floor(diff / 86400000)}日前`;
+
+        return date.toLocaleDateString("ja-JP");
+      }
+
+      function scrollToBottom() {
+        const container = document.getElementById("messages-container");
+        container.scrollTop = container.scrollHeight;
+      }
+
+      function showLoadingGroups() {
+        document.getElementById("groups-loading").classList.remove("hidden");
+        document.getElementById("groups-content").classList.add("hidden");
+        document.getElementById("no-groups").classList.add("hidden");
+      }
+
+      function showNoGroups() {
+        document.getElementById("no-groups").classList.remove("hidden");
+        document.getElementById("groups-content").classList.add("hidden");
+        document.getElementById("groups-loading").classList.add("hidden");
+      }
+
+      // イベントリスナー設定
+      document
+        .querySelector(".mobile-menu-button")
+        .addEventListener("click", function () {
+          document.querySelector(".mobile-menu").classList.toggle("hidden");
+        });
+
+      document
+        .getElementById("user-menu-button")
+        .addEventListener("click", function () {
+          document.getElementById("user-menu").classList.toggle("hidden");
+        });
+
+      window.addEventListener("click", function (e) {
+        if (!document.getElementById("user-menu-button").contains(e.target)) {
+          document.getElementById("user-menu").classList.add("hidden");
+        }
+      });
+
+      // モバイル用のリスト表示/非表示
+      document
+        .getElementById("toggle-group-list")
+        .addEventListener("click", function () {
+          const groupList = document.getElementById("group-list");
+          const chatContent = document.getElementById("chat-content");
+
+          if (groupList.classList.contains("hidden")) {
+            groupList.classList.remove("hidden");
+            chatContent.classList.add("hidden");
+          } else {
+            groupList.classList.add("hidden");
+            chatContent.classList.remove("hidden");
+          }
+        });
+
+      document
+        .getElementById("toggle-group-info")
+        .addEventListener("click", function () {
+          const groupInfo = document.getElementById("group-info");
+          const chatContent = document.getElementById("chat-content");
+
+          if (groupInfo.classList.contains("hidden")) {
+            groupInfo.classList.remove("hidden");
+            chatContent.classList.add("hidden");
+          } else {
+            groupInfo.classList.add("hidden");
+            chatContent.classList.remove("hidden");
+          }
+        });
+
+      document
+        .getElementById("show-group-info")
+        .addEventListener("click", function () {
+          const groupInfo = document.getElementById("group-info");
+          groupInfo.classList.toggle("hidden");
+        });
+
+      // グループ検索
+      document
+        .getElementById("search-groups")
+        .addEventListener("input", function (e) {
+          const query = e.target.value.toLowerCase();
+          const filteredGroups = groups.filter((group) =>
+            group.name.toLowerCase().includes(query)
+          );
+          groups = filteredGroups;
+          displayGroups();
+          groups = groups; // リセット
+        });
+
+      // メッセージ送信
+      document
+        .getElementById("send-message-btn")
+        .addEventListener("click", function () {
+          const input = document.getElementById("message-input");
+          const content = input.value.trim();
+          if (content) {
+            sendMessage(content);
+          }
+        });
+
+      document
+        .getElementById("message-input")
+        .addEventListener("keypress", function (e) {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            const content = this.value.trim();
+            if (content) {
+              sendMessage(content);
+            }
+          }
+        });
+
+      // ファイル添付
+      document
+        .getElementById("attach-file-btn")
+        .addEventListener("click", function () {
+          document.getElementById("file-input").click();
+        });
+
+      document
+        .getElementById("attach-image-btn")
+        .addEventListener("click", function () {
+          document.getElementById("image-input").click();
+        });
+
+      document
+        .getElementById("file-input")
+        .addEventListener("change", async function (e) {
+          const file = e.target.files[0];
+          if (file) {
+            try {
+              const fileUrl = await uploadFile(file, "files");
+              await sendMessage(`ファイル: ${file.name}`, fileUrl);
+            } catch (error) {
+              alert(error.message);
+            }
+            this.value = "";
+          }
+        });
+
+      document
+        .getElementById("image-input")
+        .addEventListener("change", async function (e) {
+          const file = e.target.files[0];
+          if (file) {
+            try {
+              const fileUrl = await uploadFile(file, "images");
+              await sendMessage("画像を送信しました", fileUrl);
+            } catch (error) {
+              alert(error.message);
+            }
+            this.value = "";
+          }
+        });
+
+      // グループ作成モーダル
+      document
+        .getElementById("create-group-btn")
+        .addEventListener("click", function () {
+          document
+            .getElementById("create-group-modal")
+            .classList.remove("hidden");
+        });
+
+      document
+        .getElementById("close-modal")
+        .addEventListener("click", function () {
+          document.getElementById("create-group-modal").classList.add("hidden");
+          resetCreateGroupForm();
+        });
+
+      document
+        .getElementById("cancel-create-group")
+        .addEventListener("click", function () {
+          document.getElementById("create-group-modal").classList.add("hidden");
+          resetCreateGroupForm();
+        });
+
+      // メンバー検索
+      let searchTimeout;
+      document
+        .getElementById("group-members")
+        .addEventListener("input", async function (e) {
+          clearTimeout(searchTimeout);
+          const query = e.target.value.trim();
+
+          if (query.length < 2) {
+            document
+              .getElementById("member-suggestions")
+              .classList.add("hidden");
+            return;
+          }
+
+          searchTimeout = setTimeout(async () => {
+            const users = await searchUsers(query);
+            displayMemberSuggestions(users);
+          }, 300);
+        });
+
+      function displayMemberSuggestions(users) {
+        const container = document.getElementById("member-suggestions");
+
+        if (users.length === 0) {
+          container.innerHTML =
+            '<div class="p-2 text-gray-500 text-sm">ユーザーが見つかりません</div>';
+          container.classList.remove("hidden");
+          return;
+        }
+
+        const selectedIds = selectedMembers.map((m) => m.id);
+
+        container.innerHTML = users
+          .filter((user) => !selectedIds.includes(user.id))
+          .map(
+            (user) => `
+                <div class="p-2 hover:bg-gray-100 cursor-pointer flex items-center" onclick="selectMember('${
+                  user.id
+                }', '${user.last_name}', '${user.first_name}', '${
+              user.profile_image_url || ""
+            }')">
+                    <img src="${
+                      user.profile_image_url || "/api/placeholder/32/32"
+                    }" alt="" class="w-8 h-8 rounded-full object-cover mr-2">
+                    <div>
+                        <div class="text-sm font-medium">${user.last_name} ${
+              user.first_name
+            }</div>
+                        <div class="text-xs text-gray-500">${
+                          locationNames[user.location] || user.location
+                        }</div>
+                    </div>
+                </div>
+            `
+          )
+          .join("");
+        container.classList.remove("hidden");
+      }
+
+      function selectMember(userId, lastName, firstName, profileImageUrl) {
+        selectedMembers.push({
+          id: userId,
+          last_name: lastName,
+          first_name: firstName,
+          profile_image_url: profileImageUrl,
+        });
+        displaySelectedMembers();
+        document.getElementById("group-members").value = "";
+        document.getElementById("member-suggestions").classList.add("hidden");
+      }
+
+      function displaySelectedMembers() {
+        const container = document.getElementById("selected-members");
+        container.innerHTML = selectedMembers
+          .map(
+            (member) => `
+                <div class="inline-flex items-center bg-blue-100 rounded-full px-3 py-1">
+                    <img src="${
+                      member.profile_image_url || "/api/placeholder/24/24"
+                    }" alt="" class="w-6 h-6 rounded-full object-cover mr-1">
+                    <span class="text-sm text-blue-800">${member.last_name} ${
+              member.first_name
+            }</span>
+                    <button onclick="removeMember('${
+                      member.id
+                    }')" class="ml-1 text-blue-600 hover:text-blue-800">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            `
+          )
+          .join("");
+      }
+
+      function removeMember(userId) {
+        selectedMembers = selectedMembers.filter(
+          (member) => member.id !== userId
+        );
+        displaySelectedMembers();
+      }
+
+      function resetCreateGroupForm() {
+        document.getElementById("create-group-form").reset();
+        selectedMembers = [];
+        displaySelectedMembers();
+      }
+
+      // グループ作成フォーム送信
+      document
+        .getElementById("create-group-form")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const submitButton = document.getElementById("submit-create-group");
+          submitButton.disabled = true;
+          submitButton.textContent = "作成中...";
+
+          try {
+            const formData = new FormData(this);
+            const group = await createGroup(formData);
+
+            document
+              .getElementById("create-group-modal")
+              .classList.add("hidden");
+            resetCreateGroupForm();
+
+            // 作成したグループを選択
+            await loadGroups();
+            await selectGroup(group.id);
+          } catch (error) {
+            console.error("Error creating group:", error);
+            alert(error.message || "グループの作成に失敗しました");
+          } finally {
+            submitButton.disabled = false;
+            submitButton.textContent = "作成する";
+          }
+        });
+
+      // ログアウト
+      document
+        .getElementById("logout-link")
+        .addEventListener("click", async (e) => {
+          e.preventDefault();
+          await supabase.auth.signOut();
+          window.location.href = "login.html?message=logout";
+        });
+
+      document
+        .querySelector(".logout-link-mobile")
+        .addEventListener("click", async (e) => {
+          e.preventDefault();
+          await supabase.auth.signOut();
+          window.location.href = "login.html?message=logout";
+        });
+
+      // 初期表示設定（モバイル）
+      function handleResize() {
+        if (window.innerWidth < 768) {
+          document.getElementById("group-list").classList.remove("hidden");
+          document.getElementById("chat-content").classList.add("hidden");
+          document.getElementById("group-info").classList.add("hidden");
+        } else {
+          document.getElementById("group-list").classList.remove("hidden");
+          document.getElementById("chat-content").classList.remove("hidden");
+        }
+      }
+
+      window.addEventListener("resize", handleResize);
+      handleResize();
+
+      // グローバル関数として公開
+      window.selectGroup = selectGroup;
+      window.selectMember = selectMember;
+      window.removeMember = removeMember;
+    </script>
+  </body>
+</html>
