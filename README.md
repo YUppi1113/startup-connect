@@ -22,10 +22,11 @@ AI-powered matching to streamline building a startup team.
    npm run build
    ```
 
-3. Install dependencies and start the server:
+3. Install dependencies, build Tailwind CSS and start the server:
 
    ```bash
    npm install
+   npm run build:css
    npm start
    ```
 
