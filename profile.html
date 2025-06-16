@@ -790,7 +790,7 @@
                 >探しているパートナー・スキル
                 <span class="text-red-600">*</span></label
               >
-              <textarea
+            <textarea
                 id="looking_for"
                 name="looking_for"
                 rows="3"
@@ -798,13 +798,20 @@
                 placeholder="どのようなスキルや経験を持つパートナーを探しているか記入してください"
                 required
               ></textarea>
-              <p class="mt-1 text-xs text-gray-500">※200文字以内</p>
-            </div>
+            <p class="mt-1 text-xs text-gray-500">※200文字以内</p>
           </div>
+        </div>
 
-          <!-- ボタンセクション -->
-          <div class="p-6">
-            <div class="flex justify-end space-x-3">
+        <!-- プロジェクトセクション -->
+        <div class="p-6 border-b border-gray-200">
+          <h2 class="text-lg font-semibold text-gray-800 mb-4">プロジェクト</h2>
+          <div id="projects-container"></div>
+          <button type="button" id="add-project" class="mt-2 text-blue-600 text-sm">+ プロジェクトを追加</button>
+        </div>
+
+        <!-- ボタンセクション -->
+        <div class="p-6">
+          <div class="flex justify-end space-x-3">
               <button
                 type="button"
                 onclick="window.location.href='dashboard.html'"
@@ -895,7 +902,6 @@
       let userProfile = null;
       let startupInfo = null;
       let profileImageFile = null;
-      let postImageFile = null;
 
       // 地域名マッピング
       const locationNames = {
@@ -952,6 +958,13 @@
       window.addEventListener("load", async () => {
         await checkAuth();
         await loadUserData();
+        document
+          .getElementById("add-project")
+          .addEventListener("click", () => {
+            document
+              .getElementById("projects-container")
+              .appendChild(createProjectForm());
+          });
       });
 
       // 認証チェック
@@ -992,6 +1005,16 @@
           startupInfo = startup;
           populateStartupForm(startup);
         }
+
+        // プロジェクト取得
+        const { data: projectList } = await supabase
+          .from("projects")
+          .select("*")
+          .eq("user_id", currentUser.id)
+          .order("start_date", { ascending: false });
+
+        projects = projectList || [];
+        renderProjects();
       }
 
       // ユーザー情報更新
@@ -1054,6 +1077,50 @@
             if (checkbox) checkbox.checked = true;
           });
         }
+      }
+
+      function createProjectForm(project = {}) {
+        const div = document.createElement("div");
+        div.className = "project-entry border p-4 rounded-md mb-4";
+        if (project.id) div.dataset.id = project.id;
+        div.innerHTML = `
+            <div class="mb-2">
+              <label class="block text-sm font-medium">タイトル<span class="text-red-600">*</span></label>
+              <input type="text" name="title" class="w-full px-3 py-2 border border-gray-300 rounded-md" value="${project.title || ""}" required>
+            </div>
+            <div class="mb-2">
+              <label class="block text-sm font-medium">説明</label>
+              <textarea name="description" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md">${project.description || ""}</textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-3 mb-2">
+              <div>
+                <label class="block text-sm font-medium">開始日</label>
+                <input type="date" name="start_date" class="w-full px-3 py-2 border border-gray-300 rounded-md" value="${project.start_date || ""}">
+              </div>
+              <div>
+                <label class="block text-sm font-medium">終了日</label>
+                <input type="date" name="end_date" class="w-full px-3 py-2 border border-gray-300 rounded-md" value="${project.end_date || ""}">
+              </div>
+            </div>
+            <div class="mb-2">
+              <label class="block text-sm font-medium">リンク</label>
+              <input type="url" name="project_url" class="w-full px-3 py-2 border border-gray-300 rounded-md" value="${project.project_url || ""}">
+            </div>
+            <button type="button" class="remove-project text-red-600 text-sm mt-2">削除</button>
+        `;
+        div.querySelector(".remove-project").addEventListener("click", () => {
+          if (div.dataset.id) {
+            projectsToDelete.push(div.dataset.id);
+          }
+          div.remove();
+        });
+        return div;
+      }
+
+      function renderProjects() {
+        const container = document.getElementById("projects-container");
+        container.innerHTML = "";
+        projects.forEach((p) => container.appendChild(createProjectForm(p)));
       }
 
       // プロフィール画像のプレビュー
@@ -1210,6 +1277,40 @@
               }
             }
 
+            // プロジェクトの保存
+            const projectForms = document.querySelectorAll(".project-entry");
+            const upserts = [];
+            projectForms.forEach((div) => {
+              const data = {
+                user_id: currentUser.id,
+                title: div.querySelector('input[name="title"]').value,
+                description:
+                  div.querySelector('textarea[name="description"]').value || null,
+                start_date:
+                  div.querySelector('input[name="start_date"]').value || null,
+                end_date:
+                  div.querySelector('input[name="end_date"]').value || null,
+                project_url:
+                  div.querySelector('input[name="project_url"]').value || null,
+              };
+              if (div.dataset.id) data.id = div.dataset.id;
+              upserts.push(data);
+            });
+
+            if (upserts.length > 0) {
+              const { error: projError } = await supabase
+                .from("projects")
+                .upsert(upserts);
+              if (projError) {
+                throw new Error("プロジェクトの保存に失敗しました");
+              }
+            }
+
+            for (const id of projectsToDelete) {
+              await supabase.from("projects").delete().eq("id", id);
+            }
+            projectsToDelete = [];
+
             const embedText = [
               document.getElementById("bio").value,
               skills.join(" "),
@@ -1234,6 +1335,7 @@
 
             // ユーザー情報を更新
             updateUserInfo(profileData);
+            await loadUserData();
           } catch (error) {
             console.error("Error saving profile:", error);
             showError(error.message || "保存に失敗しました");
