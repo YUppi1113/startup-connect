@@ -1134,19 +1134,25 @@
           }
 
           const groupIds = memberGroups.map((g) => g.group_id);
-          const { data: reads } = await supabase
-            .from("group_message_reads")
-            .select("group_id, message_id")
-            .eq("user_id", currentUser.id)
-            .in("group_id", groupIds);
-          const readSet = new Set(reads?.map((r) => r.message_id));
+          const unreadCounts = {};
+          if (groupIds.length > 0) {
+            const { data: unreadMsgs } = await supabase
+              .from("group_messages")
+              .select("group_id")
+              .eq("is_read", false)
+              .eq("user_id", currentUser.id)
+              .in("group_id", groupIds);
+
+            (unreadMsgs || []).forEach((m) => {
+              unreadCounts[m.group_id] = (unreadCounts[m.group_id] || 0) + 1;
+            });
+          }
 
           // 最新メッセージでソート
           allGroups = memberGroups
             .map((item) => {
               const group = item.groups;
-              const msgs = group.group_messages || [];
-              group.unreadCount = msgs.filter((m) => !readSet.has(m.id)).length;
+              group.unreadCount = unreadCounts[group.id] || 0;
               return group;
             })
             .sort((a, b) => {
@@ -1778,22 +1784,12 @@
         const messageIds = currentMessages.map((m) => m.id);
         if (messageIds.length === 0) return;
 
-        const { data: reads } = await supabase
-          .from("group_message_reads")
-          .select("message_id")
+        await supabase
+          .from("group_messages")
+          .update({ is_read: true })
+          .in("id", messageIds)
           .eq("user_id", currentUser.id)
-          .in("message_id", messageIds);
-        const readIds = new Set(reads?.map((r) => r.message_id));
-        const unreadIds = messageIds.filter((id) => !readIds.has(id));
-        if (unreadIds.length === 0) return;
-
-        const inserts = unreadIds.map((id) => ({
-          group_id: groupId,
-          user_id: currentUser.id,
-          message_id: id,
-          read_at: new Date().toISOString(),
-        }));
-        await supabase.from("group_message_reads").insert(inserts);
+          .eq("is_read", false);
         loadGroups();
       }
 
