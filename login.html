@@ -420,6 +420,7 @@
 
       async function registerPush(userId) {
         if (!('serviceWorker' in navigator)) return;
+        if (!window.__ENV__ || !window.__ENV__.PUSH_VAPID_PUBLIC_KEY) return;
         try {
           const reg = await navigator.serviceWorker.register('sw.js');
           const permission = await Notification.requestPermission();
@@ -556,7 +557,9 @@
                 window.location.href = "register.html?step=2";
               } else {
                 await recordSession(data.user.id, data.session.access_token);
-                await registerPush(data.user.id);
+                if (window.__ENV__ && window.__ENV__.PUSH_VAPID_PUBLIC_KEY) {
+                  await registerPush(data.user.id);
+                }
                 // ダッシュボードへリダイレクト
                 window.location.href = "dashboard.html";
               }

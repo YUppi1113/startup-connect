@@ -26,11 +26,13 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-webpush.setVapidDetails(
-  'mailto:example@example.com',
-  process.env.PUSH_VAPID_PUBLIC_KEY || '',
-  process.env.PUSH_VAPID_PRIVATE_KEY || ''
-);
+if (process.env.PUSH_VAPID_PUBLIC_KEY && process.env.PUSH_VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(
+    'mailto:example@example.com',
+    process.env.PUSH_VAPID_PUBLIC_KEY,
+    process.env.PUSH_VAPID_PRIVATE_KEY
+  );
+}
 
 const openai = new OpenAIApi(
   new Configuration({ apiKey: process.env.OPENAI_API_KEY })
@@ -325,6 +327,9 @@ app.get('/api/bookmarked_posts', async (req, res) => {
 app.post('/api/send_push', async (req, res) => {
   const { user_id, title, body, url, notification_id } = req.body;
   if (!user_id) return res.status(400).json({ error: 'missing user_id' });
+  if (!process.env.PUSH_VAPID_PUBLIC_KEY || !process.env.PUSH_VAPID_PRIVATE_KEY) {
+    return res.json({ status: 'push disabled' });
+  }
   try {
     const { data: subs } = await supabase
       .from('push_subscriptions')
