@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="referrer" content="no-referrer" />
+    <title>投稿一覧 - スタートアップコネクト</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body { font-family: 'Noto Sans JP', sans-serif; }
+      .skeleton { @apply animate-pulse bg-gray-200; }
+    </style>
+  </head>
+  <body class="bg-gray-50">
+    <header class="bg-white shadow">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+          <div class="flex">
+            <div class="flex-shrink-0 flex items-center">
+              <a href="dashboard.html">
+                <svg class="h-8 w-8 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+              </a>
+              <a href="dashboard.html" class="ml-2 text-xl font-bold text-gray-800">スタートアップコネクト</a>
+            </div>
+            <nav class="hidden md:ml-6 md:flex space-x-4">
+              <a href="dashboard.html" class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">ホーム</a>
+              <a href="posts.html" class="bg-blue-50 text-blue-600 px-3 py-2 rounded-md text-sm font-medium">投稿</a>
+              <a href="search.html" class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">検索</a>
+              <a href="messages.html" class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">メッセージ</a>
+              <a href="groups.html" class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">グループ</a>
+              <a href="events.html" class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">イベント</a>
+            </nav>
+          </div>
+          <div class="hidden md:flex items-center">
+            <button type="button" id="notification-button" onclick="location.href='notifications.html';" class="relative p-1 rounded-full text-gray-500 hover:text-blue-600 focus:outline-none">
+              <span class="sr-only">通知を見る</span>
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+              <span id="notification-dot" class="hidden absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500"></span>
+            </button>
+
+            <div class="ml-3 relative">
+              <div class="flex items-center">
+                <button type="button" class="bg-gray-800 flex text-sm rounded-full focus:outline-none" id="user-menu-button">
+                  <span class="sr-only">メニューを開く</span>
+                  <img id="user-avatar" class="h-8 w-8 rounded-full object-cover" src="/api/placeholder/32/32" alt="プロフィール" />
+                </button>
+                <div class="ml-2 hidden md:block">
+                  <div id="user-name" class="text-sm font-medium text-gray-800">読み込み中...</div>
+                  <div id="user-location" class="text-xs text-gray-500">-</div>
+                </div>
+              </div>
+              <div id="user-menu" class="hidden origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-30">
+                <a href="profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">プロフィール</a>
+                <a href="settings.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">設定</a>
+                <a href="#" id="logout-link" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">ログアウト</a>
+              </div>
+            </div>
+          </div>
+          <div class="flex md:hidden items-center">
+            <button type="button" class="mobile-menu-button text-gray-500 hover:text-blue-600 focus:outline-none">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="mobile-menu hidden md:hidden bg-white border-t">
+        <a href="dashboard.html" class="block px-4 py-2 text-gray-500 hover:bg-gray-100">ホーム</a>
+        <a href="posts.html" class="block px-4 py-2 bg-blue-50 text-blue-600">投稿</a>
+        <a href="search.html" class="block px-4 py-2 text-gray-500 hover:bg-gray-100">検索</a>
+        <a href="messages.html" class="block px-4 py-2 text-gray-500 hover:bg-gray-100">メッセージ</a>
+        <a href="groups.html" class="block px-4 py-2 text-gray-500 hover:bg-gray-100">グループ</a>
+        <a href="events.html" class="block px-4 py-2 text-gray-500 hover:bg-gray-100">イベント</a>
+        <div class="border-t border-gray-200 my-1"></div>
+        <a href="profile.html" class="block px-4 py-2 text-gray-500 hover:bg-gray-100">プロフィール</a>
+        <a href="settings.html" class="block px-4 py-2 text-gray-500 hover:bg-gray-100">設定</a>
+        <a href="#" class="logout-link-mobile block px-4 py-2 text-gray-500 hover:bg-gray-100">ログアウト</a>
+      </div>
+    </header>
+
+    <main class="max-w-2xl mx-auto py-6 px-4 sm:px-6 lg:px-8 space-y-6">
+      <section class="bg-white p-4 rounded-lg shadow">
+        <h2 class="text-lg font-semibold text-gray-800 mb-2">新規投稿</h2>
+        <form id="new-post-form" class="space-y-2">
+          <textarea id="post-content" class="w-full border border-gray-300 rounded p-2" rows="3" placeholder="いまどうしてる？" required></textarea>
+          <input type="file" id="post-images" accept="image/*" multiple class="block" />
+          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">投稿する</button>
+        </form>
+      </section>
+      <section id="posts-container" class="space-y-4"></section>
+    </main>
+
+    <footer class="bg-gray-100 py-6 mt-12">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center text-gray-500 text-sm">
+          <p>&copy; 2024 スタートアップコネクト. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.__ENV__;
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      let currentUser = null;
+      const locationNames = {
+        hokkaido: "北海道",
+        aomori: "青森県",
+        iwate: "岩手県",
+        miyagi: "宮城県",
+        akita: "秋田県",
+        yamagata: "山形県",
+        fukushima: "福島県",
+        ibaraki: "茨城県",
+        tochigi: "栃木県",
+        gunma: "群馬県",
+        saitama: "埼玉県",
+        chiba: "千葉県",
+        tokyo: "東京都",
+        kanagawa: "神奈川県",
+        niigata: "新潟県",
+        toyama: "富山県",
+        ishikawa: "石川県",
+        fukui: "福井県",
+        yamanashi: "山梨県",
+        nagano: "長野県",
+        gifu: "岐阜県",
+        shizuoka: "静岡県",
+        aichi: "愛知県",
+        mie: "三重県",
+        shiga: "滋賀県",
+        kyoto: "京都府",
+        osaka: "大阪府",
+        hyogo: "兵庫県",
+        nara: "奈良県",
+        wakayama: "和歌山県",
+        tottori: "鳥取県",
+        shimane: "島根県",
+        okayama: "岡山県",
+        hiroshima: "広島県",
+        yamaguchi: "山口県",
+        tokushima: "徳島県",
+        kagawa: "香川県",
+        ehime: "愛媛県",
+        kochi: "高知県",
+        fukuoka: "福岡県",
+        saga: "佐賀県",
+        nagasaki: "長崎県",
+        kumamoto: "熊本県",
+        oita: "大分県",
+        miyazaki: "宮崎県",
+        kagoshima: "鹿児島県",
+        okinawa: "沖縄県",
+      };
+
+      window.addEventListener('load', async () => {
+        await checkAuth();
+        await loadPosts();
+      });
+
+      async function checkAuth() {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          window.location.href = 'login.html';
+          return;
+        }
+        currentUser = user;
+        await loadUserProfile();
+      }
+
+      async function loadUserProfile() {
+        const { data: profile } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
+        if (profile) {
+          document.getElementById('user-name').textContent = `${profile.last_name} ${profile.first_name}`;
+          document.getElementById('user-location').textContent = locationNames[profile.location] || profile.location;
+          if (profile.profile_image_url) {
+            document.getElementById('user-avatar').src = profile.profile_image_url;
+          }
+        }
+      }
+
+      async function loadPosts() {
+        const { data: posts } = await supabase
+          .from('posts')
+          .select('*, profiles(id, first_name, last_name, profile_image_url)')
+          .order('created_at', { ascending: false });
+
+        const { data: likes } = await supabase
+          .from('post_likes')
+          .select('post_id')
+          .eq('user_id', currentUser.id);
+        const liked = new Set(likes ? likes.map(l => l.post_id) : []);
+
+        const container = document.getElementById('posts-container');
+        container.innerHTML = '';
+        if (!posts) return;
+        for (const post of posts) {
+          const div = document.createElement('div');
+          div.className = 'bg-white p-4 rounded shadow';
+          div.innerHTML = `
+            <div class="flex items-center mb-2">
+              <img src="${post.profiles.profile_image_url || '/api/placeholder/32/32'}" class="h-8 w-8 rounded-full object-cover mr-2">
+              <span class="font-semibold">${post.profiles.last_name} ${post.profiles.first_name}</span>
+              <span class="ml-auto text-xs text-gray-500">${new Date(post.created_at).toLocaleString('ja-JP')}</span>
+            </div>
+            <p class="mb-2 whitespace-pre-wrap">${post.content}</p>
+            ${post.image_urls && post.image_urls.length > 0 ? post.image_urls.map(url => `<img src="${url}" class="max-h-60 mb-2 rounded">`).join('') : ''}
+            <button data-id="${post.id}" class="like-btn text-sm text-blue-600">${liked.has(post.id) ? 'いいね解除' : 'いいね'} (${post.likes_count})</button>
+            <div class="mt-4 space-y-2" id="comments-${post.id}"></div>
+            <form data-id="${post.id}" class="comment-form mt-2 flex space-x-2">
+              <input type="text" class="flex-1 border border-gray-300 rounded p-1 text-sm" placeholder="コメントを書く" required>
+              <button class="bg-gray-200 px-2 rounded text-sm">送信</button>
+            </form>
+          `;
+          container.appendChild(div);
+          await loadComments(post.id, div.querySelector(`#comments-${post.id}`));
+        }
+      }
+
+      async function loadComments(postId, container) {
+        const { data: comments } = await supabase
+          .from('post_comments')
+          .select('*, profiles(id, first_name, last_name, profile_image_url)')
+          .eq('post_id', postId)
+          .order('created_at', { ascending: true });
+        container.innerHTML = '';
+        if (comments) {
+          for (const c of comments) {
+            const div = document.createElement('div');
+            div.className = 'flex items-start space-x-2 text-sm';
+            div.innerHTML = `
+              <img src="${c.profiles.profile_image_url || '/api/placeholder/24/24'}" class="h-6 w-6 rounded-full object-cover">
+              <div><span class="font-semibold">${c.profiles.last_name}${c.profiles.first_name}</span> ${c.content}</div>`;
+            container.appendChild(div);
+          }
+        }
+      }
+
+      async function uploadFile(file) {
+        const ext = file.name.split('.').pop();
+        const fileName = `${currentUser.id}_${Date.now()}.${ext}`;
+        const filePath = `posts/${fileName}`;
+        const { error } = await supabase.storage.from('post-images').upload(filePath, file);
+        if (error) throw error;
+        const { data } = supabase.storage.from('post-images').getPublicUrl(filePath);
+        return data.publicUrl;
+      }
+
+      document.getElementById('new-post-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const content = document.getElementById('post-content').value.trim();
+        if (!content) return;
+        const files = Array.from(document.getElementById('post-images').files);
+        const urls = [];
+        for (const file of files) {
+          const url = await uploadFile(file);
+          urls.push(url);
+        }
+        const { error } = await supabase.from('posts').insert({ user_id: currentUser.id, content, image_urls: urls });
+        if (!error) {
+          document.getElementById('post-content').value = '';
+          document.getElementById('post-images').value = '';
+          await loadPosts();
+        } else {
+          alert('投稿に失敗しました');
+        }
+      });
+
+      document.getElementById('posts-container').addEventListener('click', async (e) => {
+        if (e.target.classList.contains('like-btn')) {
+          const postId = e.target.dataset.id;
+          const isUnlike = e.target.textContent.startsWith('いいね解除');
+          if (isUnlike) {
+            await supabase.from('post_likes').delete().eq('user_id', currentUser.id).eq('post_id', postId);
+          } else {
+            await supabase.from('post_likes').insert({ user_id: currentUser.id, post_id: postId });
+          }
+          await loadPosts();
+        }
+      });
+
+      document.getElementById('posts-container').addEventListener('submit', async (e) => {
+        if (e.target.classList.contains('comment-form')) {
+          e.preventDefault();
+          const postId = e.target.dataset.id;
+          const input = e.target.querySelector('input');
+          const content = input.value.trim();
+          if (!content) return;
+          const { error } = await supabase.from('post_comments').insert({ user_id: currentUser.id, post_id: postId, content });
+          if (!error) {
+            input.value = '';
+            const commentsContainer = e.target.parentElement.querySelector(`#comments-${postId}`);
+            await loadComments(postId, commentsContainer);
+          }
+        }
+      });
+
+      document.querySelector('.mobile-menu-button').addEventListener('click', () => {
+        document.querySelector('.mobile-menu').classList.toggle('hidden');
+      });
+
+      document.getElementById('user-menu-button').addEventListener('click', () => {
+        document.getElementById('user-menu').classList.toggle('hidden');
+      });
+
+      window.addEventListener('click', (e) => {
+        if (!document.getElementById('user-menu-button').contains(e.target)) {
+          document.getElementById('user-menu').classList.add('hidden');
+        }
+      });
+
+      document.getElementById('logout-link').addEventListener('click', async (e) => {
+        e.preventDefault();
+        await supabase.auth.signOut();
+        window.location.href = 'login.html?message=logout';
+      });
+
+      document.querySelector('.logout-link-mobile').addEventListener('click', async (e) => {
+        e.preventDefault();
+        await supabase.auth.signOut();
+        window.location.href = 'login.html?message=logout';
+      });
+    </script>
+  </body>
+</html>
