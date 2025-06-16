@@ -49,6 +49,24 @@ create index IF not exists idx_group_messages_created on public.group_messages u
 
 create index IF not exists idx_group_messages_user on public.group_messages using btree (user_id) TABLESPACE pg_default;
 
+create table public.group_message_reads (
+  id uuid not null default gen_random_uuid (),
+  group_id uuid not null,
+  user_id uuid not null,
+  message_id uuid not null,
+  read_at timestamp with time zone null default now(),
+  constraint group_message_reads_pkey primary key (id),
+  constraint group_message_reads_group_id_fkey foreign KEY (group_id) references groups (id) on delete CASCADE,
+  constraint group_message_reads_user_id_fkey foreign KEY (user_id) references profiles (id) on delete CASCADE,
+  constraint group_message_reads_message_id_fkey foreign KEY (message_id) references group_messages (id) on delete CASCADE
+) TABLESPACE pg_default;
+
+create index IF not exists idx_group_message_reads_user on public.group_message_reads using btree (user_id) TABLESPACE pg_default;
+
+create index IF not exists idx_group_message_reads_group on public.group_message_reads using btree (group_id) TABLESPACE pg_default;
+
+create index IF not exists idx_group_message_reads_message on public.group_message_reads using btree (message_id) TABLESPACE pg_default;
+
 
 create table public.group_members (
   id uuid not null default gen_random_uuid (),

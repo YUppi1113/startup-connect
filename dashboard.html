@@ -906,6 +906,14 @@
           .order("groups.group_messages.created_at", { ascending: false })
           .limit(5);
 
+        const groupIds = groups ? groups.map((g) => g.group_id) : [];
+        const { data: reads } = await supabase
+          .from("group_message_reads")
+          .select("group_id, message_id")
+          .eq("user_id", currentUser.id)
+          .in("group_id", groupIds);
+        const readSet = new Set(reads?.map((r) => r.message_id));
+
         const container = document.getElementById("groups-container");
 
         if (!groups || groups.length === 0) {
@@ -924,7 +932,9 @@
         container.innerHTML = groups
           .map(({ groups: group }) => {
             const latestMessage = group.group_messages?.[0];
-            const unreadCount = 0; // TODO: 未読カウントの実装
+            const unreadCount = (group.group_messages || []).filter(
+              (m) => !readSet.has(m.id)
+            ).length;
 
             return `
                     <div class="px-6 py-4 flex items-start hover:bg-gray-50 transition duration-150 cursor-pointer" onclick="window.location.href='groups.html?id=${
