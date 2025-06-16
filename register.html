@@ -93,7 +93,7 @@
             >
           </div>
           <div class="flex md:hidden items-center">
-            <button
+            <button aria-label="メニューを開く"
               type="button"
               class="mobile-menu-button text-gray-500 hover:text-blue-600 focus:outline-none"
             >
@@ -227,7 +227,7 @@
                   <div class="flex-1">
                     <input
                       type="text"
-                      id="last_name"
+                    id="last_name" aria-label="姓"
                       name="last_name"
                       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="姓"
@@ -237,7 +237,7 @@
                   <div class="flex-1">
                     <input
                       type="text"
-                      id="first_name"
+                    id="first_name" aria-label="名"
                       name="first_name"
                       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="名"
@@ -255,7 +255,7 @@
                 >
                 <input
                   type="email"
-                  id="email"
+                    id="email" aria-label="メールアドレス"
                   name="email"
                   class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="user@example.com"
@@ -274,7 +274,7 @@
                 >
                 <input
                   type="password"
-                  id="password"
+                    id="password" aria-label="パスワード"
                   name="password"
                   class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="8文字以上の英数字"
@@ -294,7 +294,7 @@
                 >
                 <input
                   type="password"
-                  id="password_confirm"
+                    id="password_confirm" aria-label="パスワード確認"
                   name="password_confirm"
                   class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="8文字以上の英数字"
@@ -323,7 +323,7 @@
               </div>
 
               <div class="flex justify-end mt-8">
-                <button
+                <button aria-label="次へ"
                   type="button"
                   onclick="nextStep(1)"
                   class="bg-blue-600 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition duration-200"
@@ -606,7 +606,7 @@
                   >自己紹介 <span class="text-red-600">*</span></label
                 >
                 <textarea
-                  id="bio"
+                  id="bio" aria-label="自己紹介"
                   name="bio"
                   rows="4"
                   class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -624,7 +624,7 @@
                 >
                 <input
                   type="url"
-                  id="linkedin"
+                  id="linkedin" aria-label="LinkedInプロフィールURL"
                   name="linkedin"
                   class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="https://linkedin.com/in/username"
@@ -632,14 +632,14 @@
               </div>
 
               <div class="flex justify-between mt-8">
-                <button
+                <button aria-label="戻る"
                   type="button"
                   onclick="prevStep(2)"
                   class="border border-gray-300 text-gray-700 px-6 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition duration-200"
                 >
                   戻る
                 </button>
-                <button
+                <button aria-label="次へ"
                   type="button"
                   onclick="nextStep(2)"
                   class="bg-blue-600 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition duration-200"
@@ -821,7 +821,7 @@
                   >ビジネスアイデアの概要（任意）</label
                 >
                 <textarea
-                  id="business_idea"
+                  id="business_idea" aria-label="ビジネスアイデア"
                   name="business_idea"
                   rows="4"
                   class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -942,14 +942,14 @@
               </div>
 
               <div class="flex justify-between mt-8">
-                <button
+                <button aria-label="戻る"
                   type="button"
                   onclick="prevStep(3)"
                   class="border border-gray-300 text-gray-700 px-6 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition duration-200"
                 >
                   戻る
                 </button>
-                <button
+                <button aria-label="登録を完了"
                   type="submit"
                   id="submit-button"
                   class="bg-blue-600 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition duration-200"
