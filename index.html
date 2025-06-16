@@ -882,5 +882,14 @@
     </script>
     <script src="i18n.js"></script>
     <script src="accessibility.js"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          if (!navigator.serviceWorker.controller) {
+            navigator.serviceWorker.register('sw.js').catch(console.error);
+          }
+        });
+      }
+    </script>
   </body>
 </html>
