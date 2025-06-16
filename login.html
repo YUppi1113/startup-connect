@@ -10,6 +10,8 @@
     <script src="config.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/otplib@12.0.1/dist/otplib.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
       href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap"
       rel="stylesheet"
@@ -27,9 +29,9 @@
       window.showToast = showToast;
     </script>
   </head>
-  <body class="bg-gray-50">
+  <body class="bg-gray-50 dark:bg-dark-bg dark:text-dark-text">
     <!-- ナビゲーションバー -->
-    <nav class="bg-white shadow-md">
+    <nav class="bg-white dark:bg-dark-card dark:text-dark-text shadow-md">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
           <div class="flex items-center">
@@ -74,6 +76,14 @@
               class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition duration-200"
               >新規登録</a
             >
+            <button id="theme-toggle" aria-label="Toggle dark mode" class="p-2 rounded-md text-gray-600 hover:text-blue-600 focus:outline-none">
+              <svg class="h-6 w-6 dark:hidden" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/>
+              </svg>
+              <svg class="h-6 w-6 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/>
+              </svg>
+            </button>
           </div>
           <div class="flex md:hidden items-center">
             <button
@@ -778,6 +788,7 @@
         }
       }
     </script>
+    <script src="js/theme.js"></script>
     <script src="accessibility.js"></script>
   </body>
 </html>

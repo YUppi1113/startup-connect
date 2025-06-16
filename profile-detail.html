@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="styles/styles.css" />
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
       href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap"
       rel="stylesheet"
@@ -19,24 +21,6 @@
       .tab-active {
         border-bottom: 2px solid #2563eb;
         color: #2563eb;
-      }
-      .skeleton {
-        animation: shimmer 1.5s infinite;
-        background: linear-gradient(
-          90deg,
-          #f0f0f0 25%,
-          #e0e0e0 50%,
-          #f0f0f0 75%
-        );
-        background-size: 200% 100%;
-      }
-      @keyframes shimmer {
-        0% {
-          background-position: 200% 0;
-        }
-        100% {
-          background-position: -200% 0;
-        }
       }
     </style>
   </head>
@@ -132,7 +116,7 @@
                   id="user-menu-button"
                 >
                   <span class="sr-only">メニューを開く</span>
-                  <img
+                  <img loading="lazy"
                     id="current-user-avatar"
                     class="h-8 w-8 rounded-full object-cover"
                     src="/api/placeholder/32/32"
@@ -318,7 +302,7 @@
               class="flex flex-col sm:flex-row sm:items-end sm:justify-between -mt-12 sm:-mt-16"
             >
               <div class="flex items-end">
-                <img
+                <img loading="lazy"
                   id="profile-avatar"
                   src="/api/placeholder/128/128"
                   alt=""
@@ -1240,7 +1224,7 @@
                 <a href="profile-detail.html?user=${
                   conn.profiles.id
                 }" class="group">
-                    <img src="${
+                    <img loading="lazy" src="${
                       conn.profiles.profile_image_url ||
                       "/api/placeholder/40/40"
                     }" 
@@ -1275,7 +1259,7 @@
                               .map(
                                 (conn) => `
                                 <div class="flex items-center space-x-3">
-                                    <img src="${
+                                    <img loading="lazy" src="${
                                       conn.profiles.profile_image_url ||
                                       "/api/placeholder/48/48"
                                     }" 
@@ -1318,7 +1302,7 @@
                               .map(
                                 (conn) => `
                                 <div class="flex items-center space-x-3">
-                                    <img src="${
+                                    <img loading="lazy" src="${
                                       conn.profiles.profile_image_url ||
                                       "/api/placeholder/48/48"
                                     }" 
@@ -1379,13 +1363,13 @@
         const html = posts
           .map((post) => {
             const images = (post.image_urls || [])
-              .map((url) => `<img src="${url}" class="mt-2 rounded-md">`)
+              .map((url) => `<img loading="lazy" src="${url}" class="mt-2 rounded-md">`)
               .join("");
             const comments = (post.post_comments || [])
               .map(
                 (c) => `
                 <div class="flex items-start space-x-2 mt-2 text-sm">
-                  <img src="${
+                  <img loading="lazy" src="${
                     c.profiles?.profile_image_url || "/api/placeholder/24/24"
                   }" class="w-6 h-6 rounded-full object-cover" />
                   <div>
