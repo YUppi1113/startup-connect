@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="styles/styles.css" />
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
       href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap"
       rel="stylesheet"
@@ -16,35 +18,14 @@
       body {
         font-family: "Noto Sans JP", sans-serif;
       }
-      .skeleton {
-        animation: shimmer 1.5s infinite;
-        background: linear-gradient(
-          90deg,
-          #f0f0f0 25%,
-          #e0e0e0 50%,
-          #f0f0f0 75%
-        );
-        background-size: 200% 100%;
-      }
-      @keyframes shimmer {
-        0% {
-          background-position: 200% 0;
-        }
-        100% {
-          background-position: -200% 0;
-        }
-      }
     </style>
+    <script type="module">
+      import { showToast } from "./js/toast.js";
+      window.showToast = showToast;
+    </script>
   </head>
   <body class="bg-gray-50 min-h-screen">
-    <!-- ナビゲーションバー -->
-    <script>
-  const hXhr = new XMLHttpRequest();
-  hXhr.open("GET","partials/header.html",false);
-  hXhr.send(null);
-  document.write(hXhr.responseText);
-</script>
-
+  
     <!-- メインコンテンツ -->
     <main class="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
       <div class="mb-6">
@@ -62,11 +43,6 @@
       >
         <span class="block sm:inline">プロフィールが更新されました。</span>
       </div>
-      <!-- トースト通知 -->
-      <div
-        id="toast"
-        class="hidden fixed bottom-5 right-5 bg-green-500 text-white px-4 py-2 rounded shadow-lg"
-      ></div>
 
       <!-- エラーメッセージ -->
       <div
@@ -120,7 +96,7 @@
                   id="profile-image-preview"
                   class="h-24 w-24 bg-gray-200 rounded-full overflow-hidden flex items-center justify-center"
                 >
-                  <img
+                  <img loading="lazy"
                     id="current-profile-image"
                     src="/api/placeholder/96/96"
                     alt="プロフィール画像"
@@ -615,7 +591,7 @@
             ></textarea>
             <div class="flex items-center space-x-4">
               <div class="relative">
-                <img
+                <img loading="lazy"
                   id="post-image-preview"
                   src=""
                   alt=""
@@ -1152,12 +1128,9 @@
           successDiv.classList.add("hidden");
         }, 3000);
 
-        const toast = document.getElementById("toast");
-        toast.textContent = "プロフィールを更新しました";
-        toast.classList.remove("hidden");
-        setTimeout(() => {
-          toast.classList.add("hidden");
-        }, 3000);
+        if (window.showToast) {
+          window.showToast("プロフィールを更新しました", "success");
+        }
 
         loadUserData();
       }
@@ -1168,6 +1141,9 @@
         const errorText = document.getElementById("error-text");
         errorText.textContent = message;
         errorDiv.classList.remove("hidden");
+        if (window.showToast) {
+          window.showToast(message, "error");
+        }
         window.scrollTo({ top: 0, behavior: "smooth" });
         setTimeout(() => {
           errorDiv.classList.add("hidden");
@@ -1225,7 +1201,9 @@
       document
         .querySelector(".mobile-menu-button")
         .addEventListener("click", function () {
-          document.querySelector(".mobile-menu").classList.toggle("hidden");
+          const menu = document.getElementById("mobile-menu");
+          const expanded = menu.classList.toggle("hidden") ? false : true;
+          this.setAttribute("aria-expanded", expanded);
         });
 
       document

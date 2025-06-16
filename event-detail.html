@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="styles/styles.css" />
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
       href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap"
       rel="stylesheet"
@@ -29,34 +31,10 @@
       .scrollbar-thin::-webkit-scrollbar-thumb:hover {
         background: #9ca3af;
       }
-      .skeleton {
-        animation: shimmer 1.5s infinite;
-        background: linear-gradient(
-          90deg,
-          #f0f0f0 25%,
-          #e0e0e0 50%,
-          #f0f0f0 75%
-        );
-        background-size: 200% 100%;
-      }
-      @keyframes shimmer {
-        0% {
-          background-position: 200% 0;
-        }
-        100% {
-          background-position: -200% 0;
-        }
-      }
     </style>
   </head>
   <body class="bg-gray-50 min-h-screen">
-    <!-- ナビゲーションバー -->
-    <script>
-  const hXhr = new XMLHttpRequest();
-  hXhr.open("GET","partials/header.html",false);
-  hXhr.send(null);
-  document.write(hXhr.responseText);
-</script>
+ 
 
     <!-- メインコンテンツ -->
     <main class="max-w-3xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
@@ -151,7 +129,7 @@
         const isFull = remainingSeats !== null && remainingSeats <= 0;
 
         const participantAvatars = participants
-          .map((p) => `<img class="h-8 w-8 rounded-full object-cover" src="${p.profile_image_url || '/api/placeholder/32/32'}" alt="${p.last_name}" />`)
+          .map((p) => `<img loading="lazy" class="h-8 w-8 rounded-full object-cover" src="${p.profile_image_url || '/api/placeholder/32/32'}" alt="${p.last_name}" />`)
           .join('');
 
         const locationText = eventData.format === 'online'
@@ -160,7 +138,7 @@
 
         container.innerHTML = `
           <h1 class="text-2xl font-bold mb-4">${eventData.title}</h1>
-          <img src="${eventData.image_url || '/api/placeholder/600/300'}" alt="${eventData.title}" class="w-full h-60 object-cover rounded mb-4">
+          <img loading="lazy" src="${eventData.image_url || '/api/placeholder/600/300'}" alt="${eventData.title}" class="w-full h-60 object-cover rounded mb-4">
           <p class="text-sm text-gray-600 mb-1">主催: ${eventData.organizer?.last_name || ''} ${eventData.organizer?.first_name || ''}</p>
           <p class="text-sm text-gray-600 mb-1">日時: ${new Date(eventData.event_date).toLocaleDateString()} ${eventData.start_time} - ${eventData.end_time}</p>
           <p class="text-sm text-gray-600 mb-4">場所: ${locationText}</p>
@@ -230,8 +208,10 @@
         loading.textContent = message;
       }
 
-      document.querySelector('.mobile-menu-button').addEventListener('click', () => {
-        document.querySelector('.mobile-menu').classList.toggle('hidden');
+      document.querySelector('.mobile-menu-button').addEventListener('click', function () {
+        const menu = document.getElementById('mobile-menu');
+        const expanded = menu.classList.toggle('hidden') ? false : true;
+        this.setAttribute('aria-expanded', expanded);
       });
       document.getElementById('user-menu-button').addEventListener('click', () => {
         document.getElementById('user-menu').classList.toggle('hidden');

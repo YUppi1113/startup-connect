@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="styles/styles.css" />
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
       href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap"
       rel="stylesheet"
@@ -18,24 +20,6 @@
       }
       .notification-unread {
         background-color: rgba(239, 246, 255, 0.6);
-      }
-      .skeleton {
-        animation: shimmer 1.5s infinite;
-        background: linear-gradient(
-          90deg,
-          #f0f0f0 25%,
-          #e0e0e0 50%,
-          #f0f0f0 75%
-        );
-        background-size: 200% 100%;
-      }
-      @keyframes shimmer {
-        0% {
-          background-position: 200% 0;
-        }
-        100% {
-          background-position: -200% 0;
-        }
       }
       .fade-out {
         animation: fadeOut 0.3s ease-out forwards;
@@ -58,13 +42,7 @@
     </style>
   </head>
   <body class="bg-gray-50 min-h-screen">
-    <!-- ナビゲーションバー -->
-    <script>
-  const hXhr = new XMLHttpRequest();
-  hXhr.open("GET","partials/header.html",false);
-  hXhr.send(null);
-  document.write(hXhr.responseText);
-</script>
+  
 
     <!-- メインコンテンツ -->
     <main class="max-w-3xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
@@ -592,7 +570,7 @@
           case "follow":
             const follower = relatedUsers.get(notification.related_id);
             icon = follower
-              ? `<img class="h-12 w-12 rounded-full object-cover" src="${
+              ? `<img loading="lazy" class="h-12 w-12 rounded-full object-cover" src="${
                   follower.profile_image_url || "/api/placeholder/48/48"
                 }" alt="${follower.last_name} ${follower.first_name}">`
               : `<div class="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
@@ -612,7 +590,7 @@
           case "message":
             const sender = relatedUsers.get(notification.related_id);
             icon = sender
-              ? `<img class="h-12 w-12 rounded-full object-cover" src="${
+              ? `<img loading="lazy" class="h-12 w-12 rounded-full object-cover" src="${
                   sender.profile_image_url || "/api/placeholder/48/48"
                 }" alt="${sender.last_name} ${sender.first_name}">`
               : `<div class="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
@@ -668,7 +646,7 @@
           case "mention":
             const mentioner = relatedUsers.get(notification.related_id);
             icon = mentioner
-              ? `<img class="h-12 w-12 rounded-full object-cover" src="${
+              ? `<img loading="lazy" class="h-12 w-12 rounded-full object-cover" src="${
                   mentioner.profile_image_url || "/api/placeholder/48/48"
                 }" alt="${mentioner.last_name} ${mentioner.first_name}">`
               : `<div class="h-12 w-12 rounded-full bg-yellow-100 flex items-center justify-center">
@@ -982,7 +960,9 @@
       document
         .querySelector(".mobile-menu-button")
         .addEventListener("click", function () {
-          document.querySelector(".mobile-menu").classList.toggle("hidden");
+          const menu = document.getElementById("mobile-menu");
+          const expanded = menu.classList.toggle("hidden") ? false : true;
+          this.setAttribute("aria-expanded", expanded);
         });
 
       document

@@ -10,15 +10,17 @@
     </title>
     <link rel="stylesheet" href="styles/styles.css" />
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
       href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
     
   </head>
-  <body class="bg-gray-50">
+  <body class="bg-gray-50 dark:bg-dark-bg dark:text-dark-text">
     <!-- ナビゲーションバー -->
-    <nav class="bg-white shadow-md fixed w-full top-0 z-50">
+    <nav class="bg-white dark:bg-dark-card dark:text-dark-text shadow-md fixed w-full top-0 z-50">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
           <div class="flex items-center">
@@ -77,6 +79,14 @@
               data-i18n-key="getStarted"
               >無料で始める</a
             >
+            <button id="theme-toggle" aria-label="Toggle dark mode" class="p-2 rounded-md text-gray-600 hover:text-blue-600 focus:outline-none">
+              <svg class="h-6 w-6 dark:hidden" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/>
+              </svg>
+              <svg class="h-6 w-6 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/>
+              </svg>
+            </button>
             <label for="language-selector" class="sr-only">言語</label>
             <select id="language-selector" class="ml-2 border rounded px-2 py-1 text-sm">
               <option value="ja">日本語</option>
@@ -86,7 +96,7 @@
           <div class="flex md:hidden items-center">
             <button
               type="button"
-              class="mobile-menu-button text-gray-500 hover:text-blue-600 focus:outline-none"
+              aria-expanded="false" aria-controls="mobile-menu" class="mobile-menu-button text-gray-500 hover:text-blue-600 focus:outline-none"
             >
               <svg
                 class="h-6 w-6"
@@ -107,7 +117,7 @@
       </div>
 
       <!-- モバイルメニュー -->
-      <div class="mobile-menu hidden md:hidden bg-white border-t" role="menu">
+      <div id="mobile-menu" class="mobile-menu hidden md:hidden bg-white border-t" role="menu">
         <a
           href="#features"
           class="block px-4 py-2 text-gray-600 hover:bg-gray-100"
@@ -684,7 +694,7 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div class="bg-white rounded-lg shadow-sm p-6">
             <div class="flex items-center mb-4">
-              <img
+              <img loading="lazy"
                 src="https://randomuser.me/api/portraits/men/32.jpg"
                 alt="田中 健太"
                 class="w-12 h-12 rounded-full mr-4"
@@ -700,7 +710,7 @@
           </div>
           <div class="bg-white rounded-lg shadow-sm p-6">
             <div class="flex items-center mb-4">
-              <img
+              <img loading="lazy"
                 src="https://randomuser.me/api/portraits/women/44.jpg"
                 alt="山田 恵子"
                 class="w-12 h-12 rounded-full mr-4"
@@ -716,7 +726,7 @@
           </div>
           <div class="bg-white rounded-lg shadow-sm p-6">
             <div class="flex items-center mb-4">
-              <img
+              <img loading="lazy"
                 src="https://randomuser.me/api/portraits/men/22.jpg"
                 alt="佐藤 太郎"
                 class="w-12 h-12 rounded-full mr-4"
@@ -852,7 +862,9 @@
       document
         .querySelector(".mobile-menu-button")
         .addEventListener("click", function () {
-          document.querySelector(".mobile-menu").classList.toggle("hidden");
+          const menu = document.getElementById("mobile-menu");
+          const expanded = menu.classList.toggle("hidden") ? false : true;
+          this.setAttribute("aria-expanded", expanded);
         });
 
       // スムーススクロール
@@ -881,6 +893,16 @@
       });
     </script>
     <script src="i18n.js"></script>
+    <script src="js/theme.js"></script>
     <script src="accessibility.js"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          if (!navigator.serviceWorker.controller) {
+            navigator.serviceWorker.register('sw.js').catch(console.error);
+          }
+        });
+      }
+    </script>
   </body>
 </html>
