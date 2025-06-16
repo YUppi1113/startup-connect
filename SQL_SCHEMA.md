@@ -107,6 +107,7 @@ create table public.events (
   fee integer not null default 0,
   image_url text null,
   format text null,
+  status text null default 'scheduled',
   constraint events_pkey primary key (id),
   constraint events_organizer_id_fkey foreign KEY (organizer_id) references profiles (id) on delete CASCADE
 ) TABLESPACE pg_default;

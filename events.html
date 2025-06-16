@@ -1059,6 +1059,13 @@
                         </span>
                     </div>
                     ${
+                      event.status === "canceled"
+                        ? `<div class="absolute inset-0 bg-red-600 bg-opacity-70 flex items-center justify-center">
+                            <span class="text-white text-sm font-semibold">キャンセル済み</span>
+                          </div>`
+                        : ""
+                    }
+                    ${
                       event.format === "online"
                         ? `
                         <div class="absolute top-0 left-0 mt-2 ml-2">
@@ -1154,11 +1161,18 @@
                             <button onclick="openEditEventModal('${event.id}')" class="flex-1 bg-yellow-500 text-white py-2 rounded-lg font-medium hover:bg-yellow-600 transition duration-200">
                                 編集
                             </button>
+                            ${
+                              event.status === 'canceled'
+                                ? '<span class="flex-1 bg-gray-200 text-gray-500 py-2 rounded-lg font-medium text-center">中止済み</span>'
+                                : `<button onclick="cancelEvent('${event.id}')" class="flex-1 bg-red-500 text-white py-2 rounded-lg font-medium hover:bg-red-600 transition duration-200">中止</button>`
+                            }
                             <button onclick="deleteEvent('${event.id}')" class="flex-1 border border-red-600 text-red-600 py-2 rounded-lg font-medium hover:bg-red-50 transition duration-200">
                                 削除
                             </button>
                         `
-                            : (
+                            : event.status === 'canceled'
+                              ? `<span class="flex-1 bg-gray-200 text-gray-500 py-2 rounded-lg font-medium text-center">中止済み</span>`
+                              : (
                                 isParticipating
                                   ? `<button onclick="leaveEvent('${event.id}')" class="flex-1 border border-red-600 text-red-600 py-2 rounded-lg font-medium hover:bg-red-50 transition duration-200">参加取消</button>`
                                   : `<button onclick="joinEvent('${event.id}')" class="flex-1 bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition duration-200 ${isFull ? 'opacity-50 cursor-not-allowed' : ''}" ${isFull ? 'disabled' : ''}>${isFull ? '満席' : '参加する'}</button>`
@@ -1316,6 +1330,26 @@
           console.error("Error updating event:", error);
           throw new Error("イベントの更新に失敗しました");
         }
+
+        const { data: participants } = await supabase
+          .from("event_participants")
+          .select("user_id")
+          .eq("event_id", eventId);
+
+        if (participants) {
+          const notifications = participants
+            .filter((p) => p.user_id !== currentUser.id)
+            .map((p) => ({
+              user_id: p.user_id,
+              type: "event_update",
+              title: "イベント更新",
+              content: `イベント「${updateData.title}」が更新されました`,
+              related_id: eventId,
+            }));
+          if (notifications.length > 0) {
+            await supabase.from("notifications").insert(notifications);
+          }
+        }
       }
 
       // イベント削除
@@ -1329,6 +1363,45 @@
         }
         await loadEvents();
         alert("イベントを削除しました");
+      }
+
+      async function cancelEvent(eventId) {
+        if (!confirm("イベントを中止しますか？")) return;
+        const event = allEvents.find((e) => e.id === eventId);
+
+        const { error } = await supabase
+          .from("events")
+          .update({ status: "canceled" })
+          .eq("id", eventId);
+
+        if (error) {
+          console.error("Error canceling event:", error);
+          alert("イベントの中止に失敗しました");
+          return;
+        }
+
+        const { data: participants } = await supabase
+          .from("event_participants")
+          .select("user_id")
+          .eq("event_id", eventId);
+
+        if (participants) {
+          const notifications = participants
+            .filter((p) => p.user_id !== currentUser.id)
+            .map((p) => ({
+              user_id: p.user_id,
+              type: "event_cancel",
+              title: "イベント中止",
+              content: `イベント「${event?.title || ""}」は中止となりました`,
+              related_id: eventId,
+            }));
+          if (notifications.length > 0) {
+            await supabase.from("notifications").insert(notifications);
+          }
+        }
+
+        await loadEvents();
+        alert("イベントを中止しました");
       }
 
       function openEditEventModal(eventId) {
@@ -1674,6 +1747,7 @@
       window.leaveEvent = leaveEvent;
       window.viewEventDetails = viewEventDetails;
       window.openEditEventModal = openEditEventModal;
+      window.cancelEvent = cancelEvent;
       window.deleteEvent = deleteEvent;
     </script>
   </body>
