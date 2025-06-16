@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="referrer" content="no-referrer" />
+    <title>つながり一覧 - スタートアップコネクト</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+    <style>
+      body {
+        font-family: "Noto Sans JP", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 min-h-screen">
+    <!-- ナビゲーションバー -->
+    <header class="bg-white shadow-md sticky top-0 z-20">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+          <div class="flex items-center">
+            <div class="flex-shrink-0 flex items-center">
+              <a href="index.html">
+                <svg class="h-8 w-8 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+              </a>
+              <a href="dashboard.html" class="ml-2 text-xl font-bold text-gray-800">スタートアップコネクト</a>
+            </div>
+            <nav class="hidden md:ml-6 md:flex space-x-4">
+              <a href="dashboard.html" class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">ホーム</a>
+              <a href="search.html" class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">検索</a>
+              <a href="messages.html" class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">メッセージ</a>
+              <a href="groups.html" class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">グループ</a>
+              <a href="events.html" class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">イベント</a>
+            </nav>
+          </div>
+          <div class="hidden md:flex items-center">
+            <button type="button" id="notification-button" onclick="location.href='notifications.html';" class="relative p-1 rounded-full text-gray-500 hover:text-blue-600 focus:outline-none">
+              <span class="sr-only">通知を見る</span>
+              <a href="notifications.html" class="relative inline-flex">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" ></path>
+                </svg>
+                <span id="notification-dot" class="hidden absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500"></span>
+              </a>
+            </button>
+            <div class="ml-3 relative">
+              <div class="flex items-center">
+                <button type="button" class="bg-gray-800 flex text-sm rounded-full focus:outline-none" id="user-menu-button">
+                  <span class="sr-only">メニューを開く</span>
+                  <img id="current-user-avatar" class="h-8 w-8 rounded-full object-cover" src="/api/placeholder/32/32" alt="プロフィール" />
+                </button>
+                <div class="ml-2 hidden md:block">
+                  <div id="current-user-name" class="text-sm font-medium text-gray-800">読み込み中...</div>
+                  <div id="current-user-location" class="text-xs text-gray-500">-</div>
+                </div>
+              </div>
+              <div id="user-menu" class="hidden origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-30">
+                <a href="profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">プロフィール</a>
+                <a href="settings.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">設定</a>
+                <a href="#" id="logout-link" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">ログアウト</a>
+              </div>
+            </div>
+          </div>
+          <div class="flex md:hidden items-center">
+            <a href="notifications.html" class="relative mr-3 p-1">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" ></path>
+              </svg>
+              <span class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500"></span>
+            </a>
+            <button type="button" class="mobile-menu-button text-gray-500 hover:text-blue-600 focus:outline-none">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" ></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- モバイルメニュー -->
+      <div class="mobile-menu hidden md:hidden bg-white border-t">
+        <a href="dashboard.html" class="block px-4 py-2 text-gray-500 hover:bg-gray-100">ホーム</a>
+        <a href="search.html" class="block px-4 py-2 text-gray-500 hover:bg-gray-100">検索</a>
+        <a href="messages.html" class="block px-4 py-2 text-gray-500 hover:bg-gray-100">メッセージ</a>
+        <a href="groups.html" class="block px-4 py-2 text-gray-500 hover:bg-gray-100">グループ</a>
+        <a href="events.html" class="block px-4 py-2 text-gray-500 hover:bg-gray-100">イベント</a>
+        <div class="border-t border-gray-200 my-1"></div>
+        <a href="profile.html" class="block px-4 py-2 text-gray-500 hover:bg-gray-100">プロフィール</a>
+        <a href="settings.html" class="block px-4 py-2 text-gray-500 hover:bg-gray-100">設定</a>
+        <a href="#" class="logout-link block px-4 py-2 text-gray-500 hover:bg-gray-100">ログアウト</a>
+      </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <h1 class="text-2xl font-bold mb-6">つながり一覧</h1>
+      <div id="followers-section" class="mb-10">
+        <h2 class="text-xl font-medium mb-4">フォロワー (<span id="followers-count">0</span>)</h2>
+        <div id="followers-list" class="space-y-4"></div>
+      </div>
+      <div id="following-section" class="mb-10">
+        <h2 class="text-xl font-medium mb-4">フォロー中 (<span id="following-count">0</span>)</h2>
+        <div id="following-list" class="space-y-4"></div>
+      </div>
+    </main>
+
+    <script>
+      const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.__ENV__;
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      let currentUser = null;
+      let followingSet = new Set();
+      const locationNames = {
+        hokkaido: "北海道",
+        aomori: "青森県",
+        iwate: "岩手県",
+        miyagi: "宮城県",
+        akita: "秋田県",
+        yamagata: "山形県",
+        fukushima: "福島県",
+        ibaraki: "茨城県",
+        tochigi: "栃木県",
+        gunma: "群馬県",
+        saitama: "埼玉県",
+        chiba: "千葉県",
+        tokyo: "東京都",
+        kanagawa: "神奈川県",
+        niigata: "新潟県",
+        toyama: "富山県",
+        ishikawa: "石川県",
+        fukui: "福井県",
+        yamanashi: "山梨県",
+        nagano: "長野県",
+        gifu: "岐阜県",
+        shizuoka: "静岡県",
+        aichi: "愛知県",
+        mie: "三重県",
+        shiga: "滋賀県",
+        kyoto: "京都府",
+        osaka: "大阪府",
+        hyogo: "兵庫県",
+        nara: "奈良県",
+        wakayama: "和歌山県",
+        tottori: "鳥取県",
+        shimane: "島根県",
+        okayama: "岡山県",
+        hiroshima: "広島県",
+        yamaguchi: "山口県",
+        tokushima: "徳島県",
+        kagawa: "香川県",
+        ehime: "愛媛県",
+        kochi: "高知県",
+        fukuoka: "福岡県",
+        saga: "佐賀県",
+        nagasaki: "長崎県",
+        kumamoto: "熊本県",
+        oita: "大分県",
+        miyazaki: "宮崎県",
+        kagoshima: "鹿児島県",
+        okinawa: "沖縄県",
+      };
+
+      window.addEventListener('load', async () => {
+        await checkAuth();
+        await loadCurrentUser();
+        const params = new URLSearchParams(window.location.search);
+        const profileUser = params.get('user');
+        const view = params.get('view');
+        if (!profileUser) return;
+        await loadFollowingSet();
+        await loadFollowers(profileUser);
+        await loadFollowing(profileUser);
+        if (view === 'following') {
+          document.getElementById('following-section').scrollIntoView();
+        } else if (view === 'followers') {
+          document.getElementById('followers-section').scrollIntoView();
+        }
+      });
+
+      async function checkAuth() {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          window.location.href = 'login.html';
+          return;
+        }
+        currentUser = user;
+      }
+
+      async function loadCurrentUser() {
+        const { data: profile } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
+        if (profile) {
+          document.getElementById('current-user-name').textContent = `${profile.last_name} ${profile.first_name}`;
+          document.getElementById('current-user-location').textContent = locationNames[profile.location] || profile.location;
+          if (profile.profile_image_url) {
+            document.getElementById('current-user-avatar').src = profile.profile_image_url;
+          }
+        }
+      }
+
+      async function loadFollowingSet() {
+        const { data } = await supabase.from('follows').select('following_id').eq('follower_id', currentUser.id);
+        followingSet = new Set((data || []).map((f) => f.following_id));
+      }
+
+      async function loadFollowers(userId) {
+        const { data } = await supabase
+          .from('follows')
+          .select('follower_id, profiles!follows_follower_id_fkey(*)')
+          .eq('following_id', userId);
+        document.getElementById('followers-count').textContent = data.length;
+        renderList(data.map((r) => r.profiles), 'followers-list');
+      }
+
+      async function loadFollowing(userId) {
+        const { data } = await supabase
+          .from('follows')
+          .select('following_id, profiles!follows_following_id_fkey(*)')
+          .eq('follower_id', userId);
+        document.getElementById('following-count').textContent = data.length;
+        renderList(data.map((r) => r.profiles), 'following-list');
+      }
+
+      function renderList(profiles, containerId) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = profiles.map((p) => createCard(p)).join('');
+      }
+
+      function createCard(profile) {
+        const isFollowing = followingSet.has(profile.id);
+        const btnClass = isFollowing ? 'text-gray-600 border-gray-600' : 'text-blue-600 border-blue-600';
+        const btnText = isFollowing ? 'フォロー中' : 'フォローする';
+        const showBtn = currentUser && currentUser.id !== profile.id;
+        return `
+          <div class="flex items-center space-x-4">
+            <img src="${profile.profile_image_url || '/api/placeholder/48/48'}" class="h-12 w-12 rounded-full object-cover" alt="${profile.last_name} ${profile.first_name}">
+            <div class="flex-1">
+              <a href="profile-detail.html?user=${profile.id}" class="font-medium text-gray-900 hover:text-blue-600">${profile.last_name} ${profile.first_name}</a>
+              <p class="text-sm text-gray-500">${locationNames[profile.location] || profile.location}</p>
+            </div>
+            ${showBtn ? `<button onclick="toggleFollow('${profile.id}')" data-user-id="${profile.id}" class="follow-button border rounded-md px-3 py-1 text-sm ${btnClass}">${btnText}</button>` : ''}
+          </div>`;
+      }
+
+      async function toggleFollow(userId) {
+        const button = document.querySelector(`[data-user-id="${userId}"]`);
+        const isFollowing = followingSet.has(userId);
+        button.disabled = true;
+        if (isFollowing) {
+          const { error } = await supabase.from('follows').delete().eq('follower_id', currentUser.id).eq('following_id', userId);
+          if (!error) {
+            followingSet.delete(userId);
+            button.textContent = 'フォローする';
+            button.classList.remove('text-gray-600', 'border-gray-600');
+            button.classList.add('text-blue-600', 'border-blue-600');
+          }
+        } else {
+          const { error } = await supabase.from('follows').insert({ follower_id: currentUser.id, following_id: userId });
+          if (!error) {
+            followingSet.add(userId);
+            button.textContent = 'フォロー中';
+            button.classList.remove('text-blue-600', 'border-blue-600');
+            button.classList.add('text-gray-600', 'border-gray-600');
+            await supabase.from('notifications').insert({
+              user_id: userId,
+              type: 'follow',
+              title: '新しいフォロワー',
+              content: `${document.getElementById('current-user-name').textContent}さんがあなたをフォローしました`,
+              related_id: currentUser.id,
+            });
+          }
+        }
+        button.disabled = false;
+      }
+
+      // ログアウト
+      document.getElementById('logout-link').addEventListener('click', async (e) => {
+        e.preventDefault();
+        await supabase.auth.signOut();
+        window.location.href = 'login.html?message=logout';
+      });
+      document.querySelector('.logout-link').addEventListener('click', async (e) => {
+        e.preventDefault();
+        await supabase.auth.signOut();
+        window.location.href = 'login.html?message=logout';
+      });
+      document.getElementById('user-menu-button').addEventListener('click', function () {
+        document.getElementById('user-menu').classList.toggle('hidden');
+      });
+      window.addEventListener('click', function (e) {
+        if (!document.getElementById('user-menu-button').contains(e.target)) {
+          document.getElementById('user-menu').classList.add('hidden');
+        }
+      });
+    </script>
+  </body>
+</html>
