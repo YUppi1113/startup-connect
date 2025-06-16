@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="referrer" content="no-referrer" />
+    <title>プロジェクト管理 - スタートアップコネクト</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+    <style>
+      body { font-family: "Noto Sans JP", sans-serif; }
+    </style>
+  </head>
+  <body class="bg-gray-50 min-h-screen">
+    <!-- ナビゲーションバー -->
+    <header class="bg-white shadow-md sticky top-0 z-20">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+          <div class="flex items-center">
+            <div class="flex-shrink-0 flex items-center">
+              <a href="index.html">
+                <svg class="h-8 w-8 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+              </a>
+              <a href="dashboard.html" class="ml-2 text-xl font-bold text-gray-800">スタートアップコネクト</a>
+            </div>
+            <nav class="hidden md:ml-6 md:flex space-x-4">
+              <a href="dashboard.html" class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">ホーム</a>
+              <a href="search.html" class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">検索</a>
+              <a href="messages.html" class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">メッセージ</a>
+              <a href="groups.html" class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">グループ</a>
+              <a href="events.html" class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">イベント</a>
+              <a href="projects.html" class="bg-blue-50 text-blue-600 px-3 py-2 rounded-md text-sm font-medium">プロジェクト</a>
+            </nav>
+          </div>
+          <div class="hidden md:flex items-center">
+            <button type="button" id="notification-button" onclick="location.href='notifications.html';" class="relative p-1 rounded-full text-gray-500 hover:text-blue-600 focus:outline-none">
+              <span class="sr-only">通知を見る</span>
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+              <span id="notification-dot" class="hidden absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500"></span>
+            </button>
+            <div class="ml-3 relative">
+              <div class="flex items-center">
+                <button type="button" class="bg-gray-800 flex text-sm rounded-full focus:outline-none" id="user-menu-button" aria-expanded="false">
+                  <span class="sr-only">ユーザーメニューを開く</span>
+                  <img id="user-avatar" class="h-8 w-8 rounded-full" src="/api/placeholder/32/32" alt="" />
+                </button>
+                <div class="ml-3 text-left">
+                  <p id="user-name" class="text-sm font-medium text-gray-700">ユーザー名</p>
+                  <p id="user-location" class="text-xs text-gray-500">所在地</p>
+                </div>
+              </div>
+              <div id="user-menu" class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 hidden">
+                <a href="profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">プロフィール</a>
+                <a href="#" id="logout-link" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">ログアウト</a>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center md:hidden">
+            <button class="mobile-menu-button text-gray-500 hover:text-blue-600 focus:outline-none">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="mobile-menu hidden md:hidden">
+        <a href="dashboard.html" class="block px-4 py-2 text-gray-500 hover:bg-gray-100">ホーム</a>
+        <a href="search.html" class="block px-4 py-2 text-gray-500 hover:bg-gray-100">検索</a>
+        <a href="messages.html" class="block px-4 py-2 text-gray-500 hover:bg-gray-100">メッセージ</a>
+        <a href="groups.html" class="block px-4 py-2 text-gray-500 hover:bg-gray-100">グループ</a>
+        <a href="events.html" class="block px-4 py-2 text-gray-500 hover:bg-gray-100">イベント</a>
+        <a href="projects.html" class="block px-4 py-2 bg-blue-50 text-blue-600">プロジェクト</a>
+        <a href="#" class="logout-link-mobile block px-4 py-2 text-gray-500 hover:bg-gray-100">ログアウト</a>
+      </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto p-4">
+      <div class="flex justify-between items-center mb-4">
+        <h1 class="text-xl font-semibold text-gray-800">プロジェクト管理</h1>
+        <button id="open-create" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">新規プロジェクト</button>
+      </div>
+
+      <div class="bg-white p-4 rounded-lg shadow mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label for="status-filter" class="block text-sm font-medium text-gray-700 mb-1">ステータス</label>
+            <select id="status-filter" class="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="">すべて</option>
+              <option value="planning">計画中</option>
+              <option value="in-progress">進行中</option>
+              <option value="completed">完了</option>
+              <option value="on-hold">保留</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">技術スタック</label>
+            <div id="tech-filter" class="flex flex-wrap gap-2"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="projects-container" class="space-y-4"></div>
+    </main>
+
+    <!-- プロジェクトモーダル -->
+    <div id="project-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden z-40">
+      <div class="bg-white max-w-lg mx-auto mt-10 p-6 rounded-lg">
+        <h2 id="modal-title" class="text-lg font-medium mb-4">プロジェクト追加</h2>
+        <form id="project-form" class="space-y-4">
+          <div>
+            <label for="project-title" class="block text-sm font-medium text-gray-700 mb-1">タイトル <span class="text-red-600">*</span></label>
+            <input type="text" id="project-title" class="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+          </div>
+          <div>
+            <label for="project-description" class="block text-sm font-medium text-gray-700 mb-1">説明</label>
+            <textarea id="project-description" rows="3" class="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+          </div>
+          <div>
+            <label for="project-technologies" class="block text-sm font-medium text-gray-700 mb-1">技術スタック (カンマ区切り)</label>
+            <input type="text" id="project-technologies" class="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div>
+            <label for="project-url" class="block text-sm font-medium text-gray-700 mb-1">プロジェクトURL</label>
+            <input type="url" id="project-url" class="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label for="project-start" class="block text-sm font-medium text-gray-700 mb-1">開始日</label>
+              <input type="date" id="project-start" class="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label for="project-end" class="block text-sm font-medium text-gray-700 mb-1">終了日</label>
+              <input type="date" id="project-end" class="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+          </div>
+          <div>
+            <label for="project-status" class="block text-sm font-medium text-gray-700 mb-1">ステータス</label>
+            <select id="project-status" class="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="planning">計画中</option>
+              <option value="in-progress">進行中</option>
+              <option value="completed">完了</option>
+              <option value="on-hold">保留</option>
+            </select>
+          </div>
+          <div class="flex justify-end space-x-3 pt-2">
+            <button type="button" id="cancel-project" class="px-4 py-2 border border-gray-300 rounded-md">キャンセル</button>
+            <button type="submit" id="save-project" class="px-4 py-2 bg-blue-600 text-white rounded-md">保存</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.__ENV__;
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      let currentUser = null;
+      let allProjects = [];
+      let editingProjectId = null;
+
+      window.addEventListener('load', async () => {
+        await checkAuth();
+        await loadUserProfile();
+        await loadProjects();
+      });
+
+      async function checkAuth() {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          window.location.href = 'login.html';
+          return;
+        }
+        currentUser = user;
+      }
+
+      async function loadUserProfile() {
+        const { data: profile } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
+        if (profile) {
+          document.getElementById('user-name').textContent = `${profile.last_name} ${profile.first_name}`;
+          document.getElementById('user-location').textContent = profile.location;
+          if (profile.profile_image_url) {
+            document.getElementById('user-avatar').src = profile.profile_image_url;
+          }
+        }
+      }
+
+      async function loadProjects() {
+        const { data, error } = await supabase
+          .from('projects')
+          .select('*')
+          .eq('user_id', currentUser.id)
+          .order('created_at', { ascending: false });
+        if (error) {
+          console.error('Error loading projects:', error);
+          return;
+        }
+        allProjects = data || [];
+        updateTechFilter();
+        displayProjects(allProjects);
+      }
+
+      function updateTechFilter() {
+        const container = document.getElementById('tech-filter');
+        const techs = [...new Set(allProjects.flatMap(p => p.technologies || []))];
+        container.innerHTML = techs
+          .map(t => `<label class="inline-flex items-center mr-2"><input type="checkbox" name="tech-filter" value="${t}" class="h-4 w-4 text-blue-600 border-gray-300 rounded"><span class="ml-1 text-sm text-gray-700">${t}</span></label>`)
+          .join('');
+        container.querySelectorAll('input[name="tech-filter"]').forEach(cb => {
+          cb.addEventListener('change', filterProjects);
+        });
+      }
+
+      function displayProjects(projects) {
+        const container = document.getElementById('projects-container');
+        if (!projects.length) {
+          container.innerHTML = '<p class="text-center text-gray-500">プロジェクトがありません</p>';
+          return;
+        }
+        container.innerHTML = projects
+          .map(p => `
+            <div class="bg-white rounded-lg shadow p-4">
+              <div class="flex justify-between items-start">
+                <div>
+                  <h3 class="font-medium text-gray-900">${p.title}</h3>
+                  ${p.description ? `<p class="text-sm text-gray-600 mt-1">${p.description}</p>` : ''}
+                  <div class="flex flex-wrap gap-2 mt-2">
+                    ${(p.technologies || []).map(t => `<span class="px-2 py-0.5 text-xs bg-green-100 text-green-800 rounded">${t}</span>`).join('')}
+                  </div>
+                  <p class="mt-2 text-xs text-gray-500">ステータス: ${p.status || ''}</p>
+                </div>
+                <div class="space-x-2">
+                  <button onclick="openEdit('${p.id}')" class="text-blue-600 text-sm hover:underline">編集</button>
+                  <button onclick="deleteProject('${p.id}')" class="text-red-600 text-sm hover:underline">削除</button>
+                </div>
+              </div>
+            </div>
+          `)
+          .join('');
+      }
+
+      function filterProjects() {
+        const status = document.getElementById('status-filter').value;
+        const selected = Array.from(document.querySelectorAll('input[name="tech-filter"]:checked')).map(cb => cb.value);
+        let filtered = allProjects;
+        if (status) filtered = filtered.filter(p => p.status === status);
+        if (selected.length > 0) {
+          filtered = filtered.filter(p => selected.every(t => (p.technologies || []).includes(t)));
+        }
+        displayProjects(filtered);
+      }
+
+      document.getElementById('status-filter').addEventListener('change', filterProjects);
+
+      document.getElementById('open-create').addEventListener('click', () => {
+        editingProjectId = null;
+        document.getElementById('project-form').reset();
+        document.getElementById('modal-title').textContent = 'プロジェクト追加';
+        document.getElementById('project-modal').classList.remove('hidden');
+      });
+
+      document.getElementById('cancel-project').addEventListener('click', () => {
+        document.getElementById('project-modal').classList.add('hidden');
+      });
+
+      async function openEdit(id) {
+        const project = allProjects.find(p => p.id === id);
+        if (!project) return;
+        editingProjectId = id;
+        document.getElementById('modal-title').textContent = 'プロジェクト編集';
+        document.getElementById('project-title').value = project.title || '';
+        document.getElementById('project-description').value = project.description || '';
+        document.getElementById('project-technologies').value = (project.technologies || []).join(', ');
+        document.getElementById('project-url').value = project.project_url || '';
+        document.getElementById('project-start').value = project.start_date || '';
+        document.getElementById('project-end').value = project.end_date || '';
+        document.getElementById('project-status').value = project.status || 'completed';
+        document.getElementById('project-modal').classList.remove('hidden');
+      }
+
+      document.getElementById('project-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const data = {
+          title: document.getElementById('project-title').value,
+          description: document.getElementById('project-description').value || null,
+          project_url: document.getElementById('project-url').value || null,
+          technologies: document.getElementById('project-technologies').value.split(',').map(s => s.trim()).filter(Boolean),
+          start_date: document.getElementById('project-start').value || null,
+          end_date: document.getElementById('project-end').value || null,
+          status: document.getElementById('project-status').value || 'completed',
+          user_id: currentUser.id
+        };
+        let error;
+        if (editingProjectId) {
+          ({ error } = await supabase.from('projects').update(data).eq('id', editingProjectId));
+        } else {
+          ({ error } = await supabase.from('projects').insert(data));
+        }
+        if (error) {
+          alert('保存に失敗しました');
+          return;
+        }
+        document.getElementById('project-modal').classList.add('hidden');
+        await loadProjects();
+      });
+
+      async function deleteProject(id) {
+        if (!confirm('削除しますか？')) return;
+        const { error } = await supabase.from('projects').delete().eq('id', id);
+        if (error) {
+          alert('削除に失敗しました');
+          return;
+        }
+        await loadProjects();
+      }
+
+      window.openEdit = openEdit;
+      window.deleteProject = deleteProject;
+
+      document.getElementById('user-menu-button').addEventListener('click', () => {
+        document.getElementById('user-menu').classList.toggle('hidden');
+      });
+      window.addEventListener('click', (e) => {
+        if (!document.getElementById('user-menu-button').contains(e.target)) {
+          document.getElementById('user-menu').classList.add('hidden');
+        }
+      });
+      document.querySelector('.mobile-menu-button').addEventListener('click', () => {
+        document.querySelector('.mobile-menu').classList.toggle('hidden');
+      });
+      document.getElementById('logout-link').addEventListener('click', async (e) => {
+        e.preventDefault();
+        await supabase.auth.signOut();
+        window.location.href = 'login.html?message=logout';
+      });
+      document.querySelector('.logout-link-mobile').addEventListener('click', async (e) => {
+        e.preventDefault();
+        await supabase.auth.signOut();
+        window.location.href = 'login.html?message=logout';
+      });
+    </script>
+  </body>
+</html>

@@ -801,6 +801,14 @@
               <p class="mt-1 text-xs text-gray-500">※200文字以内</p>
             </div>
           </div>
+          <!-- プロジェクトセクション -->
+          <div class="p-6 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">プロジェクト</h2>
+            <div id="projects-preview" class="space-y-2 text-sm text-gray-700"></div>
+            <div class="mt-2">
+              <a href="projects.html" class="text-sm text-blue-600 hover:underline">プロジェクトを管理</a>
+            </div>
+          </div>
 
           <!-- ボタンセクション -->
           <div class="p-6">
@@ -856,6 +864,7 @@
       let userProfile = null;
       let startupInfo = null;
       let profileImageFile = null;
+      let userProjects = [];
 
       // 地域名マッピング
       const locationNames = {
@@ -952,6 +961,8 @@
           startupInfo = startup;
           populateStartupForm(startup);
         }
+
+        await loadProjects();
       }
 
       // ユーザー情報更新
@@ -1014,6 +1025,33 @@
             if (checkbox) checkbox.checked = true;
           });
         }
+      }
+
+      async function loadProjects() {
+        const { data } = await supabase
+          .from("projects")
+          .select("*")
+          .eq("user_id", currentUser.id)
+          .order("created_at", { ascending: false });
+        userProjects = data || [];
+        displayProjectsPreview();
+      }
+
+      function displayProjectsPreview() {
+        const container = document.getElementById("projects-preview");
+        if (!container) return;
+        if (userProjects.length === 0) {
+          container.innerHTML =
+            '<p class="text-gray-500 text-sm">プロジェクト情報はありません</p>';
+          return;
+        }
+        container.innerHTML = userProjects
+          .slice(0, 3)
+          .map(
+            (p) =>
+              `<div class="flex justify-between"><span>${p.title}</span><span class="text-xs text-gray-500">${p.status}</span></div>`
+          )
+          .join("");
       }
 
       // プロフィール画像のプレビュー

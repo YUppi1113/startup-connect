@@ -480,6 +480,11 @@
                   <!-- スタートアップ詳細が動的に生成される -->
                 </div>
               </div>
+                <!-- プロジェクトカード -->
+                <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                  <h2 class="text-lg font-medium text-gray-900 mb-3">プロジェクト</h2>
+                  <div id="projects-preview" class="space-y-2 text-sm text-gray-700"></div>
+                </div>
 
               <!-- つながりカード -->
               <div class="bg-gray-50 rounded-lg p-4">
@@ -641,6 +646,7 @@
       let isFollowing = false;
       let followerCount = 0;
       let followingCount = 0;
+      let projects = [];
 
       // 地域名マッピング
       const locationNames = {
@@ -839,6 +845,9 @@
 
           // つながり情報読み込み
           await loadConnections();
+
+          // プロジェクト情報読み込み
+          await loadProjects();
 
           // ローディングを隠してメインコンテンツ表示
           document.getElementById("loading-container").classList.add("hidden");
@@ -1291,6 +1300,60 @@
 
         document.getElementById("connections-content").innerHTML =
           connectionsHtml;
+      }
+
+      // プロジェクト読み込み
+      async function loadProjects() {
+        const { data } = await supabase
+          .from("projects")
+          .select("*")
+          .eq("user_id", profileUser)
+          .order("created_at", { descending: true });
+        projects = data || [];
+        displayProjectsPreview();
+        displayProjectsTab();
+      }
+
+      function displayProjectsPreview() {
+        const container = document.getElementById("projects-preview");
+        if (!container) return;
+        if (projects.length === 0) {
+          container.innerHTML =
+            '<p class="text-gray-500 text-sm">プロジェクト情報はありません</p>';
+          return;
+        }
+        container.innerHTML = projects
+          .slice(0, 3)
+          .map(
+            (p) =>
+              `<div class="flex justify-between"><span>${p.title}</span><span class="text-xs text-gray-500">${p.status}</span></div>`
+          )
+          .join("");
+      }
+
+      function displayProjectsTab() {
+        const container = document.getElementById("projects-content");
+        if (!container) return;
+        if (projects.length === 0) {
+          container.innerHTML =
+            '<p class="text-center text-gray-500 py-8">プロジェクト情報はまだありません</p>';
+          return;
+        }
+        container.innerHTML = projects
+          .map(
+            (p) =>
+              `<div class="border-b border-gray-200 py-4"><h3 class="font-medium text-gray-900">${p.title}</h3>${
+                p.description
+                  ? `<p class="text-sm text-gray-600 mt-1">${p.description}</p>`
+                  : ""
+              }<div class="flex flex-wrap gap-2 mt-2">${(p.technologies || [])
+                .map(
+                  (t) =>
+                    `<span class="px-2 py-0.5 text-xs bg-green-100 text-green-800 rounded">${t}</span>`
+                )
+                .join("")}</div><p class="mt-2 text-xs text-gray-500">ステータス: ${p.status}</p></div>`
+          )
+          .join("");
       }
 
       // フォロー/アンフォロー処理
