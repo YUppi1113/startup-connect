@@ -2,8 +2,15 @@ import express from 'express';
 import { createClient } from '@supabase/supabase-js';
 import { Configuration, OpenAIApi } from 'openai';
 import dotenv from 'dotenv';
+import webpush from 'web-push';
 
 dotenv.config();
+
+webpush.setVapidDetails(
+  `mailto:${process.env.VAPID_EMAIL}`,
+  process.env.VAPID_PUBLIC_KEY,
+  process.env.VAPID_PRIVATE_KEY
+);
 
 const app = express();
 app.use(express.json());
@@ -16,6 +23,45 @@ const supabase = createClient(
 const openai = new OpenAIApi(
   new Configuration({ apiKey: process.env.OPENAI_API_KEY })
 );
+
+async function sendPushNotification(userId, notification) {
+  const { data: subs } = await supabase
+    .from('push_subscriptions')
+    .select('*')
+    .eq('user_id', userId);
+  if (!subs) return;
+  const payload = JSON.stringify({
+    id: notification.id,
+    title: notification.title,
+    content: notification.content,
+  });
+  for (const sub of subs) {
+    try {
+      await webpush.sendNotification(
+        {
+          endpoint: sub.endpoint,
+          keys: { p256dh: sub.p256dh, auth: sub.auth },
+        },
+        payload
+      );
+    } catch (err) {
+      console.error('Failed to send push', err);
+    }
+  }
+}
+
+supabase
+  .channel('server-notifications')
+  .on(
+    'postgres_changes',
+    { event: 'INSERT', schema: 'public', table: 'notifications' },
+    async (payload) => {
+      if (payload.new) {
+        await sendPushNotification(payload.new.user_id, payload.new);
+      }
+    }
+  )
+  .subscribe();
 
 async function computeEmbedding(text) {
   const { data } = await openai.embeddings.create({

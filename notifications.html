@@ -555,6 +555,18 @@
         await loadNotifications();
         setupRealtimeSubscriptions();
         updateUnreadBadges();
+        const urlParams = new URLSearchParams(window.location.search);
+        const clickedId = urlParams.get('id');
+        if (clickedId) {
+          markAsRead(clickedId);
+        }
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'notification-click') {
+              markAsRead(event.data.id);
+            }
+          });
+        }
       });
 
       // 認証チェック
