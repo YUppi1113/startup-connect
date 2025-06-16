@@ -173,15 +173,26 @@
             </div>
             <div>
               <label for="password" class="sr-only">パスワード</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autocomplete="current-password"
-                required
-                class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="パスワード"
-              />
+              <div class="relative">
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autocomplete="current-password"
+                  required
+                  class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm pr-10"
+                  placeholder="パスワード"
+                />
+                <button
+                  type="button"
+                  id="toggle-login-password"
+                  class="absolute inset-y-0 right-0 px-3 text-gray-500"
+                  aria-label="パスワードを表示"
+                >
+                  表示
+                </button>
+              </div>
+              <div id="login-password-strength" class="mt-1 text-xs text-gray-500"></div>
             </div>
           </div>
 
@@ -500,6 +511,42 @@
           cancel.addEventListener("click", handleCancel);
         });
       }
+
+      function evaluatePasswordStrength(pw) {
+        let score = 0;
+        if (pw.length >= 8) score++;
+        if (/[A-Z]/.test(pw)) score++;
+        if (/[0-9]/.test(pw)) score++;
+        if (/[^A-Za-z0-9]/.test(pw)) score++;
+        if (score <= 1) return { text: "弱い", color: "text-red-500" };
+        if (score <= 3) return { text: "普通", color: "text-yellow-500" };
+        return { text: "強い", color: "text-green-500" };
+      }
+
+      function toggleVisibility(id, btn) {
+        const input = document.getElementById(id);
+        if (input.type === "password") {
+          input.type = "text";
+          btn.textContent = "隠す";
+        } else {
+          input.type = "password";
+          btn.textContent = "表示";
+        }
+      }
+
+      document
+        .getElementById("password")
+        .addEventListener("input", (e) => {
+          const { text, color } = evaluatePasswordStrength(e.target.value);
+          const el = document.getElementById("login-password-strength");
+          el.textContent = `強度: ${text}`;
+          el.className = `mt-1 text-xs ${color}`;
+        });
+      document
+        .getElementById("toggle-login-password")
+        .addEventListener("click", function () {
+          toggleVisibility("password", this);
+        });
       // ログインフォームの処理
       document
         .getElementById("login-form")
