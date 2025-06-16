@@ -1111,10 +1111,20 @@
       // グローバル変数
       let currentUser = null;
       let currentPage = 1;
-      const itemsPerPage = 9;
+      const itemsPerPage = 20; // fixed page size for server-side paging
       let totalResults = 0;
       let allUsers = [];
       let followingUsers = new Set();
+      const useInfiniteScroll = false; // toggle for infinite scrolling
+      let isLoadingMore = false;
+
+      // ページ番号をURLに反映
+      function updatePageParam() {
+        const params = new URLSearchParams(window.location.search);
+        params.set("page", currentPage);
+        const newUrl = `${window.location.pathname}?${params.toString()}`;
+        history.replaceState(null, "", newUrl);
+      }
 
       // 地域名マッピング
       const locationNames = {
@@ -1190,6 +1200,8 @@
 
       // ページ読み込み時の初期化
       window.addEventListener("load", async () => {
+        const params = new URLSearchParams(window.location.search);
+        currentPage = parseInt(params.get("page")) || 1;
         await checkAuth();
         await loadFollowingUsers();
         setupMobileFilter();
@@ -1259,8 +1271,8 @@
       }
 
       // 検索実行
-      async function performSearch() {
-        showLoading();
+      async function performSearch(append = false) {
+        if (!append) showLoading();
         hideNoResults();
         hidePagination();
 
@@ -1273,7 +1285,8 @@
             `
                     *,
                     startup_info!inner(*)
-                `
+                `,
+            { count: "exact" }
           )
           .neq("id", currentUser.id); // 自分自身は除外
 
@@ -1309,6 +1322,9 @@
           query = query.in("startup_info.startup_status", filters.stages);
         }
 
+        const start = (currentPage - 1) * itemsPerPage;
+        const end = start + itemsPerPage - 1;
+        query = query.range(start, end);
         const { data, error, count } = await query;
 
         if (error) {
@@ -1318,14 +1334,18 @@
           return;
         }
 
-        allUsers = data || [];
-        totalResults = allUsers.length;
+        if (append) {
+          allUsers = allUsers.concat(data || []);
+        } else {
+          allUsers = data || [];
+          totalResults = count || 0;
+        }
 
         // ソート実行
         sortResults();
 
         // 結果表示
-        displayResults();
+        displayResults(append);
         hideLoading();
       }
 
@@ -1368,13 +1388,15 @@
       }
 
       // 結果の表示
-      function displayResults() {
+      function displayResults(append = false) {
         const startIndex = (currentPage - 1) * itemsPerPage;
         const endIndex = startIndex + itemsPerPage;
-        const pageUsers = allUsers.slice(startIndex, endIndex);
+        const pageUsers = append ? allUsers.slice(startIndex) : allUsers;
 
         const resultsContainer = document.getElementById("search-results");
-        resultsContainer.innerHTML = "";
+        if (!append) {
+          resultsContainer.innerHTML = "";
+        }
 
         if (pageUsers.length === 0) {
           showNoResults();
@@ -1547,7 +1569,8 @@
       // ページ移動
       function goToPage(page) {
         currentPage = page;
-        displayResults();
+        updatePageParam();
+        performSearch();
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
 
@@ -1611,6 +1634,7 @@
       async function handleSearch(e) {
         e.preventDefault();
         currentPage = 1;
+        updatePageParam();
         await performSearch();
 
         // モバイルフィルターモーダルを閉じる
@@ -1620,6 +1644,7 @@
       // リセットハンドラー
       async function handleReset() {
         currentPage = 1;
+        updatePageParam();
         await performSearch();
       }
 
@@ -1670,6 +1695,22 @@
           await supabase.auth.signOut();
           window.location.href = "login.html?message=logout";
         });
+
+      // 無限スクロール
+      window.addEventListener("scroll", async () => {
+        if (!useInfiniteScroll || isLoadingMore) return;
+        if (
+          window.innerHeight + window.scrollY >=
+          document.body.offsetHeight - 100
+        ) {
+          if (currentPage * itemsPerPage >= totalResults) return;
+          isLoadingMore = true;
+          currentPage += 1;
+          updatePageParam();
+          await performSearch(true);
+          isLoadingMore = false;
+        }
+      });
 
       // ウィンドウクリックでメニューを閉じる
       window.addEventListener("click", function (e) {
