@@ -119,6 +119,12 @@
                 class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
                 >イベント</a
               >
+              <a
+                href="#"
+                id="guide-link"
+                class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >使い方ガイド</a
+              >
             </nav>
           </div>
           <div class="hidden md:flex items-center">
@@ -260,6 +266,13 @@
           class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
           role="menuitem"
           >イベント</a
+        >
+        <a
+          href="#"
+          id="guide-link-mobile"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          role="menuitem"
+          >使い方ガイド</a
         >
         <div class="border-t border-gray-200 my-1"></div>
         <a
@@ -555,7 +568,29 @@
           </div>
         </div>
       </div>
-    </main>
+  </main>
+
+    <!-- 使い方ガイドモーダル -->
+    <div id="guide-modal" class="fixed inset-0 z-30 hidden" role="dialog" aria-modal="true">
+      <div class="absolute inset-0 bg-gray-900 bg-opacity-50"></div>
+      <div class="relative max-w-lg mx-auto mt-20 bg-white rounded-lg shadow-xl">
+        <div class="p-6">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-semibold text-gray-900">使い方ガイド</h3>
+            <button id="close-guide-modal" class="text-gray-400 hover:text-gray-500">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <ol class="list-decimal list-inside space-y-2 text-gray-700">
+            <li>プロフィールを作成してあなたのスキルや経験を登録します。</li>
+            <li>検索機能でパートナーを探し、気になる相手にメッセージを送りましょう。</li>
+            <li>マッチしたらチャットやグループでやり取りし、ビジネスを始めます。</li>
+          </ol>
+        </div>
+      </div>
+    </div>
 
     <!-- 初回説明モーダル -->
     <div id="intro-modal" class="fixed inset-0 z-40 hidden" role="dialog" aria-modal="true">
@@ -585,6 +620,12 @@
             >
             <a href="#" class="text-gray-500 hover:text-gray-700"
               >お問い合わせ</a
+            >
+            <a
+              href="#"
+              id="guide-link-footer"
+              class="text-gray-500 hover:text-gray-700"
+              >使い方ガイド</a
             >
           </div>
         </div>
@@ -1328,6 +1369,26 @@
           await supabase.auth.signOut();
           window.location.href = "login.html?message=logout";
         });
+
+      document.getElementById("guide-link").addEventListener("click", (e) => {
+        e.preventDefault();
+        openModal("guide-modal", e.currentTarget);
+      });
+      document
+        .getElementById("guide-link-mobile")
+        .addEventListener("click", (e) => {
+          e.preventDefault();
+          openModal("guide-modal", e.currentTarget);
+        });
+      document
+        .getElementById("guide-link-footer")
+        .addEventListener("click", (e) => {
+          e.preventDefault();
+          openModal("guide-modal", e.currentTarget);
+        });
+      document
+        .getElementById("close-guide-modal")
+        .addEventListener("click", () => closeModal("guide-modal"));
     </script>
     <script src="accessibility.js"></script>
   </body>
