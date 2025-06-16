@@ -917,7 +917,8 @@
       </div>
     </footer>
 
-    <script>
+    <script type="module">
+      import { composeMessage, sendMessage as sendMessageAPI } from './js/message.js';
       // Supabase設定
       const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.__ENV__;
       const supabase = window.supabase.createClient(
@@ -1414,19 +1415,16 @@
       async function sendMessage(content, fileUrl = null) {
         if (!currentChatUser || (!content.trim() && !fileUrl)) return;
 
-        const messageData = {
-          sender_id: currentUser.id,
-          receiver_id: currentChatUser.id,
-          content: content.trim() || "",
-          file_url: fileUrl,
-          is_read: false,
-        };
+        const messageData = composeMessage(
+          currentUser.id,
+          currentChatUser.id,
+          content,
+          fileUrl
+        );
 
-        const { error } = await supabase
-          .from("direct_messages")
-          .insert(messageData);
-
-        if (error) {
+        try {
+          await sendMessageAPI(supabase, messageData);
+        } catch (error) {
           console.error("Error sending message:", error);
           alert("メッセージの送信に失敗しました");
           return;
