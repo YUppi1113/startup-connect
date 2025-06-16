@@ -486,7 +486,8 @@
                 <div class="flex justify-between items-center mb-3">
                   <h2 class="text-lg font-medium text-gray-900">つながり</h2>
                   <a
-                    href="#connections"
+                    href="#"
+                    id="view-all-connections"
                     class="text-sm text-blue-600 hover:underline"
                     >すべて見る</a
                   >
@@ -818,6 +819,8 @@
 
           profileUser = userId;
           profileUserData = profile;
+          document.getElementById("view-all-connections").href =
+            `connections.html?user=${profileUser}`;
 
           // スタートアップ情報取得
           const { data: startup } = await supabase
@@ -1149,8 +1152,8 @@
 
         // 統計表示
         document.getElementById("connections-stats").innerHTML = `
-                <span class="font-medium">${followerCount}</span> フォロワー・
-                <span class="font-medium">${followingCount}</span> フォロー中
+                <a href="connections.html?user=${profileUser}&view=followers" class="font-medium text-blue-600 hover:underline">${followerCount}</a> フォロワー・
+                <a href="connections.html?user=${profileUser}&view=following" class="font-medium text-blue-600 hover:underline">${followingCount}</a> フォロー中
             `;
 
         // つながりタブコンテンツ
