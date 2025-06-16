@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="referrer" content="no-referrer" />
+    <title>ユーザープロフィール - スタートアップコネクト</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Noto Sans JP", sans-serif;
+      }
+      .tab-active {
+        border-bottom: 2px solid #2563eb;
+        color: #2563eb;
+      }
+      .skeleton {
+        animation: shimmer 1.5s infinite;
+        background: linear-gradient(
+          90deg,
+          #f0f0f0 25%,
+          #e0e0e0 50%,
+          #f0f0f0 75%
+        );
+        background-size: 200% 100%;
+      }
+      @keyframes shimmer {
+        0% {
+          background-position: 200% 0;
+        }
+        100% {
+          background-position: -200% 0;
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 min-h-screen">
+    <!-- ナビゲーションバー -->
+    <header class="bg-white shadow-md sticky top-0 z-20">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+          <div class="flex items-center">
+            <div class="flex-shrink-0 flex items-center">
+              <a href="index.html">
+                <svg
+                  class="h-8 w-8 text-blue-600"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+              </a>
+              <a
+                href="dashboard.html"
+                class="ml-2 text-xl font-bold text-gray-800"
+                >スタートアップコネクト</a
+              >
+            </div>
+            <nav class="hidden md:ml-6 md:flex space-x-4">
+              <a
+                href="dashboard.html"
+                class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >ホーム</a
+              >
+              <a
+                href="search.html"
+                class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >検索</a
+              >
+              <a
+                href="messages.html"
+                class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >メッセージ</a
+              >
+              <a
+                href="groups.html"
+                class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >グループ</a
+              >
+              <a
+                href="events.html"
+                class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >イベント</a
+              >
+            </nav>
+          </div>
+          <div class="hidden md:flex items-center">
+            <button
+              type="button"
+              id="notification-button"
+              class="relative p-1 rounded-full text-gray-500 hover:text-blue-600 focus:outline-none"
+            >
+              <span class="sr-only">通知を見る</span>
+              <a href="notifications.html" class="relative inline-flex">
+                <svg
+                  class="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                  ></path>
+                </svg>
+                <span
+                  id="notification-dot"
+                  class="hidden absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500"
+                ></span>
+              </a>
+            </button>
+
+            <div class="ml-3 relative">
+              <div class="flex items-center">
+                <button
+                  type="button"
+                  class="bg-gray-800 flex text-sm rounded-full focus:outline-none"
+                  id="user-menu-button"
+                >
+                  <span class="sr-only">メニューを開く</span>
+                  <img
+                    id="current-user-avatar"
+                    class="h-8 w-8 rounded-full object-cover"
+                    src="/api/placeholder/32/32"
+                    alt="プロフィール"
+                  />
+                </button>
+                <div class="ml-2 hidden md:block">
+                  <div
+                    id="current-user-name"
+                    class="text-sm font-medium text-gray-800"
+                  >
+                    読み込み中...
+                  </div>
+                  <div id="current-user-location" class="text-xs text-gray-500">
+                    -
+                  </div>
+                </div>
+              </div>
+
+              <div
+                id="user-menu"
+                class="hidden origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-30"
+              >
+                <a
+                  href="profile.html"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >プロフィール</a
+                >
+                <a
+                  href="settings.html"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >設定</a
+                >
+                <a
+                  href="#"
+                  id="logout-link"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >ログアウト</a
+                >
+              </div>
+            </div>
+          </div>
+
+          <div class="flex md:hidden items-center">
+            <a href="notifications.html" class="relative mr-3 p-1">
+              <svg
+                class="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                ></path>
+              </svg>
+              <span
+                class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500"
+              ></span>
+            </a>
+
+            <button
+              type="button"
+              class="mobile-menu-button text-gray-500 hover:text-blue-600 focus:outline-none"
+            >
+              <svg
+                class="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 6h16M4 12h16M4 18h16"
+                ></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- モバイルメニュー -->
+      <div class="mobile-menu hidden md:hidden bg-white border-t">
+        <a
+          href="dashboard.html"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >ホーム</a
+        >
+        <a
+          href="search.html"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >検索</a
+        >
+        <a
+          href="messages.html"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >メッセージ</a
+        >
+        <a
+          href="groups.html"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >グループ</a
+        >
+        <a
+          href="events.html"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >イベント</a
+        >
+        <div class="border-t border-gray-200 my-1"></div>
+        <a
+          href="profile.html"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >プロフィール</a
+        >
+        <a
+          href="settings.html"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >設定</a
+        >
+        <a
+          href="#"
+          class="logout-link-mobile block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >ログアウト</a
+        >
+      </div>
+    </header>
+
+    <!-- エラー表示 -->
+    <div
+      id="error-message"
+      class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mx-4 mt-4"
+    >
+      <span id="error-text"></span>
+    </div>
+
+    <!-- ローディング表示 -->
+    <div
+      id="loading-container"
+      class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8"
+    >
+      <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="relative">
+          <div class="h-48 w-full skeleton"></div>
+          <div class="px-4 sm:px-6 lg:px-8">
+            <div
+              class="flex flex-col sm:flex-row sm:items-end sm:justify-between -mt-12 sm:-mt-16"
+            >
+              <div class="flex items-end">
+                <div
+                  class="h-24 w-24 sm:h-32 sm:w-32 rounded-full skeleton"
+                ></div>
+                <div class="ml-4 mb-4 hidden sm:block">
+                  <div class="h-8 w-32 skeleton mb-2"></div>
+                  <div class="h-4 w-24 skeleton"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- メインコンテンツ -->
+    <main
+      id="main-content"
+      class="hidden max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8"
+    >
+      <div class="bg-white shadow rounded-lg overflow-hidden">
+        <!-- プロフィールヘッダー部分 -->
+        <div class="relative">
+          <!-- カバー画像 -->
+          <div
+            class="h-48 w-full bg-gradient-to-r from-blue-500 to-indigo-600"
+          ></div>
+
+          <!-- プロフィール画像とアクションボタン -->
+          <div class="px-4 sm:px-6 lg:px-8">
+            <div
+              class="flex flex-col sm:flex-row sm:items-end sm:justify-between -mt-12 sm:-mt-16"
+            >
+              <div class="flex items-end">
+                <img
+                  id="profile-avatar"
+                  src="/api/placeholder/128/128"
+                  alt=""
+                  class="h-24 w-24 sm:h-32 sm:w-32 rounded-full border-4 border-white object-cover"
+                />
+                <div class="ml-4 mb-4 hidden sm:block">
+                  <h1
+                    id="profile-name"
+                    class="text-2xl font-bold text-gray-900"
+                  >
+                    -
+                  </h1>
+                  <p id="profile-role" class="text-sm text-gray-600">-</p>
+                </div>
+              </div>
+              <div class="mt-4 sm:mt-0 flex space-x-2">
+                <button
+                  id="follow-btn"
+                  class="bg-blue-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-blue-700 transition duration-200"
+                >
+                  <span class="hidden sm:inline">フォローする</span>
+                  <span class="sm:hidden">フォロー</span>
+                </button>
+                <button
+                  id="message-btn"
+                  class="border border-gray-300 text-gray-700 py-2 px-4 rounded-md text-sm font-medium hover:bg-gray-50 transition duration-200"
+                >
+                  <span class="hidden sm:inline">メッセージを送る</span>
+                  <span class="sm:hidden">メッセージ</span>
+                </button>
+                <div class="relative">
+                  <button
+                    id="more-options-button"
+                    class="border border-gray-300 text-gray-700 py-2 px-2 rounded-md text-sm font-medium hover:bg-gray-50 transition duration-200"
+                  >
+                    <svg
+                      class="h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
+                      />
+                    </svg>
+                  </button>
+
+                  <div
+                    id="more-options-menu"
+                    class="hidden origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-30"
+                  >
+                    <a
+                      href="#"
+                      class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >共有する</a
+                    >
+                    <a
+                      href="#"
+                      id="report-user"
+                      class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >通報する</a
+                    >
+                    <a
+                      href="#"
+                      id="block-user"
+                      class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >ブロックする</a
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- モバイル用の名前表示 -->
+            <div class="sm:hidden mt-3">
+              <h1
+                id="mobile-profile-name"
+                class="text-2xl font-bold text-gray-900"
+              >
+                -
+              </h1>
+              <p id="mobile-profile-role" class="text-sm text-gray-600">-</p>
+            </div>
+          </div>
+
+          <!-- タブナビゲーション -->
+          <div class="border-b border-gray-200 mt-6">
+            <nav
+              class="flex -mb-px px-4 sm:px-6 lg:px-8 overflow-x-auto scrollbar-hide"
+            >
+              <a
+                href="#profile"
+                data-tab="profile"
+                class="tab-active whitespace-nowrap py-4 px-1 text-center border-b-2 font-medium text-sm mr-8"
+              >
+                プロフィール
+              </a>
+              <a
+                href="#projects"
+                data-tab="projects"
+                class="text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 text-center border-b-2 border-transparent font-medium text-sm mr-8"
+              >
+                プロジェクト
+              </a>
+              <a
+                href="#posts"
+                data-tab="posts"
+                class="text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 text-center border-b-2 border-transparent font-medium text-sm mr-8"
+              >
+                投稿
+              </a>
+              <a
+                href="#connections"
+                data-tab="connections"
+                class="text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 text-center border-b-2 border-transparent font-medium text-sm"
+              >
+                つながり
+              </a>
+            </nav>
+          </div>
+        </div>
+
+        <!-- プロフィールコンテンツ -->
+        <div class="p-4 sm:p-6 lg:p-8">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- サイドバー：基本情報 -->
+            <div class="lg:col-span-1">
+              <!-- 基本情報カード -->
+              <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                <h2 class="text-lg font-medium text-gray-900 mb-3">基本情報</h2>
+                <ul id="basic-info" class="space-y-3">
+                  <!-- 基本情報が動的に生成される -->
+                </ul>
+              </div>
+
+              <!-- スキルカード -->
+              <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                <h2 class="text-lg font-medium text-gray-900 mb-3">スキル</h2>
+                <div id="skills-container" class="flex flex-wrap gap-2">
+                  <!-- スキルが動的に生成される -->
+                </div>
+              </div>
+
+              <!-- 起業ステータスカード -->
+              <div
+                id="startup-info-card"
+                class="bg-gray-50 rounded-lg p-4 mb-6"
+              >
+                <h2 class="text-lg font-medium text-gray-900 mb-3">
+                  起業ステータス
+                </h2>
+                <div id="startup-status" class="mb-3">
+                  <!-- スタートアップステータスが動的に生成される -->
+                </div>
+                <div id="startup-details">
+                  <!-- スタートアップ詳細が動的に生成される -->
+                </div>
+              </div>
+
+              <!-- つながりカード -->
+              <div class="bg-gray-50 rounded-lg p-4">
+                <div class="flex justify-between items-center mb-3">
+                  <h2 class="text-lg font-medium text-gray-900">つながり</h2>
+                  <a
+                    href="#connections"
+                    class="text-sm text-blue-600 hover:underline"
+                    >すべて見る</a
+                  >
+                </div>
+                <div
+                  id="connections-preview"
+                  class="flex flex-wrap items-center gap-2"
+                >
+                  <!-- つながりプレビューが動的に生成される -->
+                </div>
+                <div id="connections-stats" class="mt-3 text-sm text-gray-600">
+                  <!-- つながり統計が動的に生成される -->
+                </div>
+              </div>
+            </div>
+
+            <!-- メインコンテンツ：タブ内容 -->
+            <div class="lg:col-span-2">
+              <!-- プロフィールタブ -->
+              <div id="profile-tab" class="tab-content">
+                <!-- 自己紹介セクション -->
+                <div
+                  class="bg-white rounded-lg border border-gray-200 p-5 mb-6"
+                >
+                  <h2 class="text-lg font-medium text-gray-900 mb-3">
+                    自己紹介
+                  </h2>
+                  <div id="bio-content" class="text-gray-700">
+                    <!-- 自己紹介が動的に生成される -->
+                  </div>
+                </div>
+
+                <!-- スタートアップ詳細セクション -->
+                <div
+                  id="startup-details-section"
+                  class="bg-white rounded-lg border border-gray-200 p-5 mb-6"
+                >
+                  <h2 class="text-lg font-medium text-gray-900 mb-3">
+                    スタートアップについて
+                  </h2>
+                  <div id="startup-details-content">
+                    <!-- スタートアップ詳細が動的に生成される -->
+                  </div>
+                </div>
+              </div>
+
+              <!-- プロジェクトタブ -->
+              <div id="projects-tab" class="tab-content hidden">
+                <div class="bg-white rounded-lg border border-gray-200 p-5">
+                  <h2 class="text-lg font-medium text-gray-900 mb-3">
+                    プロジェクト実績
+                  </h2>
+                  <div
+                    id="projects-content"
+                    class="text-center text-gray-500 py-8"
+                  >
+                    <svg
+                      class="mx-auto h-12 w-12 text-gray-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                      />
+                    </svg>
+                    <p class="mt-2 text-sm">プロジェクト情報はまだありません</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 投稿タブ -->
+              <div id="posts-tab" class="tab-content hidden">
+                <div class="bg-white rounded-lg border border-gray-200 p-5">
+                  <h2 class="text-lg font-medium text-gray-900 mb-3">
+                    最近の投稿
+                  </h2>
+                  <div
+                    id="posts-content"
+                    class="text-center text-gray-500 py-8"
+                  >
+                    <svg
+                      class="mx-auto h-12 w-12 text-gray-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                      />
+                    </svg>
+                    <p class="mt-2 text-sm">投稿情報はまだありません</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- つながりタブ -->
+              <div id="connections-tab" class="tab-content hidden">
+                <div class="bg-white rounded-lg border border-gray-200 p-5">
+                  <h2 class="text-lg font-medium text-gray-900 mb-3">
+                    つながり
+                  </h2>
+                  <div id="connections-content">
+                    <!-- つながり一覧が動的に生成される -->
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- フッター -->
+    <footer class="bg-gray-100 py-6 mt-12">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center text-gray-500 text-sm">
+          <p>&copy; 2024 スタートアップコネクト. All rights reserved.</p>
+          <div class="mt-2 space-x-4">
+            <a href="#" class="text-gray-500 hover:text-gray-700">利用規約</a>
+            <a href="#" class="text-gray-500 hover:text-gray-700"
+              >プライバシーポリシー</a
+            >
+            <a href="#" class="text-gray-500 hover:text-gray-700"
+              >お問い合わせ</a
+            >
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // Supabase設定
+      const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.__ENV__;
+      const supabase = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+      );
+
+      // グローバル変数
+      let currentUser = null;
+      let currentUserProfile = null;
+      let profileUser = null;
+      let profileUserData = null;
+      let startupInfo = null;
+      let isFollowing = false;
+      let followerCount = 0;
+      let followingCount = 0;
+
+      // 地域名マッピング
+      const locationNames = {
+        hokkaido: "北海道",
+        aomori: "青森県",
+        iwate: "岩手県",
+        miyagi: "宮城県",
+        akita: "秋田県",
+        yamagata: "山形県",
+        fukushima: "福島県",
+        ibaraki: "茨城県",
+        tochigi: "栃木県",
+        gunma: "群馬県",
+        saitama: "埼玉県",
+        chiba: "千葉県",
+        tokyo: "東京都",
+        kanagawa: "神奈川県",
+        niigata: "新潟県",
+        toyama: "富山県",
+        ishikawa: "石川県",
+        fukui: "福井県",
+        yamanashi: "山梨県",
+        nagano: "長野県",
+        gifu: "岐阜県",
+        shizuoka: "静岡県",
+        aichi: "愛知県",
+        mie: "三重県",
+        shiga: "滋賀県",
+        kyoto: "京都府",
+        osaka: "大阪府",
+        hyogo: "兵庫県",
+        nara: "奈良県",
+        wakayama: "和歌山県",
+        tottori: "鳥取県",
+        shimane: "島根県",
+        okayama: "岡山県",
+        hiroshima: "広島県",
+        yamaguchi: "山口県",
+        tokushima: "徳島県",
+        kagawa: "香川県",
+        ehime: "愛媛県",
+        kochi: "高知県",
+        fukuoka: "福岡県",
+        saga: "佐賀県",
+        nagasaki: "長崎県",
+        kumamoto: "熊本県",
+        oita: "大分県",
+        miyazaki: "宮崎県",
+        kagoshima: "鹿児島県",
+        okinawa: "沖縄県",
+      };
+
+      const ageNames = {
+        "10s": "10代",
+        "20s": "20代",
+        "30s": "30代",
+        "40s": "40代",
+        "50s": "50代",
+        "60s": "60代以上",
+      };
+
+      const skillNames = {
+        tech: "テクノロジー・IT",
+        marketing: "マーケティング",
+        sales: "営業・セールス",
+        finance: "財務・会計",
+        design: "デザイン",
+        hr: "人事・組織開発",
+        legal: "法務・知財",
+        planning: "企画・戦略",
+        other: "その他",
+      };
+
+      const startupStatusNames = {
+        idea: "アイデア段階",
+        planning: "計画段階",
+        mvp: "MVP開発中",
+        launched: "ローンチ済み",
+        funding: "資金調達中",
+        scaling: "スケーリング中",
+      };
+
+      const industryNames = {
+        fintech: "フィンテック",
+        healthtech: "ヘルステック",
+        edtech: "エドテック",
+        proptech: "プロップテック",
+        foodtech: "フードテック",
+        mobility: "モビリティ",
+        sustainability: "サステナビリティ",
+        ai: "AI・機械学習",
+        blockchain: "ブロックチェーン",
+        iot: "IoT",
+        saas: "SaaS",
+        ecommerce: "Eコマース",
+        other: "その他",
+      };
+
+      const lookingForNames = {
+        cofounder: "共同創業者",
+        developer: "エンジニア",
+        designer: "デザイナー",
+        marketer: "マーケター",
+        investor: "投資家",
+        advisor: "アドバイザー",
+        partner: "事業パートナー",
+        mentor: "メンター",
+        other: "その他",
+      };
+
+      // ページ読み込み時の初期化
+      window.addEventListener("load", async () => {
+        await checkAuth();
+        const userId = getUrlParameter("user");
+        if (!userId) {
+          showError("ユーザーIDが指定されていません");
+          return;
+        }
+        await loadProfileData(userId);
+      });
+
+      // 認証チェック
+      async function checkAuth() {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) {
+          window.location.href = "login.html";
+          return;
+        }
+        currentUser = user;
+        await loadCurrentUserProfile();
+      }
+
+      // 現在のユーザーのプロフィール読み込み
+      async function loadCurrentUserProfile() {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", currentUser.id)
+          .single();
+
+        if (profile) {
+          currentUserProfile = profile;
+          updateCurrentUserInfo(profile);
+        }
+      }
+
+      // 現在のユーザー情報更新
+      function updateCurrentUserInfo(profile) {
+        document.getElementById(
+          "current-user-name"
+        ).textContent = `${profile.last_name} ${profile.first_name}`;
+        document.getElementById("current-user-location").textContent =
+          locationNames[profile.location] || profile.location;
+        if (profile.profile_image_url) {
+          document.getElementById("current-user-avatar").src =
+            profile.profile_image_url;
+        }
+      }
+
+      // プロフィールデータ読み込み
+      async function loadProfileData(userId) {
+        try {
+          // プロフィール情報取得
+          const { data: profile, error: profileError } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", userId)
+            .single();
+
+          if (profileError || !profile) {
+            throw new Error("ユーザーが見つかりません");
+          }
+
+          profileUser = userId;
+          profileUserData = profile;
+
+          // スタートアップ情報取得
+          const { data: startup } = await supabase
+            .from("startup_info")
+            .select("*")
+            .eq("user_id", userId)
+            .single();
+
+          startupInfo = startup;
+
+          // フォロー状態確認
+          await checkFollowStatus();
+
+          // フォロワー・フォロー数取得
+          await loadConnectionStats();
+
+          // プロフィール表示
+          displayProfile();
+
+          // つながり情報読み込み
+          await loadConnections();
+
+          // ローディングを隠してメインコンテンツ表示
+          document.getElementById("loading-container").classList.add("hidden");
+          document.getElementById("main-content").classList.remove("hidden");
+        } catch (error) {
+          console.error("Error loading profile:", error);
+          showError(error.message);
+        }
+      }
+
+      // フォロー状態確認
+      async function checkFollowStatus() {
+        if (profileUser === currentUser.id) {
+          // 自分のプロフィールの場合、編集ボタンに変更
+          document.getElementById("follow-btn").textContent =
+            "プロフィール編集";
+          document.getElementById("follow-btn").onclick = () =>
+            (window.location.href = "profile.html");
+          return;
+        }
+
+        const { data: follow } = await supabase
+          .from("follows")
+          .select("*")
+          .eq("follower_id", currentUser.id)
+          .eq("following_id", profileUser)
+          .single();
+
+        isFollowing = !!follow;
+        updateFollowButton();
+      }
+
+      // フォローボタン更新
+      function updateFollowButton() {
+        const followBtn = document.getElementById("follow-btn");
+        if (isFollowing) {
+          followBtn.textContent = "フォロー中";
+          followBtn.classList.remove("bg-blue-600", "hover:bg-blue-700");
+          followBtn.classList.add("bg-gray-600", "hover:bg-gray-700");
+        } else {
+          followBtn.textContent = "フォローする";
+          followBtn.classList.remove("bg-gray-600", "hover:bg-gray-700");
+          followBtn.classList.add("bg-blue-600", "hover:bg-blue-700");
+        }
+      }
+
+      // つながり統計読み込み
+      async function loadConnectionStats() {
+        const [followersResult, followingResult] = await Promise.all([
+          supabase
+            .from("follows")
+            .select("*", { count: "exact", head: true })
+            .eq("following_id", profileUser),
+          supabase
+            .from("follows")
+            .select("*", { count: "exact", head: true })
+            .eq("follower_id", profileUser),
+        ]);
+
+        followerCount = followersResult.count || 0;
+        followingCount = followingResult.count || 0;
+      }
+
+      // プロフィール表示
+      function displayProfile() {
+        const profile = profileUserData;
+
+        // プロフィール画像と名前
+        document.getElementById("profile-avatar").src =
+          profile.profile_image_url || "/api/placeholder/128/128";
+        document.getElementById(
+          "profile-name"
+        ).textContent = `${profile.last_name} ${profile.first_name}`;
+        document.getElementById(
+          "mobile-profile-name"
+        ).textContent = `${profile.last_name} ${profile.first_name}`;
+
+        // 役職/説明
+        const roleText = startupInfo
+          ? `${
+              startupStatusNames[startupInfo.startup_status] ||
+              startupInfo.startup_status
+            }`
+          : "一般ユーザー";
+        document.getElementById("profile-role").textContent = roleText;
+        document.getElementById("mobile-profile-role").textContent = roleText;
+
+        // 基本情報
+        displayBasicInfo();
+
+        // スキル
+        displaySkills();
+
+        // スタートアップ情報
+        displayStartupInfo();
+
+        // 自己紹介
+        displayBio();
+      }
+
+      // 基本情報表示
+      function displayBasicInfo() {
+        const profile = profileUserData;
+        const basicInfoHtml = `
+                <li class="flex items-start">
+                    <svg class="h-5 w-5 text-gray-500 mt-0.5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span class="text-gray-700">${
+                      locationNames[profile.location] || profile.location
+                    }</span>
+                </li>
+                <li class="flex items-start">
+                    <svg class="h-5 w-5 text-gray-500 mt-0.5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span class="text-gray-700">${
+                      ageNames[profile.age_range] || profile.age_range
+                    }</span>
+                </li>
+                ${
+                  profile.linkedin_url
+                    ? `
+                <li class="flex items-start">
+                    <svg class="h-5 w-5 text-gray-500 mt-0.5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                    <a href="${profile.linkedin_url}" target="_blank" class="text-blue-600 hover:underline">LinkedIn</a>
+                </li>
+                `
+                    : ""
+                }
+                <li class="flex items-start">
+                    <svg class="h-5 w-5 text-gray-500 mt-0.5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span class="text-gray-700">参加日: ${new Date(
+                      profile.created_at
+                    ).toLocaleDateString("ja-JP")}</span>
+                </li>
+            `;
+        document.getElementById("basic-info").innerHTML = basicInfoHtml;
+      }
+
+      // スキル表示
+      function displaySkills() {
+        const profile = profileUserData;
+        const skillsHtml =
+          profile.skills
+            ?.map(
+              (skill) =>
+                `<span class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-blue-100 text-blue-800">${
+                  skillNames[skill] || skill
+                }</span>`
+            )
+            .join("") ||
+          '<span class="text-gray-500 text-sm">スキル情報がありません</span>';
+
+        document.getElementById("skills-container").innerHTML = skillsHtml;
+      }
+
+      // スタートアップ情報表示
+      function displayStartupInfo() {
+        if (!startupInfo) {
+          document.getElementById("startup-info-card").style.display = "none";
+          document.getElementById("startup-details-section").style.display =
+            "none";
+          return;
+        }
+
+        // ステータス表示
+        const statusClass = getStatusColorClass(startupInfo.startup_status);
+        document.getElementById("startup-status").innerHTML = `
+                <div class="${statusClass} px-3 py-1 rounded-md text-sm font-medium inline-block">
+                    ${
+                      startupStatusNames[startupInfo.startup_status] ||
+                      startupInfo.startup_status
+                    }
+                </div>
+            `;
+
+        // スタートアップ詳細
+        const detailsHtml = `
+                ${
+                  startupInfo.business_idea
+                    ? `
+                <div class="mb-4">
+                    <h4 class="font-medium text-gray-900 mb-2">ビジネスアイデア</h4>
+                    <p class="text-sm text-gray-700">${startupInfo.business_idea}</p>
+                </div>
+                `
+                    : ""
+                }
+                
+                ${
+                  startupInfo.industries?.length > 0
+                    ? `
+                <div class="mb-4">
+                    <h4 class="font-medium text-gray-900 mb-2">業界・分野</h4>
+                    <div class="flex flex-wrap gap-1">
+                        ${startupInfo.industries
+                          .map(
+                            (industry) =>
+                              `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">${
+                                industryNames[industry] || industry
+                              }</span>`
+                          )
+                          .join("")}
+                    </div>
+                </div>
+                `
+                    : ""
+                }
+                
+                <div class="mb-4">
+                    <h4 class="font-medium text-gray-900 mb-2">探しているもの</h4>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                        ${
+                          lookingForNames[startupInfo.looking_for] ||
+                          startupInfo.looking_for
+                        }
+                    </span>
+                </div>
+                
+                ${
+                  startupInfo.challenges?.length > 0
+                    ? `
+                <div class="mb-4">
+                    <h4 class="font-medium text-gray-900 mb-2">課題・挑戦</h4>
+                    <div class="flex flex-wrap gap-1">
+                        ${startupInfo.challenges
+                          .map(
+                            (challenge) =>
+                              `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">${challenge}</span>`
+                          )
+                          .join("")}
+                    </div>
+                </div>
+                `
+                    : ""
+                }
+            `;
+
+        document.getElementById("startup-details").innerHTML = detailsHtml;
+        document.getElementById("startup-details-content").innerHTML =
+          detailsHtml;
+      }
+
+      // ステータスの色クラス取得
+      function getStatusColorClass(status) {
+        switch (status) {
+          case "idea":
+            return "bg-yellow-100 text-yellow-800";
+          case "planning":
+            return "bg-blue-100 text-blue-800";
+          case "mvp":
+            return "bg-purple-100 text-purple-800";
+          case "launched":
+            return "bg-green-100 text-green-800";
+          case "funding":
+            return "bg-red-100 text-red-800";
+          case "scaling":
+            return "bg-indigo-100 text-indigo-800";
+          default:
+            return "bg-gray-100 text-gray-800";
+        }
+      }
+
+      // 自己紹介表示
+      function displayBio() {
+        const profile = profileUserData;
+        const bioHtml = profile.bio
+          ? `<p class="text-gray-700">${profile.bio.replace(/\n/g, "<br>")}</p>`
+          : '<p class="text-gray-500">自己紹介が入力されていません。</p>';
+
+        document.getElementById("bio-content").innerHTML = bioHtml;
+      }
+
+      // つながり読み込み
+      async function loadConnections() {
+        // フォロワー取得
+        const { data: followers } = await supabase
+          .from("follows")
+          .select(
+            `
+                    follower_id,
+                    profiles!follows_follower_id_fkey(*)
+                `
+          )
+          .eq("following_id", profileUser)
+          .limit(8);
+
+        // フォロー中取得
+        const { data: following } = await supabase
+          .from("follows")
+          .select(
+            `
+                    following_id,
+                    profiles!follows_following_id_fkey(*)
+                `
+          )
+          .eq("follower_id", profileUser)
+          .limit(8);
+
+        // プレビュー表示
+        displayConnectionsPreview(followers, following);
+
+        // 統計表示
+        document.getElementById("connections-stats").innerHTML = `
+                <span class="font-medium">${followerCount}</span> フォロワー・
+                <span class="font-medium">${followingCount}</span> フォロー中
+            `;
+
+        // つながりタブコンテンツ
+        displayConnectionsTab(followers, following);
+      }
+
+      // つながりプレビュー表示
+      function displayConnectionsPreview(followers, following) {
+        const connections = [...(followers || []), ...(following || [])];
+        const uniqueConnections = connections
+          .filter(
+            (conn, index, self) =>
+              index ===
+              self.findIndex((c) => c.profiles.id === conn.profiles.id)
+          )
+          .slice(0, 6);
+
+        const previewHtml = uniqueConnections
+          .map(
+            (conn) => `
+                <a href="profile-detail.html?user=${
+                  conn.profiles.id
+                }" class="group">
+                    <img src="${
+                      conn.profiles.profile_image_url ||
+                      "/api/placeholder/40/40"
+                    }" 
+                         alt="${conn.profiles.last_name} ${
+              conn.profiles.first_name
+            }" 
+                         class="h-10 w-10 rounded-full object-cover group-hover:ring-2 ring-blue-600">
+                </a>
+            `
+          )
+          .join("");
+
+        const remainingCount = Math.max(0, followerCount + followingCount - 6);
+        const remainingHtml =
+          remainingCount > 0
+            ? `<span class="bg-gray-200 text-gray-600 h-10 w-10 rounded-full flex items-center justify-center text-xs">+${remainingCount}</span>`
+            : "";
+
+        document.getElementById("connections-preview").innerHTML =
+          previewHtml + remainingHtml;
+      }
+
+      // つながりタブ表示
+      function displayConnectionsTab(followers, following) {
+        const connectionsHtml = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="font-medium text-gray-900 mb-3">フォロワー (${followerCount})</h3>
+                        <div class="space-y-3">
+                            ${(followers || [])
+                              .slice(0, 5)
+                              .map(
+                                (conn) => `
+                                <div class="flex items-center space-x-3">
+                                    <img src="${
+                                      conn.profiles.profile_image_url ||
+                                      "/api/placeholder/48/48"
+                                    }" 
+                                         alt="${conn.profiles.last_name} ${
+                                  conn.profiles.first_name
+                                }" 
+                                         class="h-12 w-12 rounded-full object-cover">
+                                    <div class="flex-1">
+                                        <a href="profile-detail.html?user=${
+                                          conn.profiles.id
+                                        }" 
+                                           class="font-medium text-gray-900 hover:text-blue-600">
+                                            ${conn.profiles.last_name} ${
+                                  conn.profiles.first_name
+                                }
+                                        </a>
+                                        <p class="text-sm text-gray-500">${
+                                          locationNames[
+                                            conn.profiles.location
+                                          ] || conn.profiles.location
+                                        }</p>
+                                    </div>
+                                </div>
+                            `
+                              )
+                              .join("")}
+                            ${
+                              followers?.length === 0
+                                ? '<p class="text-gray-500 text-sm">フォロワーはまだいません</p>'
+                                : ""
+                            }
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="font-medium text-gray-900 mb-3">フォロー中 (${followingCount})</h3>
+                        <div class="space-y-3">
+                            ${(following || [])
+                              .slice(0, 5)
+                              .map(
+                                (conn) => `
+                                <div class="flex items-center space-x-3">
+                                    <img src="${
+                                      conn.profiles.profile_image_url ||
+                                      "/api/placeholder/48/48"
+                                    }" 
+                                         alt="${conn.profiles.last_name} ${
+                                  conn.profiles.first_name
+                                }" 
+                                         class="h-12 w-12 rounded-full object-cover">
+                                    <div class="flex-1">
+                                        <a href="profile-detail.html?user=${
+                                          conn.profiles.id
+                                        }" 
+                                           class="font-medium text-gray-900 hover:text-blue-600">
+                                            ${conn.profiles.last_name} ${
+                                  conn.profiles.first_name
+                                }
+                                        </a>
+                                        <p class="text-sm text-gray-500">${
+                                          locationNames[
+                                            conn.profiles.location
+                                          ] || conn.profiles.location
+                                        }</p>
+                                    </div>
+                                </div>
+                            `
+                              )
+                              .join("")}
+                            ${
+                              following?.length === 0
+                                ? '<p class="text-gray-500 text-sm">まだ誰もフォローしていません</p>'
+                                : ""
+                            }
+                        </div>
+                    </div>
+                </div>
+            `;
+
+        document.getElementById("connections-content").innerHTML =
+          connectionsHtml;
+      }
+
+      // フォロー/アンフォロー処理
+      async function toggleFollow() {
+        if (profileUser === currentUser.id) return;
+
+        try {
+          if (isFollowing) {
+            // アンフォロー
+            await supabase
+              .from("follows")
+              .delete()
+              .eq("follower_id", currentUser.id)
+              .eq("following_id", profileUser);
+
+            isFollowing = false;
+            followerCount--;
+          } else {
+            // フォロー
+            await supabase.from("follows").insert({
+              follower_id: currentUser.id,
+              following_id: profileUser,
+            });
+
+            // 通知作成
+            await supabase.from("notifications").insert({
+              user_id: profileUser,
+              type: "follow",
+              title: "新しいフォロワー",
+              content: `${currentUserProfile.last_name} ${currentUserProfile.first_name}さんがあなたをフォローしました`,
+              related_id: currentUser.id,
+            });
+
+            isFollowing = true;
+            followerCount++;
+          }
+
+          updateFollowButton();
+          await loadConnections(); // つながり情報を更新
+        } catch (error) {
+          console.error("Error toggling follow:", error);
+          alert("フォロー状態の変更に失敗しました");
+        }
+      }
+
+      // メッセージボタン処理
+      function openMessageChat() {
+        window.location.href = `messages.html?user=${profileUser}`;
+      }
+
+      // ユーザー通報
+      async function reportUser() {
+        const reason = prompt("通報理由を入力してください：");
+        if (!reason) return;
+
+        try {
+          // 管理者への通知として実装
+          await supabase.from("notifications").insert({
+            user_id: "admin", // 管理者ID（実装に応じて変更）
+            type: "report",
+            title: "ユーザー通報",
+            content: `${currentUserProfile.last_name} ${currentUserProfile.first_name}さんが${profileUserData.last_name} ${profileUserData.first_name}さんを通報しました。理由: ${reason}`,
+            related_id: profileUser,
+          });
+
+          alert("通報を受け付けました。ご報告ありがとうございます。");
+        } catch (error) {
+          console.error("Error reporting user:", error);
+          alert("通報の送信に失敗しました");
+        }
+      }
+
+      // ユーティリティ関数
+      function getUrlParameter(name) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(name);
+      }
+
+      function showError(message) {
+        document.getElementById("error-text").textContent = message;
+        document.getElementById("error-message").classList.remove("hidden");
+        document.getElementById("loading-container").classList.add("hidden");
+      }
+
+      // タブ切り替え
+      function switchTab(tabName) {
+        // すべてのタブを非表示
+        document.querySelectorAll(".tab-content").forEach((tab) => {
+          tab.classList.add("hidden");
+        });
+
+        // 指定されたタブを表示
+        document.getElementById(`${tabName}-tab`).classList.remove("hidden");
+
+        // タブナビゲーション更新
+        document.querySelectorAll("nav a[data-tab]").forEach((link) => {
+          link.classList.remove("tab-active", "text-blue-600");
+          link.classList.add(
+            "text-gray-500",
+            "hover:text-gray-700",
+            "hover:border-gray-300"
+          );
+        });
+
+        const activeTab = document.querySelector(
+          `nav a[data-tab="${tabName}"]`
+        );
+        if (activeTab) {
+          activeTab.classList.add("tab-active", "text-blue-600");
+          activeTab.classList.remove(
+            "text-gray-500",
+            "hover:text-gray-700",
+            "hover:border-gray-300"
+          );
+        }
+      }
+
+      // イベントリスナー設定
+      document.addEventListener("DOMContentLoaded", () => {
+        // モバイルメニュー
+        document
+          .querySelector(".mobile-menu-button")
+          .addEventListener("click", function () {
+            document.querySelector(".mobile-menu").classList.toggle("hidden");
+          });
+
+        // ユーザーメニュー
+        document
+          .getElementById("user-menu-button")
+          .addEventListener("click", function () {
+            document.getElementById("user-menu").classList.toggle("hidden");
+          });
+
+        // その他オプションメニュー
+        document
+          .getElementById("more-options-button")
+          .addEventListener("click", function (e) {
+            document
+              .getElementById("more-options-menu")
+              .classList.toggle("hidden");
+            e.stopPropagation();
+          });
+
+        // 画面外クリックでメニューを閉じる
+        window.addEventListener("click", function (e) {
+          if (!document.getElementById("user-menu-button").contains(e.target)) {
+            document.getElementById("user-menu").classList.add("hidden");
+          }
+
+          if (
+            !document.getElementById("more-options-button").contains(e.target)
+          ) {
+            document
+              .getElementById("more-options-menu")
+              .classList.add("hidden");
+          }
+        });
+
+        // フォローボタン
+        document
+          .getElementById("follow-btn")
+          .addEventListener("click", toggleFollow);
+
+        // メッセージボタン
+        document
+          .getElementById("message-btn")
+          .addEventListener("click", openMessageChat);
+
+        // 通報ボタン
+        document
+          .getElementById("report-user")
+          .addEventListener("click", reportUser);
+
+        // ブロックボタン
+        document.getElementById("block-user").addEventListener("click", () => {
+          alert("ブロック機能は準備中です");
+        });
+
+        // タブ切り替え
+        document.querySelectorAll("nav a[data-tab]").forEach((tab) => {
+          tab.addEventListener("click", function (e) {
+            e.preventDefault();
+            const tabName = this.getAttribute("data-tab");
+            switchTab(tabName);
+          });
+        });
+
+        // ログアウト
+        document
+          .getElementById("logout-link")
+          .addEventListener("click", async (e) => {
+            e.preventDefault();
+            await supabase.auth.signOut();
+            window.location.href = "login.html?message=logout";
+          });
+
+        document
+          .querySelector(".logout-link-mobile")
+          .addEventListener("click", async (e) => {
+            e.preventDefault();
+            await supabase.auth.signOut();
+            window.location.href = "login.html?message=logout";
+          });
+      });
+    </script>
+  </body>
+</html>

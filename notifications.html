@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="referrer" content="no-referrer" />
+    <title>通知 - スタートアップコネクト</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Noto Sans JP", sans-serif;
+      }
+      .notification-unread {
+        background-color: rgba(239, 246, 255, 0.6);
+      }
+      .skeleton {
+        animation: shimmer 1.5s infinite;
+        background: linear-gradient(
+          90deg,
+          #f0f0f0 25%,
+          #e0e0e0 50%,
+          #f0f0f0 75%
+        );
+        background-size: 200% 100%;
+      }
+      @keyframes shimmer {
+        0% {
+          background-position: 200% 0;
+        }
+        100% {
+          background-position: -200% 0;
+        }
+      }
+      .fade-out {
+        animation: fadeOut 0.3s ease-out forwards;
+      }
+      @keyframes fadeOut {
+        from {
+          opacity: 1;
+          height: auto;
+          padding-top: 1rem;
+          padding-bottom: 1rem;
+        }
+        to {
+          opacity: 0;
+          height: 0;
+          padding-top: 0;
+          padding-bottom: 0;
+          overflow: hidden;
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 min-h-screen">
+    <!-- ナビゲーションバー -->
+    <header class="bg-white shadow-md sticky top-0 z-20">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+          <div class="flex items-center">
+            <div class="flex-shrink-0 flex items-center">
+              <a href="index.html">
+                <svg
+                  class="h-8 w-8 text-blue-600"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+              </a>
+              <a
+                href="dashboard.html"
+                class="ml-2 text-xl font-bold text-gray-800"
+                >スタートアップコネクト</a
+              >
+            </div>
+            <nav class="hidden md:ml-6 md:flex space-x-4">
+              <a
+                href="dashboard.html"
+                class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >ホーム</a
+              >
+              <a
+                href="search.html"
+                class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >検索</a
+              >
+              <a
+                href="messages.html"
+                class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >メッセージ</a
+              >
+              <a
+                href="groups.html"
+                class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >グループ</a
+              >
+              <a
+                href="events.html"
+                class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >イベント</a
+              >
+            </nav>
+          </div>
+          <div class="hidden md:flex items-center">
+            <button
+              type="button"
+              class="relative p-1 rounded-full text-gray-500 hover:text-blue-600 focus:outline-none"
+            >
+              <span class="sr-only">通知を見る</span>
+              <a href="notifications.html" class="relative inline-flex">
+                <svg
+                  class="h-6 w-6 text-blue-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                  ></path>
+                </svg>
+                <span
+                  id="notification-badge"
+                  class="hidden absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500"
+                ></span>
+              </a>
+            </button>
+
+            <div class="ml-3 relative">
+              <div class="flex items-center">
+                <button
+                  type="button"
+                  class="bg-gray-800 flex text-sm rounded-full focus:outline-none"
+                  id="user-menu-button"
+                >
+                  <span class="sr-only">メニューを開く</span>
+                  <img
+                    id="user-avatar"
+                    class="h-8 w-8 rounded-full object-cover"
+                    src="/api/placeholder/32/32"
+                    alt="プロフィール"
+                  />
+                </button>
+                <div class="ml-2 hidden md:block">
+                  <div id="user-name" class="text-sm font-medium text-gray-800">
+                    -
+                  </div>
+                  <div id="user-location" class="text-xs text-gray-500">-</div>
+                </div>
+              </div>
+
+              <div
+                id="user-menu"
+                class="hidden origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-30"
+              >
+                <a
+                  href="profile.html"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >プロフィール</a
+                >
+                <a
+                  href="settings.html"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >設定</a
+                >
+                <a
+                  href="#"
+                  id="logout-link"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >ログアウト</a
+                >
+              </div>
+            </div>
+          </div>
+
+          <div class="flex md:hidden items-center">
+            <a href="notifications.html" class="relative mr-3 p-1">
+              <svg
+                class="h-6 w-6 text-blue-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                ></path>
+              </svg>
+              <span
+                id="notification-badge-mobile"
+                class="hidden absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500"
+              ></span>
+            </a>
+
+            <button
+              type="button"
+              class="mobile-menu-button text-gray-500 hover:text-blue-600 focus:outline-none"
+            >
+              <svg
+                class="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 6h16M4 12h16M4 18h16"
+                ></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- モバイルメニュー -->
+      <div class="mobile-menu hidden md:hidden bg-white border-t">
+        <a
+          href="dashboard.html"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >ホーム</a
+        >
+        <a
+          href="search.html"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >検索</a
+        >
+        <a
+          href="messages.html"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >メッセージ</a
+        >
+        <a
+          href="groups.html"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >グループ</a
+        >
+        <a
+          href="events.html"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >イベント</a
+        >
+        <div class="border-t border-gray-200 my-1"></div>
+        <a
+          href="profile.html"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >プロフィール</a
+        >
+        <a
+          href="settings.html"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >設定</a
+        >
+        <a
+          href="#"
+          class="logout-link-mobile block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >ログアウト</a
+        >
+      </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="max-w-3xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">通知</h1>
+        <div>
+          <button
+            id="mark-all-read"
+            class="text-sm text-blue-600 hover:text-blue-800 font-medium"
+          >
+            すべて既読にする
+          </button>
+        </div>
+      </div>
+
+      <!-- フィルタータブ -->
+      <div class="border-b border-gray-200 mb-6">
+        <nav class="-mb-px flex space-x-6">
+          <a
+            href="#"
+            data-filter="all"
+            class="filter-tab border-b-2 border-blue-500 text-blue-600 whitespace-nowrap py-3 px-1 font-medium text-sm"
+            aria-current="page"
+          >
+            すべての通知
+          </a>
+          <a
+            href="#"
+            data-filter="unread"
+            class="filter-tab border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 px-1 font-medium text-sm"
+          >
+            未読
+          </a>
+          <a
+            href="#"
+            data-filter="mention"
+            class="filter-tab border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 px-1 font-medium text-sm"
+          >
+            メンション
+          </a>
+          <a
+            href="#"
+            data-filter="event"
+            class="filter-tab border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-3 px-1 font-medium text-sm"
+          >
+            イベント
+          </a>
+        </nav>
+      </div>
+
+      <!-- 通知リスト -->
+      <div class="bg-white shadow rounded-lg overflow-hidden">
+        <ul id="notifications-list" class="divide-y divide-gray-200">
+          <!-- ローディング状態 -->
+          <div id="loading-notifications" class="p-6">
+            <div class="space-y-4">
+              <div class="flex items-start">
+                <div class="skeleton w-10 h-10 rounded-full mr-4"></div>
+                <div class="flex-1">
+                  <div class="skeleton h-4 w-3/4 mb-2"></div>
+                  <div class="skeleton h-3 w-1/2"></div>
+                </div>
+              </div>
+              <div class="flex items-start">
+                <div class="skeleton w-10 h-10 rounded-full mr-4"></div>
+                <div class="flex-1">
+                  <div class="skeleton h-4 w-3/4 mb-2"></div>
+                  <div class="skeleton h-3 w-1/2"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- 実際の通知はここに動的に生成される -->
+        </ul>
+      </div>
+
+      <!-- 通知がない場合 -->
+      <div
+        id="no-notifications"
+        class="hidden bg-white shadow rounded-lg overflow-hidden"
+      >
+        <div class="p-8 text-center">
+          <svg
+            class="mx-auto h-12 w-12 text-gray-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+            ></path>
+          </svg>
+          <h3 class="mt-2 text-sm font-medium text-gray-900">
+            通知はありません
+          </h3>
+          <p class="mt-1 text-sm text-gray-500">
+            新しい通知が届くとここに表示されます。
+          </p>
+        </div>
+      </div>
+
+      <!-- ページネーション -->
+      <div
+        id="pagination"
+        class="mt-8 flex items-center justify-between hidden"
+      >
+        <div class="flex-1 flex justify-between sm:hidden">
+          <button
+            id="prev-page-mobile"
+            class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+          >
+            前へ
+          </button>
+          <button
+            id="next-page-mobile"
+            class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+          >
+            次へ
+          </button>
+        </div>
+        <div
+          class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between"
+        >
+          <div>
+            <p class="text-sm text-gray-700">
+              <span class="font-medium" id="start-count">-</span> から
+              <span class="font-medium" id="end-count">-</span> を表示（全
+              <span class="font-medium" id="total-count">-</span> 件）
+            </p>
+          </div>
+          <div>
+            <nav
+              class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+              aria-label="Pagination"
+            >
+              <button
+                id="prev-page"
+                class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+              >
+                <span class="sr-only">前へ</span>
+                <svg
+                  class="h-5 w-5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+              </button>
+              <div id="page-numbers" class="flex">
+                <!-- ページ番号はここに動的に生成される -->
+              </div>
+              <button
+                id="next-page"
+                class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+              >
+                <span class="sr-only">次へ</span>
+                <svg
+                  class="h-5 w-5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+              </button>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- フッター -->
+    <footer class="bg-gray-100 py-6 mt-12">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center text-gray-500 text-sm">
+          <p>&copy; 2024 スタートアップコネクト. All rights reserved.</p>
+          <div class="mt-2 space-x-4">
+            <a href="#" class="text-gray-500 hover:text-gray-700">利用規約</a>
+            <a href="#" class="text-gray-500 hover:text-gray-700"
+              >プライバシーポリシー</a
+            >
+            <a href="#" class="text-gray-500 hover:text-gray-700"
+              >お問い合わせ</a
+            >
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // Supabase設定
+      const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.__ENV__;
+      const supabase = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+      );
+
+      // グローバル変数
+      let currentUser = null;
+      let userProfile = null;
+      let notifications = [];
+      let filteredNotifications = [];
+      let currentFilter = "all";
+      let currentPage = 1;
+      const itemsPerPage = 10;
+      let totalNotifications = 0;
+      let relatedUsers = new Map();
+      let relatedGroups = new Map();
+      let relatedEvents = new Map();
+
+      // 地域名マッピング
+      const locationNames = {
+        hokkaido: "北海道",
+        aomori: "青森県",
+        iwate: "岩手県",
+        miyagi: "宮城県",
+        akita: "秋田県",
+        yamagata: "山形県",
+        fukushima: "福島県",
+        ibaraki: "茨城県",
+        tochigi: "栃木県",
+        gunma: "群馬県",
+        saitama: "埼玉県",
+        chiba: "千葉県",
+        tokyo: "東京都",
+        kanagawa: "神奈川県",
+        niigata: "新潟県",
+        toyama: "富山県",
+        ishikawa: "石川県",
+        fukui: "福井県",
+        yamanashi: "山梨県",
+        nagano: "長野県",
+        gifu: "岐阜県",
+        shizuoka: "静岡県",
+        aichi: "愛知県",
+        mie: "三重県",
+        shiga: "滋賀県",
+        kyoto: "京都府",
+        osaka: "大阪府",
+        hyogo: "兵庫県",
+        nara: "奈良県",
+        wakayama: "和歌山県",
+        tottori: "鳥取県",
+        shimane: "島根県",
+        okayama: "岡山県",
+        hiroshima: "広島県",
+        yamaguchi: "山口県",
+        tokushima: "徳島県",
+        kagawa: "香川県",
+        ehime: "愛媛県",
+        kochi: "高知県",
+        fukuoka: "福岡県",
+        saga: "佐賀県",
+        nagasaki: "長崎県",
+        kumamoto: "熊本県",
+        oita: "大分県",
+        miyazaki: "宮崎県",
+        kagoshima: "鹿児島県",
+        okinawa: "沖縄県",
+      };
+
+      // ページ読み込み時の初期化
+      window.addEventListener("load", async () => {
+        await checkAuth();
+        await loadNotifications();
+        setupRealtimeSubscriptions();
+        updateUnreadBadges();
+      });
+
+      // 認証チェック
+      async function checkAuth() {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) {
+          window.location.href = "login.html";
+          return;
+        }
+        currentUser = user;
+        await loadUserProfile();
+      }
+
+      // ユーザープロフィール読み込み
+      async function loadUserProfile() {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", currentUser.id)
+          .single();
+
+        if (profile) {
+          userProfile = profile;
+          updateUserInfo(profile);
+        }
+      }
+
+      // ユーザー情報更新
+      function updateUserInfo(profile) {
+        document.getElementById(
+          "user-name"
+        ).textContent = `${profile.last_name} ${profile.first_name}`;
+        document.getElementById("user-location").textContent =
+          locationNames[profile.location] || profile.location;
+        if (profile.profile_image_url) {
+          document.getElementById("user-avatar").src =
+            profile.profile_image_url;
+        }
+      }
+
+      // 通知読み込み
+      async function loadNotifications() {
+        showLoading();
+
+        const { data, error, count } = await supabase
+          .from("notifications")
+          .select("*", { count: "exact" })
+          .eq("user_id", currentUser.id)
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          console.error("Error loading notifications:", error);
+          showError();
+          return;
+        }
+
+        notifications = data || [];
+        totalNotifications = count || 0;
+
+        // 関連エンティティを読み込み
+        await loadRelatedEntities();
+
+        // フィルタリングと表示
+        applyFilter();
+      }
+
+      // 関連エンティティ読み込み
+      async function loadRelatedEntities() {
+        const userIds = new Set();
+        const groupIds = new Set();
+        const eventIds = new Set();
+
+        notifications.forEach((notification) => {
+          if (notification.related_id) {
+            switch (notification.type) {
+              case "follow":
+              case "message":
+              case "mention":
+                userIds.add(notification.related_id);
+                break;
+              case "group_invite":
+              case "group_activity":
+                groupIds.add(notification.related_id);
+                break;
+              case "event":
+              case "event_reminder":
+                eventIds.add(notification.related_id);
+                break;
+            }
+          }
+        });
+
+        // ユーザー情報取得
+        if (userIds.size > 0) {
+          const { data: users } = await supabase
+            .from("profiles")
+            .select("*")
+            .in("id", Array.from(userIds));
+
+          users?.forEach((user) => {
+            relatedUsers.set(user.id, user);
+          });
+        }
+
+        // グループ情報取得
+        if (groupIds.size > 0) {
+          const { data: groups } = await supabase
+            .from("groups")
+            .select("*")
+            .in("id", Array.from(groupIds));
+
+          groups?.forEach((group) => {
+            relatedGroups.set(group.id, group);
+          });
+        }
+
+        // イベント情報取得
+        if (eventIds.size > 0) {
+          const { data: events } = await supabase
+            .from("events")
+            .select("*")
+            .in("id", Array.from(eventIds));
+
+          events?.forEach((event) => {
+            relatedEvents.set(event.id, event);
+          });
+        }
+      }
+
+      // フィルター適用
+      function applyFilter() {
+        switch (currentFilter) {
+          case "unread":
+            filteredNotifications = notifications.filter((n) => !n.is_read);
+            break;
+          case "mention":
+            filteredNotifications = notifications.filter(
+              (n) => n.type === "mention"
+            );
+            break;
+          case "event":
+            filteredNotifications = notifications.filter(
+              (n) => n.type === "event" || n.type === "event_reminder"
+            );
+            break;
+          default:
+            filteredNotifications = notifications;
+        }
+
+        currentPage = 1;
+        displayNotifications();
+      }
+
+      // 通知表示
+      function displayNotifications() {
+        const container = document.getElementById("notifications-list");
+        const loadingElement = document.getElementById("loading-notifications");
+        const noNotificationsElement =
+          document.getElementById("no-notifications");
+
+        loadingElement.classList.add("hidden");
+
+        if (filteredNotifications.length === 0) {
+          container.classList.add("hidden");
+          noNotificationsElement.classList.remove("hidden");
+          document.getElementById("pagination").classList.add("hidden");
+          return;
+        }
+
+        container.classList.remove("hidden");
+        noNotificationsElement.classList.add("hidden");
+
+        // ページネーション計算
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = Math.min(
+          startIndex + itemsPerPage,
+          filteredNotifications.length
+        );
+        const pageNotifications = filteredNotifications.slice(
+          startIndex,
+          endIndex
+        );
+
+        // 通知HTML生成
+        container.innerHTML = pageNotifications
+          .map((notification) => createNotificationHTML(notification))
+          .join("");
+
+        // ページネーション表示
+        updatePagination();
+      }
+
+      // 通知HTML作成
+      function createNotificationHTML(notification) {
+        const isUnread = !notification.is_read;
+        const { icon, iconColor, content, actions } =
+          getNotificationDetails(notification);
+
+        return `
+                <li class="${
+                  isUnread ? "notification-unread" : ""
+                } p-4 hover:bg-gray-50" data-notification-id="${
+          notification.id
+        }">
+                    <div class="flex">
+                        <div class="mr-4 flex-shrink-0">
+                            ${icon}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between">
+                                <p class="text-sm font-medium text-gray-900">
+                                    ${content}
+                                </p>
+                                ${
+                                  isUnread
+                                    ? '<span class="text-xs text-blue-600 font-semibold px-2 py-0.5 rounded-full bg-blue-50">新着</span>'
+                                    : ""
+                                }
+                            </div>
+                            <p class="text-sm text-gray-500 mt-1">${formatTime(
+                              notification.created_at
+                            )}</p>
+                            ${
+                              actions
+                                ? `
+                                <div class="mt-2 flex gap-2">
+                                    ${actions}
+                                </div>
+                            `
+                                : ""
+                            }
+                        </div>
+                        <div class="ml-2">
+                            <button onclick="deleteNotification('${
+                              notification.id
+                            }')" class="text-gray-400 hover:text-gray-500">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </li>
+            `;
+      }
+
+      // 通知詳細取得
+      function getNotificationDetails(notification) {
+        let icon, iconColor, content, actions;
+
+        switch (notification.type) {
+          case "follow":
+            const follower = relatedUsers.get(notification.related_id);
+            icon = follower
+              ? `<img class="h-12 w-12 rounded-full object-cover" src="${
+                  follower.profile_image_url || "/api/placeholder/48/48"
+                }" alt="${follower.last_name} ${follower.first_name}">`
+              : `<div class="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+                            <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                        </div>`;
+            content = notification.content;
+            actions = follower
+              ? `
+                        <button onclick="followBack('${notification.related_id}')" class="bg-blue-600 text-white py-1 px-3 rounded-md text-xs font-medium hover:bg-blue-700 transition duration-200">フォローバック</button>
+                        <a href="profile-detail.html?user=${notification.related_id}" class="border border-gray-300 text-gray-700 py-1 px-3 rounded-md text-xs font-medium hover:bg-gray-50 transition duration-200">プロフィールを見る</a>
+                    `
+              : "";
+            break;
+
+          case "message":
+            const sender = relatedUsers.get(notification.related_id);
+            icon = sender
+              ? `<img class="h-12 w-12 rounded-full object-cover" src="${
+                  sender.profile_image_url || "/api/placeholder/48/48"
+                }" alt="${sender.last_name} ${sender.first_name}">`
+              : `<div class="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
+                            <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                            </svg>
+                        </div>`;
+            content = notification.content;
+            actions = sender
+              ? `
+                        <a href="messages.html?user=${notification.related_id}" class="text-blue-600 hover:text-blue-800 text-xs font-medium">メッセージを読む</a>
+                    `
+              : "";
+            break;
+
+          case "event":
+          case "event_reminder":
+            const event = relatedEvents.get(notification.related_id);
+            icon = `<div class="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center">
+                        <svg class="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </div>`;
+            content = notification.content;
+            if (event && notification.type === "event") {
+              actions = `
+                            <button onclick="participateEvent('${notification.related_id}')" class="bg-blue-600 text-white py-1 px-3 rounded-md text-xs font-medium hover:bg-blue-700 transition duration-200">参加する</button>
+                            <a href="events.html?id=${notification.related_id}" class="border border-gray-300 text-gray-700 py-1 px-3 rounded-md text-xs font-medium hover:bg-gray-50 transition duration-200">詳細を見る</a>
+                            <button onclick="declineEvent('${notification.related_id}')" class="border border-gray-300 text-gray-700 py-1 px-3 rounded-md text-xs font-medium hover:bg-gray-50 transition duration-200">辞退する</button>
+                        `;
+            } else if (event) {
+              actions = `<a href="events.html?id=${notification.related_id}" class="text-blue-600 hover:text-blue-800 text-xs font-medium">イベント詳細を見る</a>`;
+            }
+            break;
+
+          case "group_invite":
+            const group = relatedGroups.get(notification.related_id);
+            icon = `<div class="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
+                        <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                    </div>`;
+            content = notification.content;
+            actions = group
+              ? `
+                        <button onclick="joinGroup('${notification.related_id}')" class="bg-blue-600 text-white py-1 px-3 rounded-md text-xs font-medium hover:bg-blue-700 transition duration-200">参加する</button>
+                        <a href="groups.html?id=${notification.related_id}" class="border border-gray-300 text-gray-700 py-1 px-3 rounded-md text-xs font-medium hover:bg-gray-50 transition duration-200">詳細を見る</a>
+                        <button onclick="declineGroup('${notification.related_id}')" class="border border-gray-300 text-gray-700 py-1 px-3 rounded-md text-xs font-medium hover:bg-gray-50 transition duration-200">辞退する</button>
+                    `
+              : "";
+            break;
+
+          case "mention":
+            const mentioner = relatedUsers.get(notification.related_id);
+            icon = mentioner
+              ? `<img class="h-12 w-12 rounded-full object-cover" src="${
+                  mentioner.profile_image_url || "/api/placeholder/48/48"
+                }" alt="${mentioner.last_name} ${mentioner.first_name}">`
+              : `<div class="h-12 w-12 rounded-full bg-yellow-100 flex items-center justify-center">
+                            <svg class="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-4 4z" />
+                            </svg>
+                        </div>`;
+            content = notification.content;
+            actions = `<a href="#" class="text-blue-600 hover:text-blue-800 text-xs font-medium">ディスカッションに返信する</a>`;
+            break;
+
+          case "reaction":
+            icon = `<div class="h-12 w-12 rounded-full bg-pink-100 flex items-center justify-center">
+                        <svg class="h-6 w-6 text-pink-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                    </div>`;
+            content = notification.content;
+            actions = `<a href="#" class="text-blue-600 hover:text-blue-800 text-xs font-medium">投稿を見る</a>`;
+            break;
+
+          default:
+            icon = `<div class="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
+                        <svg class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                        </svg>
+                    </div>`;
+            content = notification.content;
+            actions = "";
+        }
+
+        return { icon, iconColor, content, actions };
+      }
+
+      // すべて既読にする
+      async function markAllAsRead() {
+        const unreadNotifications = notifications.filter((n) => !n.is_read);
+        if (unreadNotifications.length === 0) return;
+
+        const { error } = await supabase
+          .from("notifications")
+          .update({ is_read: true })
+          .eq("user_id", currentUser.id)
+          .eq("is_read", false);
+
+        if (error) {
+          console.error("Error marking notifications as read:", error);
+          return;
+        }
+
+        // ローカルデータ更新
+        notifications.forEach((n) => (n.is_read = true));
+        applyFilter();
+        updateUnreadBadges();
+      }
+
+      // 個別通知を既読にする
+      async function markAsRead(notificationId) {
+        const notification = notifications.find((n) => n.id === notificationId);
+        if (!notification || notification.is_read) return;
+
+        const { error } = await supabase
+          .from("notifications")
+          .update({ is_read: true })
+          .eq("id", notificationId);
+
+        if (error) {
+          console.error("Error marking notification as read:", error);
+          return;
+        }
+
+        notification.is_read = true;
+        applyFilter();
+        updateUnreadBadges();
+      }
+
+      // 通知削除
+      async function deleteNotification(notificationId) {
+        const notificationElement = document.querySelector(
+          `[data-notification-id="${notificationId}"]`
+        );
+        if (notificationElement) {
+          notificationElement.classList.add("fade-out");
+        }
+
+        const { error } = await supabase
+          .from("notifications")
+          .delete()
+          .eq("id", notificationId);
+
+        if (error) {
+          console.error("Error deleting notification:", error);
+          if (notificationElement) {
+            notificationElement.classList.remove("fade-out");
+          }
+          return;
+        }
+
+        // アニメーション後に再読み込み
+        setTimeout(() => {
+          notifications = notifications.filter((n) => n.id !== notificationId);
+          applyFilter();
+          updateUnreadBadges();
+        }, 300);
+      }
+
+      // 未読バッジ更新
+      function updateUnreadBadges() {
+        const unreadCount = notifications.filter((n) => !n.is_read).length;
+        const badge = document.getElementById("notification-badge");
+        const badgeMobile = document.getElementById(
+          "notification-badge-mobile"
+        );
+
+        if (unreadCount > 0) {
+          badge.classList.remove("hidden");
+          badgeMobile.classList.remove("hidden");
+        } else {
+          badge.classList.add("hidden");
+          badgeMobile.classList.add("hidden");
+        }
+      }
+
+      // ページネーション更新
+      function updatePagination() {
+        if (filteredNotifications.length <= itemsPerPage) {
+          document.getElementById("pagination").classList.add("hidden");
+          return;
+        }
+
+        document.getElementById("pagination").classList.remove("hidden");
+
+        const totalPages = Math.ceil(
+          filteredNotifications.length / itemsPerPage
+        );
+        const startCount = (currentPage - 1) * itemsPerPage + 1;
+        const endCount = Math.min(
+          currentPage * itemsPerPage,
+          filteredNotifications.length
+        );
+
+        document.getElementById("start-count").textContent = startCount;
+        document.getElementById("end-count").textContent = endCount;
+        document.getElementById("total-count").textContent =
+          filteredNotifications.length;
+
+        // ページ番号生成
+        const pageNumbersContainer = document.getElementById("page-numbers");
+        pageNumbersContainer.innerHTML = "";
+
+        for (let i = 1; i <= totalPages; i++) {
+          if (
+            i === 1 ||
+            i === totalPages ||
+            (i >= currentPage - 2 && i <= currentPage + 2)
+          ) {
+            const pageButton = document.createElement("button");
+            pageButton.className =
+              i === currentPage
+                ? "z-10 bg-blue-50 border-blue-500 text-blue-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium"
+                : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium";
+            pageButton.textContent = i;
+            pageButton.onclick = () => goToPage(i);
+            pageNumbersContainer.appendChild(pageButton);
+          } else if (i === currentPage - 3 || i === currentPage + 3) {
+            const dots = document.createElement("span");
+            dots.className =
+              "relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700";
+            dots.textContent = "...";
+            pageNumbersContainer.appendChild(dots);
+          }
+        }
+
+        // 前後ボタンの有効/無効
+        document.getElementById("prev-page").disabled = currentPage === 1;
+        document.getElementById("next-page").disabled =
+          currentPage === totalPages;
+        document.getElementById("prev-page-mobile").disabled =
+          currentPage === 1;
+        document.getElementById("next-page-mobile").disabled =
+          currentPage === totalPages;
+      }
+
+      // ページ移動
+      function goToPage(page) {
+        currentPage = page;
+        displayNotifications();
+        window.scrollTo(0, 0);
+      }
+
+      // リアルタイムサブスクリプション設定
+      function setupRealtimeSubscriptions() {
+        supabase
+          .channel("notifications-channel")
+          .on(
+            "postgres_changes",
+            {
+              event: "INSERT",
+              schema: "public",
+              table: "notifications",
+              filter: `user_id=eq.${currentUser.id}`,
+            },
+            async (payload) => {
+              await loadNotifications();
+              updateUnreadBadges();
+            }
+          )
+          .on(
+            "postgres_changes",
+            {
+              event: "UPDATE",
+              schema: "public",
+              table: "notifications",
+              filter: `user_id=eq.${currentUser.id}`,
+            },
+            async (payload) => {
+              await loadNotifications();
+              updateUnreadBadges();
+            }
+          )
+          .subscribe();
+      }
+
+      // ユーティリティ関数
+      function formatTime(timestamp) {
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diff = now - date;
+
+        if (diff < 60000) return "今";
+        if (diff < 3600000) return `${Math.floor(diff / 60000)}分前`;
+        if (diff < 86400000) return `${Math.floor(diff / 3600000)}時間前`;
+        if (diff < 604800000) return `${Math.floor(diff / 86400000)}日前`;
+        if (diff < 2592000000) return `${Math.floor(diff / 604800000)}週間前`;
+
+        return date.toLocaleDateString("ja-JP");
+      }
+
+      function showLoading() {
+        document
+          .getElementById("loading-notifications")
+          .classList.remove("hidden");
+        document
+          .getElementById("notifications-list")
+          .classList.remove("hidden");
+        document.getElementById("no-notifications").classList.add("hidden");
+      }
+
+      function showError() {
+        document
+          .getElementById("loading-notifications")
+          .classList.add("hidden");
+        document.getElementById("no-notifications").classList.remove("hidden");
+        document.getElementById("notifications-list").classList.add("hidden");
+      }
+
+      // アクション関数
+      async function followBack(userId) {
+        const { error } = await supabase.from("follows").insert({
+          follower_id: currentUser.id,
+          following_id: userId,
+        });
+
+        if (!error) {
+          alert("フォローしました！");
+          loadNotifications();
+        }
+      }
+
+      async function participateEvent(eventId) {
+        const { error } = await supabase.from("event_participants").insert({
+          event_id: eventId,
+          user_id: currentUser.id,
+          status: "participating",
+        });
+
+        if (!error) {
+          alert("イベントに参加登録しました！");
+        }
+      }
+
+      async function declineEvent(eventId) {
+        const { error } = await supabase.from("event_participants").insert({
+          event_id: eventId,
+          user_id: currentUser.id,
+          status: "declined",
+        });
+
+        if (!error) {
+          alert("イベントへの参加を辞退しました。");
+        }
+      }
+
+      async function joinGroup(groupId) {
+        const { error } = await supabase.from("group_members").insert({
+          group_id: groupId,
+          user_id: currentUser.id,
+          role: "member",
+        });
+
+        if (!error) {
+          alert("グループに参加しました！");
+        }
+      }
+
+      async function declineGroup(groupId) {
+        alert("グループへの参加を辞退しました。");
+      }
+
+      // イベントリスナー設定
+      document
+        .querySelector(".mobile-menu-button")
+        .addEventListener("click", function () {
+          document.querySelector(".mobile-menu").classList.toggle("hidden");
+        });
+
+      document
+        .getElementById("user-menu-button")
+        .addEventListener("click", function () {
+          document.getElementById("user-menu").classList.toggle("hidden");
+        });
+
+      window.addEventListener("click", function (e) {
+        if (!document.getElementById("user-menu-button").contains(e.target)) {
+          document.getElementById("user-menu").classList.add("hidden");
+        }
+      });
+
+      // すべて既読にする
+      document
+        .getElementById("mark-all-read")
+        .addEventListener("click", markAllAsRead);
+
+      // フィルタータブ
+      document.querySelectorAll(".filter-tab").forEach((tab) => {
+        tab.addEventListener("click", function (e) {
+          e.preventDefault();
+
+          // アクティブタブのスタイル更新
+          document.querySelectorAll(".filter-tab").forEach((t) => {
+            t.classList.remove("border-blue-500", "text-blue-600");
+            t.classList.add(
+              "border-transparent",
+              "text-gray-500",
+              "hover:text-gray-700",
+              "hover:border-gray-300"
+            );
+          });
+
+          this.classList.remove(
+            "border-transparent",
+            "text-gray-500",
+            "hover:text-gray-700",
+            "hover:border-gray-300"
+          );
+          this.classList.add("border-blue-500", "text-blue-600");
+
+          // フィルター適用
+          currentFilter = this.dataset.filter;
+          applyFilter();
+        });
+      });
+
+      // ページネーション
+      document.getElementById("prev-page").addEventListener("click", () => {
+        if (currentPage > 1) goToPage(currentPage - 1);
+      });
+
+      document.getElementById("next-page").addEventListener("click", () => {
+        const totalPages = Math.ceil(
+          filteredNotifications.length / itemsPerPage
+        );
+        if (currentPage < totalPages) goToPage(currentPage + 1);
+      });
+
+      document
+        .getElementById("prev-page-mobile")
+        .addEventListener("click", () => {
+          if (currentPage > 1) goToPage(currentPage - 1);
+        });
+
+      document
+        .getElementById("next-page-mobile")
+        .addEventListener("click", () => {
+          const totalPages = Math.ceil(
+            filteredNotifications.length / itemsPerPage
+          );
+          if (currentPage < totalPages) goToPage(currentPage + 1);
+        });
+
+      // ログアウト
+      document
+        .getElementById("logout-link")
+        .addEventListener("click", async (e) => {
+          e.preventDefault();
+          await supabase.auth.signOut();
+          window.location.href = "login.html?message=logout";
+        });
+
+      document
+        .querySelector(".logout-link-mobile")
+        .addEventListener("click", async (e) => {
+          e.preventDefault();
+          await supabase.auth.signOut();
+          window.location.href = "login.html?message=logout";
+        });
+
+      // グローバル関数として公開
+      window.deleteNotification = deleteNotification;
+      window.followBack = followBack;
+      window.participateEvent = participateEvent;
+      window.declineEvent = declineEvent;
+      window.joinGroup = joinGroup;
+      window.declineGroup = declineGroup;
+
+      // 通知クリックで既読にする
+      document.addEventListener("click", function (e) {
+        const notificationElement = e.target.closest("[data-notification-id]");
+        if (notificationElement && !e.target.closest("button")) {
+          const notificationId = notificationElement.dataset.notificationId;
+          markAsRead(notificationId);
+        }
+      });
+    </script>
+  </body>
+</html>
