@@ -1,8 +1,19 @@
 {
+  "appName": "スタートアップコネクト",
   "features": "特徴",
   "howItWorks": "使い方",
   "pricing": "料金プラン",
   "testimonials": "利用者の声",
   "login": "ログイン",
-  "getStarted": "無料で始める"
+  "register": "新規登録",
+  "getStarted": "無料で始める",
+  "heroHeading": "夢を共に実現する\n最高のパートナーと出会う",
+  "heroDescription": "スタートアップコネクトは、起業家とビジネスパートナーをつなぐ日本最大級のマッチングプラットフォームです",
+  "ctaHeading": "今すぐ始めて、理想のパートナーを見つけよう",
+  "ctaDescription": "登録は無料。あなたのビジネスアイデアを実現する仲間が待っています。",
+  "ctaButton": "無料で登録する",
+  "loginHeading": "アカウントにログイン",
+  "loginNoAccount": "まだアカウントをお持ちでない方は",
+  "loginButton": "ログイン",
+  "learnMore": "詳しく見る"
 }

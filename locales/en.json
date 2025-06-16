@@ -1,8 +1,19 @@
 {
+  "appName": "Startup Connect",
   "features": "Features",
   "howItWorks": "How it Works",
   "pricing": "Pricing",
   "testimonials": "Testimonials",
   "login": "Login",
-  "getStarted": "Get Started"
+  "register": "Sign Up",
+  "getStarted": "Get Started",
+  "heroHeading": "Meet the perfect partner to make your dreams come true",
+  "heroDescription": "Startup Connect is Japan's largest matchmaking platform connecting entrepreneurs and business partners.",
+  "ctaHeading": "Start now and find your ideal partner",
+  "ctaDescription": "Registration is free. Teammates to realize your business idea are waiting.",
+  "ctaButton": "Register for free",
+  "loginHeading": "Log In to Your Account",
+  "loginNoAccount": "Don't have an account yet?",
+  "loginButton": "Log In",
+  "learnMore": "Learn more"
 }

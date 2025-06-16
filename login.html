@@ -44,32 +44,26 @@
                   <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                 </svg>
               </a>
-              <a href="index.html" class="ml-2 text-xl font-bold text-gray-800"
-                >スタートアップコネクト</a
-              >
+              <a href="index.html" class="ml-2 text-xl font-bold text-gray-800" data-i18n-key="appName"></a>
             </div>
           </div>
           <div class="hidden md:flex items-center space-x-4">
             <a
               href="index.html#features"
               class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
-              >特徴</a
-            >
+              data-i18n-key="features"></a>
             <a
               href="index.html#how-it-works"
               class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
-              >使い方</a
-            >
+              data-i18n-key="howItWorks"></a>
             <a
               href="index.html#pricing"
               class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
-              >料金プラン</a
-            >
+              data-i18n-key="pricing"></a>
             <a
               href="register.html"
               class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition duration-200"
-              >新規登録</a
-            >
+              data-i18n-key="register"></a>
           </div>
           <div class="flex md:hidden items-center">
             <button
@@ -99,23 +93,19 @@
         <a
           href="index.html#features"
           class="block px-4 py-2 text-gray-600 hover:bg-gray-100"
-          >特徴</a
-        >
+          data-i18n-key="features"></a>
         <a
           href="index.html#how-it-works"
           class="block px-4 py-2 text-gray-600 hover:bg-gray-100"
-          >使い方</a
-        >
+          data-i18n-key="howItWorks"></a>
         <a
           href="index.html#pricing"
           class="block px-4 py-2 text-gray-600 hover:bg-gray-100"
-          >料金プラン</a
-        >
+          data-i18n-key="pricing"></a>
         <a
           href="register.html"
           class="block px-4 py-2 text-blue-600 hover:bg-gray-100"
-          >新規登録</a
-        >
+          data-i18n-key="register"></a>
       </div>
     </nav>
 
@@ -125,17 +115,12 @@
     >
       <div class="max-w-md w-full space-y-8">
         <div>
-          <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            アカウントにログイン
-          </h2>
-          <p class="mt-2 text-center text-sm text-gray-600">
-            まだアカウントをお持ちでない方は
+          <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900" data-i18n-key="loginHeading"></h2>
+          <p class="mt-2 text-center text-sm text-gray-600" data-i18n-key="loginNoAccount">
             <a
               href="register.html"
               class="font-medium text-blue-600 hover:text-blue-500"
-            >
-              新規登録
-            </a>
+              data-i18n-key="register"></a>
           </p>
         </div>
 
@@ -241,7 +226,7 @@
                   />
                 </svg>
               </span>
-              ログイン
+              <span data-i18n-key="loginButton"></span>
             </button>
           </div>
 
@@ -768,6 +753,7 @@
         }
       }
     </script>
+    <script src="i18n.js"></script>
     <script src="accessibility.js"></script>
   </body>
 </html>

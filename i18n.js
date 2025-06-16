@@ -3,8 +3,10 @@ async function loadLanguage(lang) {
   const dict = await res.json();
   document.querySelectorAll('[data-i18n-key]').forEach(el => {
     const key = el.getAttribute('data-i18n-key');
-    if (dict[key]) {
+    if (dict.hasOwnProperty(key)) {
       el.textContent = dict[key];
+    } else {
+      console.warn(`Missing translation for "${key}" in ${lang}`);
     }
   });
   document.documentElement.lang = lang;
