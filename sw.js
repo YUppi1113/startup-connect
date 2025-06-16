@@ -18,12 +18,12 @@ self.addEventListener('notificationclick', event => {
     if (id) {
       try {
         await fetch('/mark_notification', { method: 'POST', body: JSON.stringify({ id }) });
-      } catch (e) {}
+      } catch (e) { /* ignore */ }
     }
-    const allClients = await clients.matchAll({ type: 'window' });
+    const allClients = await self.clients.matchAll({ type: 'window' });
     for (const client of allClients) {
       if (client.url === url && 'focus' in client) return client.focus();
     }
-    if (clients.openWindow) return clients.openWindow(url);
+    if (self.clients.openWindow) return self.clients.openWindow(url);
   })());
 });

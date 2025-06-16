@@ -32,3 +32,21 @@ AI-powered matching to streamline building a startup team.
 If `config.js` is not generated correctly, the login and registration pages will
 fail to connect to Supabase. Ensure the environment variables are set and the
 build step has been executed.
+
+## User Registration Flow
+
+1. **Sign Up** – Visit `register.html` and create an account with your email
+   and password or use the Google/GitHub buttons.
+2. **Email Verification** – Supabase sends a verification link to the provided
+   address. Clicking the link redirects you back to `login.html` so you can sign
+   in.
+3. **Automatic Profile Creation** – When your email is confirmed, a blank
+   profile record is inserted along with default privacy, notification and
+   security settings.
+4. **Complete Startup Info** – After the first login you continue to step 2 of
+   registration to fill out personal details and your startup information. This
+   data is saved to the `profiles` and `startup_info` tables and a profile
+   embedding is generated.
+5. **Dashboard Access** – Upon completion you return to the login screen with a
+   success message. Signing in then takes you to `dashboard.html` where your
+   personalized feed and messages appear.
