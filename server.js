@@ -1,6 +1,7 @@
 import express from 'express';
 import { createClient } from '@supabase/supabase-js';
 import { Configuration, OpenAIApi } from 'openai';
+import webpush from 'web-push';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -11,6 +12,12 @@ app.use(express.json());
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
+webpush.setVapidDetails(
+  'mailto:example@example.com',
+  process.env.PUSH_VAPID_PUBLIC_KEY || '',
+  process.env.PUSH_VAPID_PRIVATE_KEY || ''
 );
 
 const openai = new OpenAIApi(
@@ -203,6 +210,47 @@ app.post('/api/posts/:id/comments', async (req, res) => {
   } catch (err) {
     console.error('add comment error', err);
     res.status(500).json({ error: 'failed to add comment' });
+  }
+});
+
+app.post('/api/send_push', async (req, res) => {
+  const { user_id, title, body, url, notification_id } = req.body;
+  if (!user_id) return res.status(400).json({ error: 'missing user_id' });
+  try {
+    const { data: subs } = await supabase
+      .from('push_subscriptions')
+      .select('*')
+      .eq('user_id', user_id);
+    for (const sub of subs || []) {
+      const subscription = {
+        endpoint: sub.endpoint,
+        keys: { p256dh: sub.p256dh, auth: sub.auth },
+      };
+      try {
+        await webpush.sendNotification(
+          subscription,
+          JSON.stringify({ title, body, url, id: notification_id })
+        );
+      } catch (err) {
+        console.error('push error', err);
+      }
+    }
+    res.json({ status: 'sent' });
+  } catch (err) {
+    console.error('send push error', err);
+    res.status(500).json({ error: 'failed' });
+  }
+});
+
+app.post('/mark_notification', async (req, res) => {
+  const { id } = req.body;
+  if (!id) return res.status(400).json({ error: 'missing id' });
+  try {
+    await supabase.from('notifications').update({ is_read: true }).eq('id', id);
+    res.json({ status: 'ok' });
+  } catch (err) {
+    console.error('mark notification error', err);
+    res.status(500).json({ error: 'failed' });
   }
 });
 

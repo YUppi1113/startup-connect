@@ -538,10 +538,15 @@
                   <h2 class="text-lg font-medium text-gray-900 mb-3">
                     スタートアップについて
                   </h2>
-                  <div id="startup-details-content">
-                    <!-- スタートアップ詳細が動的に生成される -->
-                  </div>
+                <div id="startup-details-content">
+                  <!-- スタートアップ詳細が動的に生成される -->
                 </div>
+              </div>
+
+              <div id="projects-preview" class="bg-white rounded-lg border border-gray-200 p-5 mb-6 hidden">
+                <h2 class="text-lg font-medium text-gray-900 mb-3">プロジェクト</h2>
+                <div id="projects-preview-content"></div>
+              </div>
               </div>
 
               <!-- プロジェクトタブ -->
@@ -862,6 +867,7 @@
 
           // プロジェクト表示
           displayProjects();
+          displayProjectsPreview();
 
           // つながり情報読み込み
           await loadConnections();
@@ -1176,6 +1182,16 @@
           .join('');
 
         document.getElementById('projects-content').innerHTML = html;
+      }
+
+      function displayProjectsPreview() {
+        if (!projects || projects.length === 0) return;
+        const preview = projects.slice(0, 3)
+          .map(p => `<div class="mb-2"><span class="font-medium">${p.title}</span></div>`)
+          .join('');
+        const container = document.getElementById('projects-preview');
+        document.getElementById('projects-preview-content').innerHTML = preview;
+        container.classList.remove('hidden');
       }
 
       // つながり読み込み

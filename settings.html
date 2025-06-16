@@ -1390,26 +1390,29 @@
 
       // アクティブセッション読み込み
       async function loadActiveSessions() {
-        // 簡単なセッション情報の表示（実際のアプリでは更に詳細な実装が必要）
-        const container = document.getElementById("active-sessions");
-        container.innerHTML = `
-                <div class="py-4 flex justify-between">
-                    <div class="flex items-center">
-                        <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
-                        <div class="ml-3">
-                            <div class="text-sm font-medium text-gray-900">現在のブラウザセッション</div>
-                            <div class="text-xs text-gray-500">現在アクティブ</div>
-                        </div>
-                    </div>
-                    <div class="flex items-center">
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                            現在のセッション
-                        </span>
-                    </div>
-                </div>
-            `;
+        const { data } = await supabase
+          .from('user_sessions')
+          .select('*')
+          .eq('user_id', currentUser.id)
+          .order('created_at', { ascending: false });
+        const container = document.getElementById('active-sessions');
+        if (!data || data.length === 0) {
+          container.innerHTML = '<div class="py-4 text-sm text-gray-500">セッションはありません</div>';
+          return;
+        }
+        container.innerHTML = data
+          .map(s => `
+            <div class="py-4 flex justify-between items-center">
+              <div>
+                <div class="text-sm text-gray-900">${s.user_agent}</div>
+                <div class="text-xs text-gray-500">${s.ip_address || ''}</div>
+              </div>
+              <button data-id="${s.id}" class="revoke-session text-red-600 text-sm">終了</button>
+            </div>`)
+          .join('');
+        container.querySelectorAll('.revoke-session').forEach(btn => {
+          btn.addEventListener('click', () => revokeSession(btn.dataset.id));
+        });
       }
 
       // イベントリスナー設定
@@ -2069,12 +2072,22 @@
 
         showLoading();
         try {
-          // Supabaseの場合、現在のセッション以外を終了する機能は限定的
-          // 実際のアプリでは、カスタムのセッション管理が必要
-          await supabase.auth.refreshSession();
-          showSuccess("セッションを更新しました。");
+          await supabase.from('user_sessions').delete().eq('user_id', currentUser.id);
+          await loadActiveSessions();
         } catch (error) {
           showError("セッションの操作に失敗しました: " + error.message);
+        } finally {
+          hideLoading();
+        }
+      }
+
+      async function revokeSession(id) {
+        showLoading();
+        try {
+          await supabase.from('user_sessions').delete().eq('id', id);
+          await loadActiveSessions();
+        } catch (error) {
+          showError('セッションの操作に失敗しました: ' + error.message);
         } finally {
           hideLoading();
         }
