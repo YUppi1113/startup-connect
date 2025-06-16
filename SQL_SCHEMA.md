@@ -1,17 +1,6 @@
 # SQL Schema
 
 
-<<<<<<< codex/add-event-editing-and-deletion-features
-## Events triggers
-
-```sql
-create trigger handle_events_updated_at
-before update on events for each row
-execute function handle_updated_at();
-```
-
-The delete action relies on the foreign key from `event_participants.event_id` with `on delete cascade` so no additional trigger is required.
-=======
 -- enable vector extension for profile embeddings
 create extension if not exists vector;
 
@@ -45,6 +34,24 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+-- 3-4) profiles を自動作成
+CREATE OR REPLACE FUNCTION create_profile()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.profiles(id, first_name, last_name)
+  VALUES (
+    NEW.id,
+    NEW.raw_user_meta_data->>'first_name',
+    NEW.raw_user_meta_data->>'last_name'
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER create_profile_trigger
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION create_profile();
 
 -- 4) テーブル定義（依存先→依存元の順に）
 
@@ -398,8 +405,6 @@ CREATE TABLE public.profile_embeddings (
 );
 
 
-
-=======
 # Database Schema
 
 ## profile_embeddings
@@ -420,4 +425,3 @@ create table public.profile_embeddings (
 Node service that calls OpenAI's embedding API and upserts the result into
 `profile_embeddings`. It also exposes `/api/recommendations` which ranks users
 by cosine similarity between embeddings.
->>>>>>> main
