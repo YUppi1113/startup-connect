@@ -701,6 +701,122 @@
       </div>
     </div>
 
+    <!-- イベント編集モーダル -->
+    <div id="edit-event-modal" class="fixed inset-0 z-40 hidden">
+      <div class="absolute inset-0 bg-gray-900 bg-opacity-50"></div>
+      <div class="relative max-w-2xl mx-auto mt-10 mb-10 bg-white rounded-lg shadow-xl overflow-y-auto max-h-[90vh]">
+        <div class="p-6">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-semibold text-gray-900">イベントを編集</h3>
+            <button id="close-edit-modal" class="text-gray-400 hover:text-gray-500">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <form id="edit-event-form">
+            <div class="space-y-6">
+              <div>
+                <label for="edit-event-title" class="block text-sm font-medium text-gray-700 mb-1">イベント名 <span class="text-red-600">*</span></label>
+                <input type="text" id="edit-event-title" name="event-title" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+              </div>
+
+              <div>
+                <label for="edit-event-description" class="block text-sm font-medium text-gray-700 mb-1">イベント説明 <span class="text-red-600">*</span></label>
+                <textarea id="edit-event-description" name="event-description" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required></textarea>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label for="edit-event-category" class="block text-sm font-medium text-gray-700 mb-1">イベントタイプ <span class="text-red-600">*</span></label>
+                  <select id="edit-event-category" name="event-category" class="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <option value="">選択してください</option>
+                    <option value="pitch">ピッチコンテスト</option>
+                    <option value="networking">ネットワーキング</option>
+                    <option value="seminar">セミナー・勉強会</option>
+                    <option value="hackathon">ハッカソン</option>
+                    <option value="workshop">ワークショップ</option>
+                    <option value="conference">カンファレンス</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="edit-event-format" class="block text-sm font-medium text-gray-700 mb-1">開催形式 <span class="text-red-600">*</span></label>
+                  <select id="edit-event-format" name="event-format" class="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <option value="">選択してください</option>
+                    <option value="offline">オフライン</option>
+                    <option value="online">オンライン</option>
+                    <option value="hybrid">ハイブリッド</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label for="edit-event-date" class="block text-sm font-medium text-gray-700 mb-1">開催日 <span class="text-red-600">*</span></label>
+                  <input type="date" id="edit-event-date" name="event-date" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                </div>
+                <div>
+                  <label for="edit-event-start-time" class="block text-sm font-medium text-gray-700 mb-1">開始時間 <span class="text-red-600">*</span></label>
+                  <input type="time" id="edit-event-start-time" name="event-start-time" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                </div>
+                <div>
+                  <label for="edit-event-end-time" class="block text-sm font-medium text-gray-700 mb-1">終了時間 <span class="text-red-600">*</span></label>
+                  <input type="time" id="edit-event-end-time" name="event-end-time" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                </div>
+              </div>
+
+              <div id="edit-location-fields">
+                <label for="edit-event-venue" class="block text-sm font-medium text-gray-700 mb-1">開催場所 <span class="text-red-600">*</span></label>
+                <input type="text" id="edit-event-venue" name="event-venue" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2" />
+                <input type="text" id="edit-event-address" name="event-address" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+
+              <div id="edit-online-fields" class="hidden">
+                <label for="edit-event-url" class="block text-sm font-medium text-gray-700 mb-1">配信URL <span class="text-red-600">*</span></label>
+                <input type="url" id="edit-event-url" name="event-url" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label for="edit-event-max-attendees" class="block text-sm font-medium text-gray-700 mb-1">定員</label>
+                  <input type="number" id="edit-event-max-attendees" name="event-max-attendees" min="1" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                  <label for="edit-event-fee" class="block text-sm font-medium text-gray-700 mb-1">参加費</label>
+                  <div class="flex">
+                    <input type="number" id="edit-event-fee" name="event-fee" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <span class="inline-flex items-center px-3 py-2 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500">円</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label for="edit-event-image" class="block text-sm font-medium text-gray-700 mb-1">イベント画像</label>
+                <div class="flex items-center justify-center w-full">
+                  <label class="flex flex-col w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:bg-gray-50">
+                    <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                      <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <p class="pt-1 text-sm text-gray-500">画像をアップロード</p>
+                      <p class="text-xs text-gray-500">PNG, JPG, GIF（最大2MB）</p>
+                    </div>
+                    <input id="edit-event-image" name="event-image" type="file" class="hidden" accept="image/*" />
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-8 flex justify-end space-x-3">
+              <button type="button" id="cancel-edit-event" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-50 transition duration-200">キャンセル</button>
+              <button type="submit" id="update-event" class="px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 transition duration-200">更新する</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
     <!-- フッター -->
     <footer class="bg-gray-100 py-6 mt-12">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -732,6 +848,7 @@
       let userProfile = null;
       let allEvents = [];
       let participatingEvents = new Set();
+      let editingEventId = null;
 
       // イベントタイプのマッピング
       const eventTypeNames = {
@@ -1032,25 +1149,22 @@
                     </div>
                     <div class="mt-4 flex space-x-2">
                         ${
-                          isParticipating
+                          event.organizer_id === currentUser.id
                             ? `
-                            <button onclick="leaveEvent('${event.id}')" class="flex-1 border border-red-600 text-red-600 py-2 rounded-lg font-medium hover:bg-red-50 transition duration-200">
-                                参加取消
+                            <button onclick="openEditEventModal('${event.id}')" class="flex-1 bg-yellow-500 text-white py-2 rounded-lg font-medium hover:bg-yellow-600 transition duration-200">
+                                編集
+                            </button>
+                            <button onclick="deleteEvent('${event.id}')" class="flex-1 border border-red-600 text-red-600 py-2 rounded-lg font-medium hover:bg-red-50 transition duration-200">
+                                削除
                             </button>
                         `
-                            : `
-                            <button onclick="joinEvent('${
-                              event.id
-                            }')" class="flex-1 bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition duration-200 ${
-                                isFull ? "opacity-50 cursor-not-allowed" : ""
-                              }" ${isFull ? "disabled" : ""}>
-                                ${isFull ? "満席" : "参加する"}
-                            </button>
-                        `
+                            : (
+                                isParticipating
+                                  ? `<button onclick="leaveEvent('${event.id}')" class="flex-1 border border-red-600 text-red-600 py-2 rounded-lg font-medium hover:bg-red-50 transition duration-200">参加取消</button>`
+                                  : `<button onclick="joinEvent('${event.id}')" class="flex-1 bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition duration-200 ${isFull ? 'opacity-50 cursor-not-allowed' : ''}" ${isFull ? 'disabled' : ''}>${isFull ? '満席' : '参加する'}</button>`
+                              )
                         }
-                        <button onclick="viewEventDetails('${
-                          event.id
-                        }')" class="flex items-center justify-center px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition duration-200">
+                        <button onclick="viewEventDetails('${event.id}')" class="flex items-center justify-center px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition duration-200">
                             詳細
                         </button>
                     </div>
@@ -1156,6 +1270,96 @@
           console.error("Error creating event:", error);
           throw new Error("イベントの作成に失敗しました");
         }
+      }
+
+      // イベント更新
+      async function updateEvent(eventId, formData) {
+        const updateData = {
+          title: formData.get("event-title"),
+          description: formData.get("event-description"),
+          event_type: formData.get("event-category"),
+          format: formData.get("event-format"),
+          event_date: formData.get("event-date"),
+          start_time: formData.get("event-start-time"),
+          end_time: formData.get("event-end-time"),
+          location: formData.get("event-venue") || null,
+          address: formData.get("event-address") || null,
+          online_url: formData.get("event-url") || null,
+          max_attendees: parseInt(formData.get("event-max-attendees")) || null,
+          fee: parseInt(formData.get("event-fee")) || 0,
+        };
+
+        const imageFile = formData.get("event-image");
+        if (imageFile && imageFile.size > 0) {
+          const fileExt = imageFile.name.split(".").pop();
+          const fileName = `${currentUser.id}_${Date.now()}.${fileExt}`;
+          const filePath = `events/${fileName}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from("event-images")
+            .upload(filePath, imageFile);
+
+          if (!uploadError) {
+            const { data } = supabase.storage
+              .from("event-images")
+              .getPublicUrl(filePath);
+            updateData.image_url = data.publicUrl;
+          }
+        }
+
+        const { error } = await supabase
+          .from("events")
+          .update(updateData)
+          .eq("id", eventId);
+
+        if (error) {
+          console.error("Error updating event:", error);
+          throw new Error("イベントの更新に失敗しました");
+        }
+      }
+
+      // イベント削除
+      async function deleteEvent(eventId) {
+        if (!confirm("本当に削除しますか？")) return;
+        const { error } = await supabase.from("events").delete().eq("id", eventId);
+        if (error) {
+          console.error("Error deleting event:", error);
+          alert("イベントの削除に失敗しました");
+          return;
+        }
+        await loadEvents();
+        alert("イベントを削除しました");
+      }
+
+      function openEditEventModal(eventId) {
+        const event = allEvents.find((e) => e.id === eventId);
+        if (!event) return;
+        editingEventId = eventId;
+        document.getElementById("edit-event-title").value = event.title;
+        document.getElementById("edit-event-description").value = event.description;
+        document.getElementById("edit-event-category").value = event.event_type;
+        document.getElementById("edit-event-format").value = event.format || "";
+        document.getElementById("edit-event-date").value = event.event_date.split("T")[0];
+        document.getElementById("edit-event-start-time").value = event.start_time;
+        document.getElementById("edit-event-end-time").value = event.end_time;
+        document.getElementById("edit-event-venue").value = event.location || "";
+        document.getElementById("edit-event-address").value = event.address || "";
+        document.getElementById("edit-event-url").value = event.online_url || "";
+        document.getElementById("edit-event-max-attendees").value = event.max_attendees || "";
+        document.getElementById("edit-event-fee").value = event.fee || "";
+        const locationFields = document.getElementById("edit-location-fields");
+        const onlineFields = document.getElementById("edit-online-fields");
+        if (event.format === "online") {
+          locationFields.classList.add("hidden");
+          onlineFields.classList.remove("hidden");
+        } else if (event.format === "offline") {
+          locationFields.classList.remove("hidden");
+          onlineFields.classList.add("hidden");
+        } else {
+          locationFields.classList.remove("hidden");
+          onlineFields.classList.remove("hidden");
+        }
+        document.getElementById("edit-event-modal").classList.remove("hidden");
       }
 
       // イベント検索・フィルタリング
@@ -1370,8 +1574,69 @@
             console.error("Error:", error);
             alert(error.message || "イベントの作成に失敗しました");
           } finally {
+          submitButton.disabled = false;
+          submitButton.textContent = "作成する";
+        }
+      });
+
+      // 編集モーダルイベント
+      document
+        .getElementById("close-edit-modal")
+        .addEventListener("click", function () {
+          document.getElementById("edit-event-modal").classList.add("hidden");
+        });
+
+      document
+        .getElementById("cancel-edit-event")
+        .addEventListener("click", function () {
+          document.getElementById("edit-event-modal").classList.add("hidden");
+        });
+
+      document
+        .getElementById("edit-event-format")
+        .addEventListener("change", function () {
+          const locationFields = document.getElementById("edit-location-fields");
+          const onlineFields = document.getElementById("edit-online-fields");
+
+          if (this.value === "online") {
+            locationFields.classList.add("hidden");
+            onlineFields.classList.remove("hidden");
+          } else if (this.value === "offline") {
+            locationFields.classList.remove("hidden");
+            onlineFields.classList.add("hidden");
+          } else if (this.value === "hybrid") {
+            locationFields.classList.remove("hidden");
+            onlineFields.classList.remove("hidden");
+          }
+        });
+
+      document
+        .getElementById("edit-event-form")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+          const submitButton = document.getElementById("update-event");
+          submitButton.disabled = true;
+          submitButton.textContent = "更新中...";
+          try {
+            const formData = new FormData(this);
+            const imageFile = formData.get("event-image");
+            if (imageFile && imageFile.size > 2 * 1024 * 1024) {
+              alert("画像ファイルは2MB以下にしてください。");
+              submitButton.disabled = false;
+              submitButton.textContent = "更新する";
+              return;
+            }
+            await updateEvent(editingEventId, formData);
+            document.getElementById("edit-event-modal").classList.add("hidden");
+            this.reset();
+            await loadEvents();
+            alert("イベントを更新しました！");
+          } catch (error) {
+            console.error("Error:", error);
+            alert(error.message || "イベントの更新に失敗しました");
+          } finally {
             submitButton.disabled = false;
-            submitButton.textContent = "作成する";
+            submitButton.textContent = "更新する";
           }
         });
 
@@ -1408,6 +1673,8 @@
       window.joinEvent = joinEvent;
       window.leaveEvent = leaveEvent;
       window.viewEventDetails = viewEventDetails;
+      window.openEditEventModal = openEditEventModal;
+      window.deleteEvent = deleteEvent;
     </script>
   </body>
 </html>
