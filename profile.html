@@ -249,6 +249,11 @@
       >
         <span class="block sm:inline">プロフィールが更新されました。</span>
       </div>
+      <!-- トースト通知 -->
+      <div
+        id="toast"
+        class="hidden fixed bottom-5 right-5 bg-green-500 text-white px-4 py-2 rounded shadow-lg"
+      ></div>
 
       <!-- エラーメッセージ -->
       <div
@@ -430,6 +435,34 @@
                 </select>
               </div>
             </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div>
+                <label for="phone" class="block text-sm font-medium text-gray-700 mb-1"
+                  >電話番号</label
+                >
+                <input
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label for="timezone" class="block text-sm font-medium text-gray-700 mb-1">タイムゾーン</label>
+                <select
+                  id="timezone"
+                  name="timezone"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="Asia/Tokyo">アジア/東京 (GMT+9)</option>
+                  <option value="America/Los_Angeles">アメリカ/ロサンゼルス (GMT-7)</option>
+                  <option value="America/New_York">アメリカ/ニューヨーク (GMT-4)</option>
+                  <option value="Europe/London">ヨーロッパ/ロンドン (GMT+1)</option>
+                  <option value="Europe/Berlin">ヨーロッパ/ベルリン (GMT+2)</option>
+                </select>
+              </div>
+            </div>
           </div>
 
           <!-- スキル・専門分野セクション -->
@@ -442,130 +475,22 @@
               >スキル・専門分野（複数選択可）
               <span class="text-red-600">*</span></label
             >
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-              <div class="flex items-center">
-                <input
-                  type="checkbox"
-                  id="skill_tech"
-                  name="skills[]"
-                  value="tech"
-                  class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <label for="skill_tech" class="ml-2 block text-sm text-gray-700"
-                  >テクノロジー・IT</label
-                >
-              </div>
-              <div class="flex items-center">
-                <input
-                  type="checkbox"
-                  id="skill_marketing"
-                  name="skills[]"
-                  value="marketing"
-                  class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <label
-                  for="skill_marketing"
-                  class="ml-2 block text-sm text-gray-700"
-                  >マーケティング</label
-                >
-              </div>
-              <div class="flex items-center">
-                <input
-                  type="checkbox"
-                  id="skill_sales"
-                  name="skills[]"
-                  value="sales"
-                  class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <label
-                  for="skill_sales"
-                  class="ml-2 block text-sm text-gray-700"
-                  >営業・セールス</label
-                >
-              </div>
-              <div class="flex items-center">
-                <input
-                  type="checkbox"
-                  id="skill_finance"
-                  name="skills[]"
-                  value="finance"
-                  class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <label
-                  for="skill_finance"
-                  class="ml-2 block text-sm text-gray-700"
-                  >財務・会計</label
-                >
-              </div>
-              <div class="flex items-center">
-                <input
-                  type="checkbox"
-                  id="skill_design"
-                  name="skills[]"
-                  value="design"
-                  class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <label
-                  for="skill_design"
-                  class="ml-2 block text-sm text-gray-700"
-                  >デザイン</label
-                >
-              </div>
-              <div class="flex items-center">
-                <input
-                  type="checkbox"
-                  id="skill_hr"
-                  name="skills[]"
-                  value="hr"
-                  class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <label for="skill_hr" class="ml-2 block text-sm text-gray-700"
-                  >人事・組織開発</label
-                >
-              </div>
-              <div class="flex items-center">
-                <input
-                  type="checkbox"
-                  id="skill_legal"
-                  name="skills[]"
-                  value="legal"
-                  class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <label
-                  for="skill_legal"
-                  class="ml-2 block text-sm text-gray-700"
-                  >法務・知財</label
-                >
-              </div>
-              <div class="flex items-center">
-                <input
-                  type="checkbox"
-                  id="skill_planning"
-                  name="skills[]"
-                  value="planning"
-                  class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <label
-                  for="skill_planning"
-                  class="ml-2 block text-sm text-gray-700"
-                  >企画・戦略</label
-                >
-              </div>
-              <div class="flex items-center">
-                <input
-                  type="checkbox"
-                  id="skill_other"
-                  name="skills[]"
-                  value="other"
-                  class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <label
-                  for="skill_other"
-                  class="ml-2 block text-sm text-gray-700"
-                  >その他</label
-                >
-              </div>
-            </div>
+            <select
+              id="skills"
+              name="skills[]"
+              multiple
+              class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="tech">テクノロジー・IT</option>
+              <option value="marketing">マーケティング</option>
+              <option value="sales">営業・セールス</option>
+              <option value="finance">財務・会計</option>
+              <option value="design">デザイン</option>
+              <option value="hr">人事・組織開発</option>
+              <option value="legal">法務・知財</option>
+              <option value="planning">企画・戦略</option>
+              <option value="other">その他</option>
+            </select>
           </div>
 
           <!-- 自己紹介セクション -->
@@ -599,9 +524,14 @@
                 type="url"
                 id="linkedin_url"
                 name="linkedin_url"
+                pattern="https?://.+"
+                title="https://linkedin.com/in/your-profile"
                 class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="https://linkedin.com/in/username"
               />
+              <p class="text-xs text-gray-500 mt-1">
+                例: https://linkedin.com/in/your-profile
+              </p>
             </div>
           </div>
 
@@ -976,6 +906,9 @@
         document.getElementById("bio").value = profile.bio || "";
         document.getElementById("linkedin_url").value =
           profile.linkedin_url || "";
+        document.getElementById("phone").value = profile.phone || "";
+        document.getElementById("timezone").value =
+          profile.timezone || "Asia/Tokyo";
 
         // プロフィール画像
         if (profile.profile_image_url) {
@@ -991,9 +924,9 @@
 
         // スキル
         if (profile.skills && profile.skills.length > 0) {
-          profile.skills.forEach((skill) => {
-            const checkbox = document.getElementById(`skill_${skill}`);
-            if (checkbox) checkbox.checked = true;
+          const select = document.getElementById("skills");
+          Array.from(select.options).forEach((opt) => {
+            opt.selected = profile.skills.includes(opt.value);
           });
         }
       }
@@ -1079,8 +1012,8 @@
 
             // スキルの収集
             const skills = Array.from(
-              document.querySelectorAll('input[name="skills[]"]:checked')
-            ).map((cb) => cb.value);
+              document.getElementById("skills").selectedOptions
+            ).map((o) => o.value);
 
             if (skills.length === 0) {
               throw new Error("少なくとも1つのスキルを選択してください");
@@ -1096,6 +1029,8 @@
               linkedin_url:
                 document.getElementById("linkedin_url").value || null,
               profile_image_url: profileImageUrl,
+              phone: document.getElementById("phone").value || null,
+              timezone: document.getElementById("timezone").value || "Asia/Tokyo",
               skills: skills,
             };
 
@@ -1189,6 +1124,15 @@
         setTimeout(() => {
           successDiv.classList.add("hidden");
         }, 3000);
+
+        const toast = document.getElementById("toast");
+        toast.textContent = "プロフィールを更新しました";
+        toast.classList.remove("hidden");
+        setTimeout(() => {
+          toast.classList.add("hidden");
+        }, 3000);
+
+        loadUserData();
       }
 
       // エラーメッセージ表示
