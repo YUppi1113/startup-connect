@@ -147,7 +147,7 @@
                   id="user-menu-button"
                 >
                   <span class="sr-only">メニューを開く</span>
-                  <img
+                  <img loading="lazy"
                     id="user-avatar"
                     class="h-8 w-8 rounded-full object-cover"
                     src="/api/placeholder/32/32"
@@ -811,7 +811,7 @@
           case "follow":
             const follower = relatedUsers.get(notification.related_id);
             icon = follower
-              ? `<img class="h-12 w-12 rounded-full object-cover" src="${
+              ? `<img loading="lazy" class="h-12 w-12 rounded-full object-cover" src="${
                   follower.profile_image_url || "/api/placeholder/48/48"
                 }" alt="${follower.last_name} ${follower.first_name}">`
               : `<div class="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
@@ -831,7 +831,7 @@
           case "message":
             const sender = relatedUsers.get(notification.related_id);
             icon = sender
-              ? `<img class="h-12 w-12 rounded-full object-cover" src="${
+              ? `<img loading="lazy" class="h-12 w-12 rounded-full object-cover" src="${
                   sender.profile_image_url || "/api/placeholder/48/48"
                 }" alt="${sender.last_name} ${sender.first_name}">`
               : `<div class="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
@@ -887,7 +887,7 @@
           case "mention":
             const mentioner = relatedUsers.get(notification.related_id);
             icon = mentioner
-              ? `<img class="h-12 w-12 rounded-full object-cover" src="${
+              ? `<img loading="lazy" class="h-12 w-12 rounded-full object-cover" src="${
                   mentioner.profile_image_url || "/api/placeholder/48/48"
                 }" alt="${mentioner.last_name} ${mentioner.first_name}">`
               : `<div class="h-12 w-12 rounded-full bg-yellow-100 flex items-center justify-center">

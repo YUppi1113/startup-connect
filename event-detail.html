@@ -139,7 +139,7 @@
                   id="user-menu-button"
                 >
                   <span class="sr-only">メニューを開く</span>
-                  <img
+                  <img loading="lazy"
                     id="user-avatar"
                     class="h-8 w-8 rounded-full object-cover"
                     src="/api/placeholder/32/32"
@@ -338,7 +338,7 @@
         const isFull = remainingSeats !== null && remainingSeats <= 0;
 
         const participantAvatars = participants
-          .map((p) => `<img class="h-8 w-8 rounded-full object-cover" src="${p.profile_image_url || '/api/placeholder/32/32'}" alt="${p.last_name}" />`)
+          .map((p) => `<img loading="lazy" class="h-8 w-8 rounded-full object-cover" src="${p.profile_image_url || '/api/placeholder/32/32'}" alt="${p.last_name}" />`)
           .join('');
 
         const locationText = eventData.format === 'online'
@@ -347,7 +347,7 @@
 
         container.innerHTML = `
           <h1 class="text-2xl font-bold mb-4">${eventData.title}</h1>
-          <img src="${eventData.image_url || '/api/placeholder/600/300'}" alt="${eventData.title}" class="w-full h-60 object-cover rounded mb-4">
+          <img loading="lazy" src="${eventData.image_url || '/api/placeholder/600/300'}" alt="${eventData.title}" class="w-full h-60 object-cover rounded mb-4">
           <p class="text-sm text-gray-600 mb-1">主催: ${eventData.organizer?.last_name || ''} ${eventData.organizer?.first_name || ''}</p>
           <p class="text-sm text-gray-600 mb-1">日時: ${new Date(eventData.event_date).toLocaleDateString()} ${eventData.start_time} - ${eventData.end_time}</p>
           <p class="text-sm text-gray-600 mb-4">場所: ${locationText}</p>

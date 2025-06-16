@@ -173,7 +173,7 @@
                   aria-haspopup="true" aria-expanded="false" aria-controls="user-menu"
                 >
                   <span class="sr-only">メニューを開く</span>
-                  <img
+                  <img loading="lazy"
                     id="user-avatar"
                     class="h-8 w-8 rounded-full object-cover"
                     src="/api/placeholder/32/32"
@@ -798,7 +798,7 @@
       function updateProfileCard(profile) {
         const profileCard = document.getElementById("profile-card");
         profileCard.innerHTML = `
-                <img src="${
+                <img loading="lazy" src="${
                   profile.profile_image_url || "/api/placeholder/96/96"
                 }" alt="${profile.last_name} ${
           profile.first_name
@@ -957,7 +957,7 @@
                   message.sender_id
                 }';">
                     <div class="flex-shrink-0 mr-4">
-                        <img class="h-10 w-10 rounded-full object-cover" src="${
+                        <img loading="lazy" class="h-10 w-10 rounded-full object-cover" src="${
                           message.sender.profile_image_url ||
                           "/api/placeholder/40/40"
                         }" alt="${message.sender.last_name} ${
@@ -1238,7 +1238,7 @@
                   user.id
                 }';">
                     <div class="flex-shrink-0 mr-4">
-                        <img class="h-10 w-10 rounded-full object-cover" src="${
+                        <img loading="lazy" class="h-10 w-10 rounded-full object-cover" src="${
                           user.profile_image_url || "/api/placeholder/40/40"
                         }" alt="${user.last_name} ${user.first_name}">
                     </div>
