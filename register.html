@@ -1761,6 +1761,27 @@
             ).map((cb) => cb.value);
 
             // プロフィール情報の更新
+            const { data: existingProfile } = await supabase
+              .from("profiles")
+              .select("id")
+              .eq("id", user.id)
+              .single();
+
+            if (!existingProfile) {
+              const { error: insertError } = await supabase.from("profiles").insert({
+                id: user.id,
+                first_name: document.getElementById("first_name").value,
+                last_name: document.getElementById("last_name").value,
+                location: document.getElementById("location").value,
+                age_range: document.getElementById("age").value,
+              });
+              if (insertError) {
+                console.error("Profile insert error:", insertError);
+                showError("プロフィール情報の保存に失敗しました。");
+                return;
+              }
+            }
+
             const { error: profileError } = await supabase
               .from("profiles")
               .update({
