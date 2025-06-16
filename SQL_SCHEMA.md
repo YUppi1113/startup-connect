@@ -332,6 +332,22 @@ update on post_comments for EACH row
 execute FUNCTION handle_updated_at ();
 
 
+create table public.post_bookmarks (
+  id uuid not null default gen_random_uuid(),
+  user_id uuid not null,
+  post_id uuid not null,
+  created_at timestamp with time zone null default now(),
+  constraint post_bookmarks_pkey primary key (id),
+  constraint post_bookmarks_user_id_post_id_key unique (user_id, post_id),
+  constraint post_bookmarks_user_id_fkey foreign key (user_id) references auth.users(id) on delete cascade,
+  constraint post_bookmarks_post_id_fkey foreign key (post_id) references posts(id) on delete cascade
+) TABLESPACE pg_default;
+
+create index IF not exists idx_post_bookmarks_user on public.post_bookmarks using btree (user_id) TABLESPACE pg_default;
+
+create index IF not exists idx_post_bookmarks_post on public.post_bookmarks using btree (post_id) TABLESPACE pg_default;
+
+
 create table public.notifications (
   id uuid not null default gen_random_uuid (),
   user_id uuid null,

@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Configuration, OpenAIApi } from 'openai';
 import webpush from 'web-push';
 import dotenv from 'dotenv';
+import { extractHashtags } from './js/posts.js';
 
 dotenv.config();
 
@@ -221,6 +222,103 @@ app.post('/api/posts/:id/comments', async (req, res) => {
   } catch (err) {
     console.error('add comment error', err);
     res.status(500).json({ error: 'failed to add comment' });
+  }
+});
+
+app.get('/api/posts/search', async (req, res) => {
+  const { q } = req.query;
+  const limit = parseInt(req.query.limit || '20', 10);
+  if (!q) return res.json([]);
+  try {
+    const { data, error } = await supabase
+      .from('posts')
+      .select('*')
+      .ilike('content', `%${q}%`)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    res.json(data || []);
+  } catch (err) {
+    console.error('search posts error', err);
+    res.status(500).json({ error: 'failed to search posts' });
+  }
+});
+
+app.get('/api/trending_hashtags', async (req, res) => {
+  const days = parseInt(req.query.days || '7', 10);
+  const limit = parseInt(req.query.limit || '5', 10);
+  const since = new Date();
+  since.setDate(since.getDate() - days);
+  try {
+    const { data, error } = await supabase
+      .from('posts')
+      .select('content')
+      .gte('created_at', since.toISOString());
+    if (error) throw error;
+    const counts = {};
+    for (const p of data || []) {
+      const tags = extractHashtags(p.content);
+      for (const t of tags) {
+        counts[t] = (counts[t] || 0) + 1;
+      }
+    }
+    const trending = Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, limit)
+      .map(([tag, count]) => ({ tag, count }));
+    res.json(trending);
+  } catch (err) {
+    console.error('trending error', err);
+    res.status(500).json({ error: 'failed to fetch trending' });
+  }
+});
+
+app.post('/api/posts/:id/bookmark', async (req, res) => {
+  const { id } = req.params;
+  const { user_id } = req.body;
+  if (!user_id) return res.status(400).json({ error: 'missing user_id' });
+  try {
+    const { data: existing } = await supabase
+      .from('post_bookmarks')
+      .select('id')
+      .eq('post_id', id)
+      .eq('user_id', user_id)
+      .single();
+    let bookmarked = true;
+    if (existing) {
+      await supabase.from('post_bookmarks').delete().eq('id', existing.id);
+      bookmarked = false;
+    } else {
+      await supabase.from('post_bookmarks').insert({ post_id: id, user_id });
+    }
+    const { count } = await supabase
+      .from('post_bookmarks')
+      .select('*', { count: 'exact', head: true })
+      .eq('post_id', id);
+    res.json({ bookmarked, count });
+  } catch (err) {
+    console.error('bookmark error', err);
+    res.status(500).json({ error: 'failed to update bookmark' });
+  }
+});
+
+app.get('/api/bookmarked_posts', async (req, res) => {
+  const { user_id } = req.query;
+  const limit = parseInt(req.query.limit || '10', 10);
+  if (!user_id) return res.status(400).json({ error: 'missing user_id' });
+  try {
+    const { data, error } = await supabase
+      .from('post_bookmarks')
+      .select('posts(*)')
+      .eq('user_id', user_id)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    const posts = (data || []).map(b => b.posts);
+    res.json(posts);
+  } catch (err) {
+    console.error('fetch bookmarks error', err);
+    res.status(500).json({ error: 'failed to fetch bookmarks' });
   }
 });
 
