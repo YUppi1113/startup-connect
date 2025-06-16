@@ -47,6 +47,21 @@
           background-position: -200% 0;
         }
       }
+      .guide-bubble {
+        position: relative;
+        background: #f3f4f6;
+        border-radius: 0.5rem;
+        padding: 1rem;
+      }
+      .guide-bubble::after {
+        content: "";
+        position: absolute;
+        bottom: -8px;
+        left: 1.5rem;
+        border-width: 8px;
+        border-style: solid;
+        border-color: #f3f4f6 transparent transparent transparent;
+      }
     </style>
   </head>
   <body class="bg-gray-50 min-h-screen">
@@ -583,11 +598,13 @@
               </svg>
             </button>
           </div>
-          <ol class="list-decimal list-inside space-y-2 text-gray-700">
-            <li>プロフィールを作成してあなたのスキルや経験を登録します。</li>
-            <li>検索機能でパートナーを探し、気になる相手にメッセージを送りましょう。</li>
-            <li>マッチしたらチャットやグループでやり取りし、ビジネスを始めます。</li>
-          </ol>
+          <div id="guide-step" class="guide-bubble text-gray-700 mb-4">
+            <p id="guide-step-text"></p>
+          </div>
+          <div class="flex justify-between">
+            <button id="guide-prev" class="text-blue-600 hover:underline" disabled>戻る</button>
+            <button id="guide-next" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">次へ</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1372,23 +1389,63 @@
 
       document.getElementById("guide-link").addEventListener("click", (e) => {
         e.preventDefault();
+        guideIndex = 0;
+        showGuideStep(guideIndex);
         openModal("guide-modal", e.currentTarget);
       });
       document
         .getElementById("guide-link-mobile")
         .addEventListener("click", (e) => {
           e.preventDefault();
+          guideIndex = 0;
+          showGuideStep(guideIndex);
           openModal("guide-modal", e.currentTarget);
-        });
+      });
       document
         .getElementById("guide-link-footer")
         .addEventListener("click", (e) => {
           e.preventDefault();
+          guideIndex = 0;
+          showGuideStep(guideIndex);
           openModal("guide-modal", e.currentTarget);
-        });
+      });
+      const guideSteps = [
+        "プロフィールを作成してあなたのスキルや経験を登録します。",
+        "検索機能でパートナーを探し、気になる相手にメッセージを送りましょう。",
+        "マッチしたらチャットやグループでやり取りし、ビジネスを始めます。",
+      ];
+      let guideIndex = 0;
+
+      function showGuideStep(index) {
+        document.getElementById("guide-step-text").textContent = guideSteps[index];
+        document.getElementById("guide-prev").disabled = index === 0;
+        document.getElementById("guide-next").textContent = index === guideSteps.length - 1 ? "完了" : "次へ";
+      }
+
+      document.getElementById("guide-next").addEventListener("click", () => {
+        if (guideIndex < guideSteps.length - 1) {
+          guideIndex++;
+          showGuideStep(guideIndex);
+        } else {
+          closeModal("guide-modal");
+          guideIndex = 0;
+          showGuideStep(guideIndex);
+        }
+      });
+
+      document.getElementById("guide-prev").addEventListener("click", () => {
+        if (guideIndex > 0) {
+          guideIndex--;
+          showGuideStep(guideIndex);
+        }
+      });
+
       document
         .getElementById("close-guide-modal")
         .addEventListener("click", () => closeModal("guide-modal"));
+
+      // 初期ステップ表示
+      showGuideStep(guideIndex);
     </script>
     <script src="accessibility.js"></script>
   </body>
