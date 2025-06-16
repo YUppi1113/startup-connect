@@ -53,6 +53,12 @@
           background-position: -200% 0;
         }
       }
+      .line-clamp-1 {
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+      }
     </style>
   </head>
   <body class="bg-gray-50 min-h-screen">
@@ -490,27 +496,9 @@
                     </svg>
                   </button>
                   <button
-                    type="button"
-                    class="p-2 text-gray-500 hover:text-blue-600 rounded-full"
-                  >
-                    <svg
-                      class="h-5 w-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                      />
-                    </svg>
-                  </button>
-                  <button
                     id="show-group-info"
                     type="button"
-                    class="p-2 text-gray-500 hover:text-blue-600 rounded-full md:hidden lg:block"
+                    class="p-2 text-gray-500 hover:text-blue-600 rounded-full"
                   >
                     <svg
                       class="h-5 w-5"
@@ -903,7 +891,8 @@
       let currentUser = null;
       let userProfile = null;
       let currentGroup = null;
-      let groups = [];
+      let allGroups = [];
+      let filteredGroups = [];
       let currentMessages = [];
       let selectedMembers = [];
       let groupMembers = new Map();
@@ -979,15 +968,19 @@
 
       // ページ読み込み時の初期化
       window.addEventListener("load", async () => {
-        await checkAuth();
-        await loadGroups();
-        setupRealtimeSubscriptions();
+        try {
+          await checkAuth();
+          await loadGroups();
+          setupRealtimeSubscriptions();
 
-        // URLパラメータから特定のグループを開く
-        const urlParams = new URLSearchParams(window.location.search);
-        const groupId = urlParams.get("id");
-        if (groupId) {
-          await selectGroup(groupId);
+          // URLパラメータから特定のグループを開く
+          const urlParams = new URLSearchParams(window.location.search);
+          const groupId = urlParams.get("id");
+          if (groupId) {
+            await selectGroup(groupId);
+          }
+        } catch (error) {
+          console.error("Initialization error:", error);
         }
       });
 
@@ -1006,11 +999,16 @@
 
       // ユーザープロフィール読み込み
       async function loadUserProfile() {
-        const { data: profile } = await supabase
+        const { data: profile, error } = await supabase
           .from("profiles")
           .select("*")
           .eq("id", currentUser.id)
           .single();
+
+        if (error) {
+          console.error("Error loading profile:", error);
+          return;
+        }
 
         if (profile) {
           userProfile = profile;
@@ -1035,38 +1033,50 @@
       async function loadGroups() {
         showLoadingGroups();
 
-        // 参加しているグループを取得
-        const { data: memberGroups } = await supabase
-          .from("group_members")
-          .select(
+        try {
+          // 参加しているグループを取得
+          const { data: memberGroups, error } = await supabase
+            .from("group_members")
+            .select(
+              `
+              group_id,
+              groups!inner(
+                *,
+                group_messages(
+                  *,
+                  user:profiles!group_messages_user_id_fkey(*)
+                )
+              )
             `
-                    group_id,
-                    groups!inner(
-                        *,
-                        group_messages(
-                            *,
-                            user:profiles!group_messages_user_id_fkey(*)
-                        )
-                    )
-                `
-          )
-          .eq("user_id", currentUser.id);
+            )
+            .eq("user_id", currentUser.id);
 
-        if (!memberGroups || memberGroups.length === 0) {
+          console.log("loadGroups() →", { memberGroups, error });
+
+          if (error) {
+            throw error;
+          }
+
+          if (!memberGroups || memberGroups.length === 0) {
+            showNoGroups();
+            return;
+          }
+
+          // 最新メッセージでソート
+          allGroups = memberGroups
+            .map((item) => item.groups)
+            .sort((a, b) => {
+              const aLatest = a.group_messages?.[0]?.created_at || a.created_at;
+              const bLatest = b.group_messages?.[0]?.created_at || b.created_at;
+              return new Date(bLatest) - new Date(aLatest);
+            });
+
+          filteredGroups = [...allGroups];
+          displayGroups();
+        } catch (error) {
+          console.error("Error loading groups:", error);
           showNoGroups();
-          return;
         }
-
-        // 最新メッセージでソート
-        groups = memberGroups
-          .map((item) => item.groups)
-          .sort((a, b) => {
-            const aLatest = a.group_messages?.[0]?.created_at || a.created_at;
-            const bLatest = b.group_messages?.[0]?.created_at || b.created_at;
-            return new Date(bLatest) - new Date(aLatest);
-          });
-
-        displayGroups();
       }
 
       // グループ表示
@@ -1079,80 +1089,82 @@
         noGroupsElement.classList.add("hidden");
         container.classList.remove("hidden");
 
-        if (groups.length === 0) {
+        if (filteredGroups.length === 0) {
           showNoGroups();
           return;
         }
 
-        container.innerHTML = groups
+        container.innerHTML = filteredGroups
           .map((group) => {
             const isActive = currentGroup?.id === group.id;
             const latestMessage = group.group_messages?.[0];
             const color = categoryColors[group.category] || "gray";
 
             return `
-                    <div class="px-4 py-3 ${
-                      isActive
-                        ? "bg-blue-50 border-l-4 border-blue-600"
-                        : "bg-white"
-                    } flex items-start hover:bg-gray-50 transition duration-150 cursor-pointer" onclick="selectGroup('${
+              <div class="px-4 py-3 ${
+                isActive ? "bg-blue-50 border-l-4 border-blue-600" : "bg-white"
+              } flex items-start hover:bg-gray-50 transition duration-150 cursor-pointer" onclick="selectGroup('${
               group.id
             }')">
-                        <div class="relative flex-shrink-0">
-                            <div class="w-12 h-12 rounded-full bg-${color}-100 flex items-center justify-center">
-                                <svg class="h-6 w-6 text-${color}-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                </svg>
-                            </div>
-                        </div>
-                        <div class="ml-3 flex-1">
-                            <div class="flex justify-between items-baseline">
-                                <h3 class="text-sm font-medium text-gray-900">${
-                                  group.name
-                                }</h3>
-                                <span class="text-xs text-gray-500">${
-                                  latestMessage
-                                    ? formatMessageTime(
-                                        latestMessage.created_at
-                                      )
-                                    : ""
-                                }</span>
-                            </div>
-                            ${
-                              latestMessage
-                                ? `
-                                <p class="text-sm text-gray-600 line-clamp-1">
-                                    <span class="font-medium">${latestMessage.user.last_name}:</span> ${latestMessage.content}
-                                </p>
-                            `
-                                : '<p class="text-sm text-gray-500">まだメッセージがありません</p>'
-                            }
-                        </div>
-                    </div>
-                `;
+                <div class="relative flex-shrink-0">
+                  <div class="w-12 h-12 rounded-full bg-${color}-100 flex items-center justify-center">
+                    <svg class="h-6 w-6 text-${color}-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                </div>
+                <div class="ml-3 flex-1">
+                  <div class="flex justify-between items-baseline">
+                    <h3 class="text-sm font-medium text-gray-900">${
+                      group.name
+                    }</h3>
+                    <span class="text-xs text-gray-500">${
+                      latestMessage
+                        ? formatMessageTime(latestMessage.created_at)
+                        : ""
+                    }</span>
+                  </div>
+                  ${
+                    latestMessage
+                      ? `
+                    <p class="text-sm text-gray-600 line-clamp-1">
+                      <span class="font-medium">${latestMessage.user.last_name}:</span> ${latestMessage.content}
+                    </p>
+                  `
+                      : '<p class="text-sm text-gray-500">まだメッセージがありません</p>'
+                  }
+                </div>
+              </div>
+            `;
           })
           .join("");
       }
 
       // グループ選択
       async function selectGroup(groupId) {
-        const group = groups.find((g) => g.id === groupId);
-        if (!group) return;
+        try {
+          const group = allGroups.find((g) => g.id === groupId);
+          if (!group) return;
 
-        currentGroup = group;
+          currentGroup = group;
 
-        // UIを更新
-        document.getElementById("no-group-selected").classList.add("hidden");
-        document.getElementById("active-group-chat").classList.remove("hidden");
+          // UIを更新
+          document.getElementById("no-group-selected").classList.add("hidden");
+          document
+            .getElementById("active-group-chat")
+            .classList.remove("hidden");
 
-        // グループ情報を表示
-        updateGroupHeader(group);
-        await loadGroupMembers(groupId);
-        await loadGroupMessages(groupId);
-        updateGroupInfo(group);
+          // グループ情報を表示
+          updateGroupHeader(group);
+          await loadGroupMembers(groupId);
+          await loadGroupMessages(groupId);
+          updateGroupInfo(group);
 
-        // グループリストを更新
-        displayGroups();
+          // グループリストを更新
+          displayGroups();
+        } catch (error) {
+          console.error("Error selecting group:", error);
+        }
       }
 
       // グループヘッダー更新
@@ -1161,71 +1173,87 @@
         const iconElement = document.getElementById("group-icon");
         iconElement.className = `w-10 h-10 rounded-full bg-${color}-100 flex items-center justify-center`;
         iconElement.innerHTML = `
-                <svg class="h-6 w-6 text-${color}-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-            `;
+          <svg class="h-6 w-6 text-${color}-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+        `;
 
         document.getElementById("group-name").textContent = group.name;
       }
 
       // グループメンバー読み込み
       async function loadGroupMembers(groupId) {
-        const { data: members } = await supabase
-          .from("group_members")
-          .select(
+        try {
+          const { data: members, error } = await supabase
+            .from("group_members")
+            .select(
+              `
+              user_id,
+              profiles!inner(*)
             `
-                    user_id,
-                    profiles!inner(*)
-                `
-          )
-          .eq("group_id", groupId);
+            )
+            .eq("group_id", groupId);
 
-        if (members) {
-          groupMembers.clear();
-          members.forEach((member) => {
-            groupMembers.set(member.user_id, member.profiles);
-          });
+          if (error) throw error;
 
-          document.getElementById(
-            "group-member-count"
-          ).textContent = `${members.length}人のメンバー`;
+          if (members) {
+            groupMembers.clear();
+            members.forEach((member) => {
+              groupMembers.set(member.user_id, member.profiles);
+            });
+
+            document.getElementById(
+              "group-member-count"
+            ).textContent = `${members.length}人のメンバー`;
+          }
+        } catch (error) {
+          console.error("Error loading group members:", error);
         }
       }
 
       // グループメッセージ読み込み
       async function loadGroupMessages(groupId) {
-        const { data: messages } = await supabase
-          .from("group_messages")
-          .select(
+        try {
+          const { data: messages, error } = await supabase
+            .from("group_messages")
+            .select(
+              `
+              *,
+              user:profiles!group_messages_user_id_fkey(*)
             `
-                    *,
-                    user:profiles!group_messages_user_id_fkey(*)
-                `
-          )
-          .eq("group_id", groupId)
-          .order("created_at", { ascending: true });
+            )
+            .eq("group_id", groupId)
+            .order("created_at", { ascending: true });
 
-        currentMessages = messages || [];
-        displayMessages();
+          if (error) throw error;
+
+          currentMessages = messages || [];
+          displayMessages();
+        } catch (error) {
+          console.error("Error loading group messages:", error);
+          currentMessages = [];
+          displayMessages();
+        }
       }
 
       // メッセージ表示
       function displayMessages() {
         const container = document.getElementById("messages-container");
 
-        if (currentMessages.length === 0) {
+        // メッセージが空なら案内文を表示
+        if (!currentMessages || currentMessages.length === 0) {
           container.innerHTML = `
-                    <div class="flex justify-center items-center h-full text-gray-500">
-                        <div class="text-center">
-                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                            </svg>
-                            <p class="mt-2 text-sm">まだメッセージがありません</p>
-                            <p class="text-xs text-gray-400">最初のメッセージを送信しましょう</p>
-                        </div>
-                    </div>
-                `;
+            <div class="flex justify-center items-center h-full text-gray-500">
+              <div class="text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                </svg>
+                <p class="mt-2 text-sm">まだメッセージがありません</p>
+                <p class="text-xs text-gray-400">最初のメッセージを送信しましょう</p>
+              </div>
+            </div>
+          `;
           return;
         }
 
@@ -1237,128 +1265,118 @@
             "ja-JP"
           );
           const isMyMessage = message.user_id === currentUser.id;
-          const isSystemMessage = message.type === "system";
+          const urls = message.file_urls || [];
 
           // 日付表示
           if (messageDate !== currentDate) {
             html += `
-                        <div class="flex justify-center my-4">
-                            <span class="bg-gray-100 text-gray-500 text-xs px-2 py-1 rounded-full">${messageDate}</span>
-                        </div>
-                    `;
+              <div class="flex justify-center my-4">
+                <span class="bg-gray-100 text-gray-500 text-xs px-2 py-1 rounded-full">
+                  ${messageDate}
+                </span>
+              </div>
+            `;
             currentDate = messageDate;
           }
 
-          // システムメッセージ
-          if (isSystemMessage) {
-            html += `
-                        <div class="flex justify-center my-4">
-                            <div class="bg-gray-100 text-gray-600 text-xs px-3 py-1 rounded-full">
-                                ${message.content}
-                            </div>
-                        </div>
-                    `;
-            return;
-          }
-
-          // 通常のメッセージ
+          // 自分のメッセージ
           if (isMyMessage) {
             html += `
-                        <div class="flex items-start justify-end mb-4">
-                            <div class="max-w-[80%]">
-                                <div class="flex items-center justify-end">
-                                    <span class="text-xs text-gray-500">${formatTime(
-                                      message.created_at
-                                    )}</span>
-                                    <span class="text-sm font-medium text-gray-900 ml-2">${
-                                      message.user.last_name
-                                    } ${message.user.first_name}</span>
-                                </div>
-                                <div class="bg-blue-600 text-white rounded-lg p-3 mt-1">
-                                    ${
-                                      message.file_url
-                                        ? `
-                                        <div class="mb-2">
-                                            ${
-                                              message.file_url.match(
-                                                /\.(jpg|jpeg|png|gif)$/i
-                                              )
-                                                ? `<img src="${message.file_url}" alt="画像" class="max-w-full rounded">`
-                                                : `<a href="${message.file_url}" target="_blank" class="text-blue-200 underline">📎 ファイルを開く</a>`
-                                            }
-                                        </div>
-                                    `
-                                        : ""
-                                    }
-                                    <p>${message.content}</p>
-                                </div>
-                            </div>
-                            <img src="${
-                              message.user.profile_image_url ||
-                              "/api/placeholder/32/32"
-                            }" alt="${message.user.last_name} ${
-              message.user.first_name
-            }" class="h-8 w-8 rounded-full object-cover ml-2">
-                        </div>
-                    `;
-          } else {
+              <div class="flex items-start justify-end mb-4">
+                <div class="max-w-[80%]">
+                  <div class="flex items-center justify-end">
+                    <span class="text-xs text-gray-500">
+                      ${formatTime(message.created_at)}
+                    </span>
+                    <span class="text-sm font-medium text-gray-900 ml-2">
+                      ${message.user.last_name} ${message.user.first_name}
+                    </span>
+                  </div>
+                  <div class="bg-blue-600 text-white rounded-lg p-3 mt-1">
+                    ${urls
+                      .filter((url) => url)
+                      .map(
+                        (url) => `
+                      <div class="mb-2">
+                        ${
+                          url.match(/\.(jpg|jpeg|png|gif)$/i)
+                            ? `<img src="${url}" alt="画像" class="max-w-full rounded">`
+                            : `<a href="${url}" target="_blank" class="text-blue-200 underline">📎 ファイルを開く</a>`
+                        }
+                      </div>
+                    `
+                      )
+                      .join("")}
+                    <p>${escapeHtml(message.content)}</p>
+                  </div>
+                </div>
+                <img
+                  src="${
+                    message.user.profile_image_url || "/api/placeholder/32/32"
+                  }"
+                  alt="${message.user.last_name} ${message.user.first_name}"
+                  class="h-8 w-8 rounded-full object-cover ml-2"
+                >
+              </div>
+            `;
+          }
+          // 他のユーザーのメッセージ
+          else {
+            const prev = currentMessages[index - 1];
             const showAvatar =
-              index === 0 ||
-              currentMessages[index - 1].user_id !== message.user_id ||
-              currentMessages[index - 1].type === "system";
+              index === 0 || !prev || prev.user_id !== message.user_id;
 
             html += `
-                        <div class="flex items-start mb-4">
-                            ${
-                              showAvatar
-                                ? `
-                                <img src="${
-                                  message.user.profile_image_url ||
-                                  "/api/placeholder/32/32"
-                                }" alt="${message.user.last_name} ${
-                                    message.user.first_name
-                                  }" class="h-8 w-8 rounded-full object-cover mr-2">
-                            `
-                                : '<div class="w-10"></div>'
-                            }
-                            <div class="max-w-[80%]">
-                                ${
-                                  showAvatar
-                                    ? `
-                                    <div class="flex items-center">
-                                        <span class="text-sm font-medium text-gray-900 mr-2">${
-                                          message.user.last_name
-                                        } ${message.user.first_name}</span>
-                                        <span class="text-xs text-gray-500">${formatTime(
-                                          message.created_at
-                                        )}</span>
-                                    </div>
-                                `
-                                    : ""
-                                }
-                                <div class="bg-gray-100 rounded-lg p-3 mt-1">
-                                    ${
-                                      message.file_url
-                                        ? `
-                                        <div class="mb-2">
-                                            ${
-                                              message.file_url.match(
-                                                /\.(jpg|jpeg|png|gif)$/i
-                                              )
-                                                ? `<img src="${message.file_url}" alt="画像" class="max-w-full rounded">`
-                                                : `<a href="${message.file_url}" target="_blank" class="text-blue-600 underline">📎 ファイルを開く</a>`
-                                            }
-                                        </div>
-                                    `
-                                        : ""
-                                    }
-                                    <p class="text-gray-800">${
-                                      message.content
-                                    }</p>
-                                </div>
-                            </div>
-                        </div>
-                    `;
+              <div class="flex items-start mb-4">
+                ${
+                  showAvatar
+                    ? `<img
+                       src="${
+                         message.user.profile_image_url ||
+                         "/api/placeholder/32/32"
+                       }"
+                       alt="${message.user.last_name} ${
+                        message.user.first_name
+                      }"
+                       class="h-8 w-8 rounded-full object-cover mr-2"
+                     >`
+                    : '<div class="w-10"></div>'
+                }
+                <div class="max-w-[80%]">
+                  ${
+                    showAvatar
+                      ? `
+                    <div class="flex items-center">
+                      <span class="text-sm font-medium text-gray-900 mr-2">
+                        ${message.user.last_name} ${message.user.first_name}
+                      </span>
+                      <span class="text-xs text-gray-500">
+                        ${formatTime(message.created_at)}
+                      </span>
+                    </div>
+                  `
+                      : ""
+                  }
+                  <div class="bg-gray-100 rounded-lg p-3 mt-1">
+                    ${urls
+                      .filter((url) => url)
+                      .map(
+                        (url) => `
+                      <div class="mb-2">
+                        ${
+                          url.match(/\.(jpg|jpeg|png|gif)$/i)
+                            ? `<img src="${url}" alt="画像" class="max-w-full rounded">`
+                            : `<a href="${url}" target="_blank" class="text-blue-600 underline">📎 ファイルを開く</a>`
+                        }
+                      </div>
+                    `
+                      )
+                      .join("")}
+                    <p class="text-gray-800">${escapeHtml(message.content)}</p>
+                  </div>
+                </div>
+              </div>
+            `;
           }
         });
 
@@ -1367,35 +1385,35 @@
       }
 
       // メッセージ送信
-      async function sendMessage(content, fileUrl = null) {
-        if (!currentGroup || (!content.trim() && !fileUrl)) return;
+      async function sendMessage(content, fileUrls = []) {
+        if (!currentGroup || (!content.trim() && fileUrls.length === 0)) return;
 
-        const messageData = {
-          group_id: currentGroup.id,
-          user_id: currentUser.id,
-          content: content.trim() || "",
-          file_url: fileUrl,
-          type: "message",
-        };
+        try {
+          const messageData = {
+            group_id: currentGroup.id,
+            user_id: currentUser.id,
+            content: content.trim() || "",
+            file_urls: fileUrls.filter((url) => url),
+          };
 
-        const { error } = await supabase
-          .from("group_messages")
-          .insert(messageData);
+          const { error } = await supabase
+            .from("group_messages")
+            .insert(messageData);
 
-        if (error) {
+          if (error) throw error;
+
+          // 入力フィールドをクリア
+          document.getElementById("message-input").value = "";
+
+          // メッセージを再読み込み
+          await loadGroupMessages(currentGroup.id);
+
+          // グループリストを更新
+          await loadGroups();
+        } catch (error) {
           console.error("Error sending message:", error);
           alert("メッセージの送信に失敗しました");
-          return;
         }
-
-        // 入力フィールドをクリア
-        document.getElementById("message-input").value = "";
-
-        // メッセージを再読み込み
-        await loadGroupMessages(currentGroup.id);
-
-        // グループリストを更新
-        await loadGroups();
       }
 
       // グループ作成
@@ -1455,21 +1473,7 @@
           group_id: group.id,
           user_id: currentUser.id,
           content: `${userProfile.last_name} ${userProfile.first_name}さんがグループを作成しました`,
-          type: "system",
         });
-
-        // 招待されたメンバーに通知
-        const notifications = selectedMembers.map((member) => ({
-          user_id: member.id,
-          type: "group_invite",
-          title: "グループへの招待",
-          content: `${userProfile.last_name} ${userProfile.first_name}さんがあなたを「${group.name}」グループに招待しました`,
-          related_id: group.id,
-        }));
-
-        if (notifications.length > 0) {
-          await supabase.from("notifications").insert(notifications);
-        }
 
         return group;
       }
@@ -1480,75 +1484,67 @@
         const color = categoryColors[group.category] || "gray";
 
         container.innerHTML = `
-                <div class="flex justify-center">
-                    <div class="w-20 h-20 rounded-full bg-${color}-100 flex items-center justify-center">
-                        <svg class="h-10 w-10 text-${color}-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                    </div>
+          <div class="flex justify-center">
+            <div class="w-20 h-20 rounded-full bg-${color}-100 flex items-center justify-center">
+              <svg class="h-10 w-10 text-${color}-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+          </div>
+          <h3 class="font-medium text-lg text-gray-900 text-center mt-4">${
+            group.name
+          }</h3>
+          <p class="text-sm text-gray-600 text-center mt-1">作成日: ${new Date(
+            group.created_at
+          ).toLocaleDateString("ja-JP")}</p>
+          
+          <div class="mt-6">
+            <h4 class="font-medium text-gray-900 mb-2">グループの説明</h4>
+            <p class="text-sm text-gray-600">${escapeHtml(
+              group.description
+            )}</p>
+          </div>
+          
+          <div class="mt-6">
+            <div class="flex justify-between items-center mb-2">
+              <h4 class="font-medium text-gray-900">メンバー (${
+                groupMembers.size
+              })</h4>
+            </div>
+            <div class="space-y-3 max-h-60 overflow-y-auto scrollbar-thin">
+              ${Array.from(groupMembers.values())
+                .map(
+                  (member) => `
+                <div class="flex items-center">
+                  <img src="${
+                    member.profile_image_url || "/api/placeholder/32/32"
+                  }" alt="${member.last_name} ${
+                    member.first_name
+                  }" class="h-8 w-8 rounded-full object-cover">
+                  <div class="ml-2">
+                    <div class="text-sm font-medium text-gray-900">${
+                      member.last_name
+                    } ${member.first_name}</div>
+                    <div class="text-xs text-gray-500">${
+                      member.bio ? member.bio.substring(0, 20) + "..." : ""
+                    }</div>
+                  </div>
                 </div>
-                <h3 class="font-medium text-lg text-gray-900 text-center mt-4">${
-                  group.name
-                }</h3>
-                <p class="text-sm text-gray-600 text-center mt-1">作成日: ${new Date(
-                  group.created_at
-                ).toLocaleDateString("ja-JP")}</p>
-                
-                <div class="mt-6">
-                    <h4 class="font-medium text-gray-900 mb-2">グループの説明</h4>
-                    <p class="text-sm text-gray-600">${group.description}</p>
-                </div>
-                
-                <div class="mt-6">
-                    <div class="flex justify-between items-center mb-2">
-                        <h4 class="font-medium text-gray-900">メンバー (${
-                          groupMembers.size
-                        })</h4>
-                        <button id="invite-members-btn" class="text-blue-600 text-sm hover:underline">招待する</button>
-                    </div>
-                    <div class="space-y-3 max-h-60 overflow-y-auto scrollbar-thin">
-                        ${Array.from(groupMembers.values())
-                          .map(
-                            (member) => `
-                            <div class="flex items-center">
-                                <img src="${
-                                  member.profile_image_url ||
-                                  "/api/placeholder/32/32"
-                                }" alt="${member.last_name} ${
-                              member.first_name
-                            }" class="h-8 w-8 rounded-full object-cover">
-                                <div class="ml-2">
-                                    <div class="text-sm font-medium text-gray-900">${
-                                      member.last_name
-                                    } ${member.first_name}</div>
-                                    <div class="text-xs text-gray-500">${
-                                      member.bio
-                                        ? member.bio.substring(0, 20) + "..."
-                                        : ""
-                                    }</div>
-                                </div>
-                            </div>
-                        `
-                          )
-                          .join("")}
-                    </div>
-                </div>
-                
-                <div class="mt-8 flex flex-col gap-2">
-                    <button class="flex items-center justify-center px-4 py-2 border border-blue-600 rounded-lg text-blue-600 font-medium hover:bg-blue-50 transition duration-200">
-                        <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                        グループ設定
-                    </button>
-                    <button id="leave-group-btn" class="flex items-center justify-center px-4 py-2 border border-red-500 rounded-lg text-red-500 font-medium hover:bg-red-50 transition duration-200">
-                        <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
-                        グループを退出
-                    </button>
-                </div>
-            `;
+              `
+                )
+                .join("")}
+            </div>
+          </div>
+          
+          <div class="mt-8 flex flex-col gap-2">
+            <button id="leave-group-btn" class="flex items-center justify-center px-4 py-2 border border-red-500 rounded-lg text-red-500 font-medium hover:bg-red-50 transition duration-200">
+              <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              グループを退出
+            </button>
+          </div>
+        `;
 
         // グループ退出ボタン
         document
@@ -1566,69 +1562,79 @@
 
       // グループ退出
       async function leaveGroup(groupId) {
-        const { error } = await supabase
-          .from("group_members")
-          .delete()
-          .eq("group_id", groupId)
-          .eq("user_id", currentUser.id);
+        try {
+          const { error } = await supabase
+            .from("group_members")
+            .delete()
+            .eq("group_id", groupId)
+            .eq("user_id", currentUser.id);
 
-        if (error) {
+          if (error) throw error;
+
+          // システムメッセージを追加
+          await supabase.from("group_messages").insert({
+            group_id: groupId,
+            user_id: currentUser.id,
+            content: `${userProfile.last_name} ${userProfile.first_name}さんがグループを退出しました`,
+          });
+
+          // UIをリセット
+          currentGroup = null;
+          document
+            .getElementById("no-group-selected")
+            .classList.remove("hidden");
+          document.getElementById("active-group-chat").classList.add("hidden");
+
+          // グループリストを再読み込み
+          await loadGroups();
+        } catch (error) {
           console.error("Error leaving group:", error);
           alert("グループの退出に失敗しました");
-          return;
         }
-
-        // システムメッセージを追加
-        await supabase.from("group_messages").insert({
-          group_id: groupId,
-          user_id: currentUser.id,
-          content: `${userProfile.last_name} ${userProfile.first_name}さんがグループを退出しました`,
-          type: "system",
-        });
-
-        // UIをリセット
-        currentGroup = null;
-        document.getElementById("no-group-selected").classList.remove("hidden");
-        document.getElementById("active-group-chat").classList.add("hidden");
-
-        // グループリストを再読み込み
-        await loadGroups();
       }
 
       // ユーザー検索（メンバー招待用）
       async function searchUsers(query) {
         if (!query.trim()) return [];
 
-        const { data: users } = await supabase
-          .from("profiles")
-          .select("*")
-          .neq("id", currentUser.id)
-          .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%`)
-          .limit(10);
+        try {
+          const { data: users, error } = await supabase
+            .from("profiles")
+            .select("*")
+            .neq("id", currentUser.id)
+            .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%`)
+            .limit(10);
 
-        return users || [];
+          if (error) throw error;
+          return users || [];
+        } catch (error) {
+          console.error("Error searching users:", error);
+          return [];
+        }
       }
 
       // ファイルアップロード
       async function uploadFile(file, type = "files") {
-        const fileExt = file.name.split(".").pop();
-        const fileName = `${currentUser.id}_${Date.now()}.${fileExt}`;
-        const filePath = `groups/${currentGroup.id}/${type}/${fileName}`;
+        try {
+          const fileExt = file.name.split(".").pop();
+          const fileName = `${currentUser.id}_${Date.now()}.${fileExt}`;
+          const filePath = `groups/${currentGroup.id}/${type}/${fileName}`;
 
-        const { error: uploadError } = await supabase.storage
-          .from("group-files")
-          .upload(filePath, file);
+          const { error: uploadError } = await supabase.storage
+            .from("group-files")
+            .upload(filePath, file);
 
-        if (uploadError) {
-          console.error("Upload error:", uploadError);
+          if (uploadError) throw uploadError;
+
+          const { data } = supabase.storage
+            .from("group-files")
+            .getPublicUrl(filePath);
+
+          return data.publicUrl;
+        } catch (error) {
+          console.error("Upload error:", error);
           throw new Error("ファイルのアップロードに失敗しました");
         }
-
-        const { data } = supabase.storage
-          .from("group-files")
-          .getPublicUrl(filePath);
-
-        return data.publicUrl;
       }
 
       // リアルタイム更新設定
@@ -1715,6 +1721,12 @@
         document.getElementById("groups-loading").classList.add("hidden");
       }
 
+      function escapeHtml(text) {
+        const div = document.createElement("div");
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
       // イベントリスナー設定
       document
         .querySelector(".mobile-menu-button")
@@ -1777,12 +1789,14 @@
         .getElementById("search-groups")
         .addEventListener("input", function (e) {
           const query = e.target.value.toLowerCase();
-          const filteredGroups = groups.filter((group) =>
-            group.name.toLowerCase().includes(query)
-          );
-          groups = filteredGroups;
+          if (query) {
+            filteredGroups = allGroups.filter((group) =>
+              group.name.toLowerCase().includes(query)
+            );
+          } else {
+            filteredGroups = [...allGroups];
+          }
           displayGroups();
-          groups = groups; // リセット
         });
 
       // メッセージ送信
@@ -1828,7 +1842,7 @@
           if (file) {
             try {
               const fileUrl = await uploadFile(file, "files");
-              await sendMessage(`ファイル: ${file.name}`, fileUrl);
+              await sendMessage(`ファイル: ${file.name}`, [fileUrl]);
             } catch (error) {
               alert(error.message);
             }
@@ -1843,7 +1857,7 @@
           if (file) {
             try {
               const fileUrl = await uploadFile(file, "images");
-              await sendMessage("画像を送信しました", fileUrl);
+              await sendMessage("画像を送信しました", [fileUrl]);
             } catch (error) {
               alert(error.message);
             }
@@ -1911,24 +1925,24 @@
           .filter((user) => !selectedIds.includes(user.id))
           .map(
             (user) => `
-                <div class="p-2 hover:bg-gray-100 cursor-pointer flex items-center" onclick="selectMember('${
-                  user.id
-                }', '${user.last_name}', '${user.first_name}', '${
+            <div class="p-2 hover:bg-gray-100 cursor-pointer flex items-center" onclick="selectMember('${
+              user.id
+            }', '${user.last_name}', '${user.first_name}', '${
               user.profile_image_url || ""
             }')">
-                    <img src="${
-                      user.profile_image_url || "/api/placeholder/32/32"
-                    }" alt="" class="w-8 h-8 rounded-full object-cover mr-2">
-                    <div>
-                        <div class="text-sm font-medium">${user.last_name} ${
+              <img src="${
+                user.profile_image_url || "/api/placeholder/32/32"
+              }" alt="" class="w-8 h-8 rounded-full object-cover mr-2">
+              <div>
+                <div class="text-sm font-medium">${user.last_name} ${
               user.first_name
             }</div>
-                        <div class="text-xs text-gray-500">${
-                          locationNames[user.location] || user.location
-                        }</div>
-                    </div>
-                </div>
-            `
+                <div class="text-xs text-gray-500">${
+                  locationNames[user.location] || user.location
+                }</div>
+              </div>
+            </div>
+          `
           )
           .join("");
         container.classList.remove("hidden");
@@ -1951,22 +1965,22 @@
         container.innerHTML = selectedMembers
           .map(
             (member) => `
-                <div class="inline-flex items-center bg-blue-100 rounded-full px-3 py-1">
-                    <img src="${
-                      member.profile_image_url || "/api/placeholder/24/24"
-                    }" alt="" class="w-6 h-6 rounded-full object-cover mr-1">
-                    <span class="text-sm text-blue-800">${member.last_name} ${
+            <div class="inline-flex items-center bg-blue-100 rounded-full px-3 py-1">
+              <img src="${
+                member.profile_image_url || "/api/placeholder/24/24"
+              }" alt="" class="w-6 h-6 rounded-full object-cover mr-1">
+              <span class="text-sm text-blue-800">${member.last_name} ${
               member.first_name
             }</span>
-                    <button onclick="removeMember('${
-                      member.id
-                    }')" class="ml-1 text-blue-600 hover:text-blue-800">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
-                </div>
-            `
+              <button onclick="removeMember('${
+                member.id
+              }')" class="ml-1 text-blue-600 hover:text-blue-800">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+          `
           )
           .join("");
       }
