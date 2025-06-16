@@ -86,6 +86,126 @@ app.get('/api/recommendations', async (req, res) => {
   res.json(profiles || []);
 });
 
+// --- Posts API ---
+app.get('/api/posts', async (req, res) => {
+  const { user_id } = req.query;
+  const limit = parseInt(req.query.limit || '10', 10);
+  if (!user_id) return res.status(400).json({ error: 'missing user_id' });
+  try {
+    const { data, error } = await supabase
+      .from('posts')
+      .select(
+        '*, post_comments(id, user_id, content, created_at, profiles!post_comments_user_id_fkey(id, first_name, last_name, profile_image_url))'
+      )
+      .eq('user_id', user_id)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    res.json(data || []);
+  } catch (err) {
+    console.error('fetch posts error', err);
+    res.status(500).json({ error: 'failed to fetch posts' });
+  }
+});
+
+app.post('/api/posts', async (req, res) => {
+  const { user_id, content, image_urls } = req.body;
+  if (!user_id || !content) {
+    return res.status(400).json({ error: 'missing parameters' });
+  }
+  try {
+    const { data, error } = await supabase
+      .from('posts')
+      .insert({ user_id, content, image_urls: image_urls || [] })
+      .select()
+      .single();
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    console.error('create post error', err);
+    res.status(500).json({ error: 'failed to create post' });
+  }
+});
+
+app.post('/api/posts/:id/like', async (req, res) => {
+  const { id } = req.params;
+  const { user_id } = req.body;
+  if (!user_id) return res.status(400).json({ error: 'missing user_id' });
+  try {
+    const { data: existing } = await supabase
+      .from('post_likes')
+      .select('id')
+      .eq('post_id', id)
+      .eq('user_id', user_id)
+      .single();
+    let liked = true;
+    if (existing) {
+      await supabase.from('post_likes').delete().eq('id', existing.id);
+      liked = false;
+    } else {
+      await supabase.from('post_likes').insert({ post_id: id, user_id });
+    }
+
+    const { count } = await supabase
+      .from('post_likes')
+      .select('*', { count: 'exact', head: true })
+      .eq('post_id', id);
+    await supabase.from('posts').update({ likes_count: count }).eq('id', id);
+    res.json({ liked, likes_count: count });
+  } catch (err) {
+    console.error('like post error', err);
+    res.status(500).json({ error: 'failed to update like' });
+  }
+});
+
+app.get('/api/posts/:id/comments', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { data, error } = await supabase
+      .from('post_comments')
+      .select(
+        '*, profiles!post_comments_user_id_fkey(id, first_name, last_name, profile_image_url)'
+      )
+      .eq('post_id', id)
+      .order('created_at');
+    if (error) throw error;
+    res.json(data || []);
+  } catch (err) {
+    console.error('fetch comments error', err);
+    res.status(500).json({ error: 'failed to fetch comments' });
+  }
+});
+
+app.post('/api/posts/:id/comments', async (req, res) => {
+  const { id } = req.params;
+  const { user_id, content } = req.body;
+  if (!user_id || !content) {
+    return res.status(400).json({ error: 'missing parameters' });
+  }
+  try {
+    const { data, error } = await supabase
+      .from('post_comments')
+      .insert({ post_id: id, user_id, content })
+      .select()
+      .single();
+    if (error) throw error;
+
+    const { count } = await supabase
+      .from('post_comments')
+      .select('*', { count: 'exact', head: true })
+      .eq('post_id', id);
+    await supabase
+      .from('posts')
+      .update({ comments_count: count })
+      .eq('id', id);
+
+    res.json(data);
+  } catch (err) {
+    console.error('add comment error', err);
+    res.status(500).json({ error: 'failed to add comment' });
+  }
+});
+
 const port = process.env.PORT || 3001;
 app.listen(port, () => {
   console.log(`Embedding service running on port ${port}`);
