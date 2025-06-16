@@ -907,12 +907,19 @@
           .limit(5);
 
         const groupIds = groups ? groups.map((g) => g.group_id) : [];
-        const { data: reads } = await supabase
-          .from("group_message_reads")
-          .select("group_id, message_id")
-          .eq("user_id", currentUser.id)
-          .in("group_id", groupIds);
-        const readSet = new Set(reads?.map((r) => r.message_id));
+        const unreadCounts = {};
+        if (groupIds.length > 0) {
+          const { data: unreadMessages } = await supabase
+            .from("group_messages")
+            .select("group_id")
+            .eq("is_read", false)
+            .eq("user_id", currentUser.id)
+            .in("group_id", groupIds);
+
+          (unreadMessages || []).forEach((msg) => {
+            unreadCounts[msg.group_id] = (unreadCounts[msg.group_id] || 0) + 1;
+          });
+        }
 
         const container = document.getElementById("groups-container");
 
@@ -932,9 +939,7 @@
         container.innerHTML = groups
           .map(({ groups: group }) => {
             const latestMessage = group.group_messages?.[0];
-            const unreadCount = (group.group_messages || []).filter(
-              (m) => !readSet.has(m.id)
-            ).length;
+            const unreadCount = unreadCounts[group.id] || 0;
 
             return `
                     <div class="px-6 py-4 flex items-start hover:bg-gray-50 transition duration-150 cursor-pointer" onclick="window.location.href='groups.html?id=${
