@@ -9,6 +9,17 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
+app.get('/api/placeholder/:width/:height', (req, res) => {
+  const width = parseInt(req.params.width, 10) || 100;
+  const height = parseInt(req.params.height, 10) || 100;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">\n` +
+    `<rect width="100%" height="100%" fill="#ddd"/>` +
+    `<text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#888" font-family="sans-serif" font-size="14">${width}x${height}</text>` +
+    `</svg>`;
+  res.set('Content-Type', 'image/svg+xml');
+  res.send(svg);
+});
+
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
