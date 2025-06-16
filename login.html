@@ -527,6 +527,9 @@
               } else {
                 showError("ログインに失敗しました。もう一度お試しください。");
               }
+            } else if (!data.user.email_confirmed_at) {
+              showError("メールアドレスの確認が完了していません。メールをご確認ください。");
+              await supabase.auth.signOut();
             } else {
               const { data: settings } = await supabase
                 .from("security_settings")
