@@ -5,11 +5,12 @@ AI-powered matching to streamline building a startup team.
 
 ## Setup
 
-1. Create a `.env` file with your Supabase credentials:
+1. Create a `.env` file with your Supabase and OpenAI credentials:
 
    ```env
    SUPABASE_URL=<your-supabase-url>
    SUPABASE_ANON_KEY=<your-anon-key>
+   OPENAI_API_KEY=<your-openai-api-key>
    ```
 
    To enable optional push notifications, also provide `PUSH_VAPID_PUBLIC_KEY`
