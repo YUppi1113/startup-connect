@@ -1350,6 +1350,13 @@
 
           try {
             const formData = new FormData(this);
+            const imageFile = formData.get("event-image");
+            if (imageFile && imageFile.size > 2 * 1024 * 1024) {
+              alert("画像ファイルは2MB以下にしてください。");
+              submitButton.disabled = false;
+              submitButton.textContent = "作成する";
+              return;
+            }
             await createEvent(formData);
 
             document
