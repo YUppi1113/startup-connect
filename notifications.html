@@ -59,221 +59,12 @@
   </head>
   <body class="bg-gray-50 min-h-screen">
     <!-- ナビゲーションバー -->
-    <header class="bg-white shadow-md sticky top-0 z-20">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
-          <div class="flex items-center">
-            <div class="flex-shrink-0 flex items-center">
-              <a href="index.html">
-                <svg
-                  class="h-8 w-8 text-blue-600"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="9" cy="7" r="4"></circle>
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
-              </a>
-              <a
-                href="dashboard.html"
-                class="ml-2 text-xl font-bold text-gray-800"
-                >スタートアップコネクト</a
-              >
-            </div>
-            <nav class="hidden md:ml-6 md:flex space-x-4">
-              <a
-                href="dashboard.html"
-                class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
-                >ホーム</a
-              >
-              <a
-                href="search.html"
-                class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
-                >検索</a
-              >
-              <a
-                href="messages.html"
-                class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
-                >メッセージ</a
-              >
-              <a
-                href="groups.html"
-                class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
-                >グループ</a
-              >
-              <a
-                href="events.html"
-                class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
-                >イベント</a
-              >
-            </nav>
-          </div>
-          <div class="hidden md:flex items-center">
-            <button
-              type="button"
-              class="relative p-1 rounded-full text-gray-500 hover:text-blue-600 focus:outline-none"
-            >
-              <span class="sr-only">通知を見る</span>
-              <a href="notifications.html" class="relative inline-flex">
-                <svg
-                  class="h-6 w-6 text-blue-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                  ></path>
-                </svg>
-                <span
-                  id="notification-badge"
-                  class="hidden absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500"
-                ></span>
-              </a>
-            </button>
-
-            <div class="ml-3 relative">
-              <div class="flex items-center">
-                <button
-                  type="button"
-                  class="bg-gray-800 flex text-sm rounded-full focus:outline-none"
-                  id="user-menu-button"
-                >
-                  <span class="sr-only">メニューを開く</span>
-                  <img
-                    id="user-avatar"
-                    class="h-8 w-8 rounded-full object-cover"
-                    src="/api/placeholder/32/32"
-                    alt="プロフィール"
-                  />
-                </button>
-                <div class="ml-2 hidden md:block">
-                  <div id="user-name" class="text-sm font-medium text-gray-800">
-                    -
-                  </div>
-                  <div id="user-location" class="text-xs text-gray-500">-</div>
-                </div>
-              </div>
-
-              <div
-                id="user-menu"
-                class="hidden origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-30"
-              >
-                <a
-                  href="profile.html"
-                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >プロフィール</a
-                >
-                <a
-                  href="settings.html"
-                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >設定</a
-                >
-                <a
-                  href="#"
-                  id="logout-link"
-                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >ログアウト</a
-                >
-              </div>
-            </div>
-          </div>
-
-          <div class="flex md:hidden items-center">
-            <a href="notifications.html" class="relative mr-3 p-1">
-              <svg
-                class="h-6 w-6 text-blue-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                ></path>
-              </svg>
-              <span
-                id="notification-badge-mobile"
-                class="hidden absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500"
-              ></span>
-            </a>
-
-            <button
-              type="button"
-              class="mobile-menu-button text-gray-500 hover:text-blue-600 focus:outline-none"
-            >
-              <svg
-                class="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M4 6h16M4 12h16M4 18h16"
-                ></path>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- モバイルメニュー -->
-      <div class="mobile-menu hidden md:hidden bg-white border-t">
-        <a
-          href="dashboard.html"
-          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
-          >ホーム</a
-        >
-        <a
-          href="search.html"
-          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
-          >検索</a
-        >
-        <a
-          href="messages.html"
-          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
-          >メッセージ</a
-        >
-        <a
-          href="groups.html"
-          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
-          >グループ</a
-        >
-        <a
-          href="events.html"
-          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
-          >イベント</a
-        >
-        <div class="border-t border-gray-200 my-1"></div>
-        <a
-          href="profile.html"
-          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
-          >プロフィール</a
-        >
-        <a
-          href="settings.html"
-          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
-          >設定</a
-        >
-        <a
-          href="#"
-          class="logout-link-mobile block px-4 py-2 text-gray-500 hover:bg-gray-100"
-          >ログアウト</a
-        >
-      </div>
-    </header>
+    <script>
+  const hXhr = new XMLHttpRequest();
+  hXhr.open("GET","partials/header.html",false);
+  hXhr.send(null);
+  document.write(hXhr.responseText);
+</script>
 
     <!-- メインコンテンツ -->
     <main class="max-w-3xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
@@ -460,22 +251,12 @@
     </main>
 
     <!-- フッター -->
-    <footer class="bg-gray-100 py-6 mt-12">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center text-gray-500 text-sm">
-          <p>&copy; 2024 スタートアップコネクト. All rights reserved.</p>
-          <div class="mt-2 space-x-4">
-            <a href="#" class="text-gray-500 hover:text-gray-700">利用規約</a>
-            <a href="#" class="text-gray-500 hover:text-gray-700"
-              >プライバシーポリシー</a
-            >
-            <a href="#" class="text-gray-500 hover:text-gray-700"
-              >お問い合わせ</a
-            >
-          </div>
-        </div>
-      </div>
-    </footer>
+    <script>
+  const fXhr = new XMLHttpRequest();
+  fXhr.open("GET","partials/footer.html",false);
+  fXhr.send(null);
+  document.write(fXhr.responseText);
+</script>
 
     <script>
       // Supabase設定
