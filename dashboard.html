@@ -557,6 +557,22 @@
       </div>
     </main>
 
+    <!-- 初回説明モーダル -->
+    <div id="intro-modal" class="fixed inset-0 z-40 hidden" role="dialog" aria-modal="true">
+      <div class="absolute inset-0 bg-gray-900 bg-opacity-50"></div>
+      <div class="relative max-w-md mx-auto mt-20 bg-white rounded-lg shadow-xl p-6">
+        <h2 class="text-xl font-semibold mb-4">スタートアップコネクトへようこそ</h2>
+        <ol class="list-decimal list-inside space-y-2 text-gray-700">
+          <li>プロフィールを完成させましょう。</li>
+          <li>検索からパートナーを探しましょう。</li>
+          <li>メッセージを送って交流しましょう。</li>
+        </ol>
+        <div class="mt-6 text-right">
+          <button id="intro-close-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">はじめる</button>
+        </div>
+      </div>
+    </div>
+
     <!-- フッター -->
     <footer class="bg-gray-100 py-6 mt-12">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -664,6 +680,16 @@
         await checkAuth();
         await loadDashboardData();
         setupRealtimeSubscriptions();
+
+        if (!localStorage.getItem("introShown")) {
+          openModal("intro-modal");
+        }
+        document
+          .getElementById("intro-close-btn")
+          .addEventListener("click", () => {
+            localStorage.setItem("introShown", "true");
+            closeModal("intro-modal");
+          });
       });
 
       // 認証チェック
@@ -1303,5 +1329,6 @@
           window.location.href = "login.html?message=logout";
         });
     </script>
+    <script src="accessibility.js"></script>
   </body>
 </html>
