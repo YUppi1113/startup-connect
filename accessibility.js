@@ -16,7 +16,7 @@
           first.focus();
         }
       } else if (e.key === 'Escape') {
-        closeModal(modal.id);
+        window.closeModal(modal.id);
       }
     }
     modal.addEventListener('keydown', handle);
