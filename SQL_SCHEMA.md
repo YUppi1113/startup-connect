@@ -1,7 +1,6 @@
 # SQL Schema
 
 
-<<<<<<< codex/add-event-editing-and-deletion-features
 ## Events triggers
 
 ```sql
@@ -11,7 +10,6 @@ execute function handle_updated_at();
 ```
 
 The delete action relies on the foreign key from `event_participants.event_id` with `on delete cascade` so no additional trigger is required.
-=======
 -- enable vector extension for profile embeddings
 create extension if not exists vector;
 
@@ -399,7 +397,6 @@ CREATE TABLE public.profile_embeddings (
 
 
 
-=======
 # Database Schema
 
 ## profile_embeddings
@@ -420,4 +417,3 @@ create table public.profile_embeddings (
 Node service that calls OpenAI's embedding API and upserts the result into
 `profile_embeddings`. It also exposes `/api/recommendations` which ranks users
 by cosine similarity between embeddings.
->>>>>>> main
