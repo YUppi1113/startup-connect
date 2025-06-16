@@ -835,7 +835,8 @@
       </div>
     </footer>
 
-    <script>
+    <script type="module">
+      import { filterEvents as applyFilterEvents } from './js/events.js';
       // Supabase設定
       const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.__ENV__;
       const supabase = window.supabase.createClient(
@@ -1365,73 +1366,14 @@
       // イベント検索・フィルタリング
       function filterEvents() {
         const typeFilter = document.getElementById("event-type").value;
-        const locationFilter = document.getElementById(
-          "event-location-filter"
-        ).value;
+        const locationFilter = document.getElementById("event-location-filter").value;
         const dateFilter = document.getElementById("event-date-filter").value;
 
-        let filteredEvents = allEvents;
-
-        // タイプフィルター
-        if (typeFilter) {
-          filteredEvents = filteredEvents.filter(
-            (event) => event.event_type === typeFilter
-          );
-        }
-
-        // 地域フィルター
-        if (locationFilter) {
-          if (locationFilter === "online") {
-            filteredEvents = filteredEvents.filter(
-              (event) => event.format === "online"
-            );
-          } else {
-            filteredEvents = filteredEvents.filter(
-              (event) =>
-                event.location &&
-                event.location.toLowerCase().includes(locationFilter)
-            );
-          }
-        }
-
-        // 日付フィルター
-        if (dateFilter) {
-          const now = new Date();
-          const today = new Date(
-            now.getFullYear(),
-            now.getMonth(),
-            now.getDate()
-          );
-
-          filteredEvents = filteredEvents.filter((event) => {
-            const eventDate = new Date(event.event_date);
-
-            switch (dateFilter) {
-              case "today":
-                return eventDate.getTime() === today.getTime();
-              case "this-week":
-                const weekStart = new Date(today);
-                weekStart.setDate(today.getDate() - today.getDay());
-                const weekEnd = new Date(weekStart);
-                weekEnd.setDate(weekStart.getDate() + 6);
-                return eventDate >= weekStart && eventDate <= weekEnd;
-              case "this-month":
-                return (
-                  eventDate.getMonth() === today.getMonth() &&
-                  eventDate.getFullYear() === today.getFullYear()
-                );
-              case "next-month":
-                const nextMonth = new Date(today);
-                nextMonth.setMonth(today.getMonth() + 1);
-                return (
-                  eventDate.getMonth() === nextMonth.getMonth() &&
-                  eventDate.getFullYear() === nextMonth.getFullYear()
-                );
-              default:
-                return true;
-            }
-          });
-        }
+        const filteredEvents = applyFilterEvents(allEvents, {
+          type: typeFilter,
+          location: locationFilter,
+          date: dateFilter,
+        });
 
         displayEvents(filteredEvents);
       }
