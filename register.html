@@ -280,15 +280,24 @@
                   class="block text-sm font-medium text-gray-700 mb-1"
                   >パスワード <span class="text-red-600">*</span></label
                 >
-                <input
-                  type="password"
+                <div class="relative">
+                  <input
+                    type="password"
                     id="password" aria-label="パスワード"
-                  name="password"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="8文字以上の英数字"
-                  minlength="8"
-                  required
-                />
+                    name="password"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="8文字以上の英数字"
+                    minlength="8"
+                    required
+                  />
+                  <button type="button" id="toggle-password" class="absolute inset-y-0 right-3 flex items-center text-sm text-gray-600">表示</button>
+                </div>
+                <div class="mt-1">
+                  <span id="password-strength-text" class="text-xs"></span>
+                  <div class="w-full bg-gray-200 h-1 mt-1">
+                    <div id="password-strength-bar" class="h-1 w-0 bg-red-500"></div>
+                  </div>
+                </div>
                 <p id="password-error" class="mt-1 text-sm text-red-600 hidden"></p>
                 <p class="mt-1 text-xs text-gray-500">
                   ※8文字以上で、英字・数字を含めてください
@@ -301,15 +310,18 @@
                   class="block text-sm font-medium text-gray-700 mb-1"
                   >パスワード（確認） <span class="text-red-600">*</span></label
                 >
-                <input
-                  type="password"
+                <div class="relative">
+                  <input
+                    type="password"
                     id="password_confirm" aria-label="パスワード確認"
-                  name="password_confirm"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="8文字以上の英数字"
-                  minlength="8"
-                  required
-                />
+                    name="password_confirm"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="8文字以上の英数字"
+                    minlength="8"
+                    required
+                  />
+                  <button type="button" id="toggle-password-confirm" class="absolute inset-y-0 right-3 flex items-center text-sm text-gray-600">表示</button>
+                </div>
                 <p id="password_confirm-error" class="mt-1 text-sm text-red-600 hidden"></p>
               </div>
 
@@ -1297,6 +1309,8 @@
               hideError();
             }
 
+            updatePasswordStrength(value);
+
             if (confirmField.value && confirmField.value !== value) {
               confirmError.textContent = "パスワードが一致しません。";
               confirmError.classList.remove("hidden");
@@ -1465,6 +1479,61 @@
 
         return isValid;
       }
+
+      function updatePasswordStrength(value) {
+        const text = document.getElementById("password-strength-text");
+        const bar = document.getElementById("password-strength-bar");
+        let score = 0;
+        if (value.length >= 8) score++;
+        if (/[0-9]/.test(value)) score++;
+        if (/[a-z]/.test(value) && /[A-Z]/.test(value)) score++;
+        if (/[^A-Za-z0-9]/.test(value)) score++;
+        let label = "弱い";
+        let color = "bg-red-500";
+        let width = "25%";
+        if (score >= 4) {
+          label = "強い";
+          color = "bg-green-500";
+          width = "100%";
+        } else if (score === 3) {
+          label = "普通";
+          color = "bg-yellow-500";
+          width = "75%";
+        } else if (score === 2) {
+          label = "やや弱い";
+          color = "bg-yellow-400";
+          width = "50%";
+        }
+        text.textContent = `強度: ${label}`;
+        bar.className = `h-1 ${color}`;
+        bar.style.width = width;
+      }
+
+      document.getElementById("toggle-password").addEventListener("click", () => {
+        const input = document.getElementById("password");
+        const btn = document.getElementById("toggle-password");
+        if (input.type === "password") {
+          input.type = "text";
+          btn.textContent = "非表示";
+        } else {
+          input.type = "password";
+          btn.textContent = "表示";
+        }
+      });
+
+      document
+        .getElementById("toggle-password-confirm")
+        .addEventListener("click", () => {
+          const input = document.getElementById("password_confirm");
+          const btn = document.getElementById("toggle-password-confirm");
+          if (input.type === "password") {
+            input.type = "text";
+            btn.textContent = "非表示";
+          } else {
+            input.type = "password";
+            btn.textContent = "表示";
+          }
+        });
 
       // アカウント作成
       async function createAccount() {
@@ -1768,6 +1837,7 @@
       // 既存のユーザーの続き処理と保存データの復元
       window.addEventListener("load", async () => {
         restoreFormData();
+        updatePasswordStrength(document.getElementById("password").value || "");
 
         document
           .querySelectorAll(
