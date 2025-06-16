@@ -1,6 +1,6 @@
 import express from 'express';
 import { createClient } from '@supabase/supabase-js';
-import { Configuration, OpenAIApi } from 'openai';
+import OpenAI from "openai";
 import webpush from 'web-push';
 import dotenv from 'dotenv';
 import { extractHashtags } from './js/posts.js';
@@ -34,9 +34,10 @@ if (process.env.PUSH_VAPID_PUBLIC_KEY && process.env.PUSH_VAPID_PRIVATE_KEY) {
   );
 }
 
-const openai = new OpenAIApi(
-  new Configuration({ apiKey: process.env.OPENAI_API_KEY })
-);
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
+
 
 async function computeEmbedding(text) {
   const { data } = await openai.embeddings.create({

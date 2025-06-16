@@ -12,474 +12,390 @@ execute function handle_updated_at();
 
 The delete action relies on the foreign key from `event_participants.event_id` with `on delete cascade` so no additional trigger is required.
 =======
-create table public.groups (
-  id uuid not null default gen_random_uuid (),
-  name text not null,
-  description text not null,
-  category text not null,
-  is_private boolean null default false,
-  admin_id uuid not null,
-  group_image_url text null,
-  created_at timestamp with time zone null default now(),
-  updated_at timestamp with time zone null default now(),
-  constraint groups_pkey primary key (id),
-  constraint groups_admin_id_fkey foreign KEY (admin_id) references profiles (id) on delete CASCADE
-) TABLESPACE pg_default;
-
-create index IF not exists idx_groups_admin on public.groups using btree (admin_id) TABLESPACE pg_default;
-
-create index IF not exists idx_groups_category on public.groups using btree (category) TABLESPACE pg_default;
-
-create index IF not exists idx_groups_created_at on public.groups using btree (created_at desc) TABLESPACE pg_default;
-
-create trigger handle_groups_updated_at BEFORE
-update on groups for EACH row
-execute FUNCTION handle_updated_at ();
-
-
-zcreate table public.group_messages (
-  id uuid not null default gen_random_uuid (),
-  group_id uuid not null,
-  user_id uuid not null,
-  content text not null,
-  file_urls text[] null default '{}'::text[],
-  created_at timestamp with time zone null default now(),
-  constraint group_messages_pkey primary key (id),
-  constraint group_messages_group_id_fkey foreign KEY (group_id) references groups (id) on delete CASCADE,
-  constraint group_messages_user_id_fkey foreign KEY (user_id) references profiles (id) on delete CASCADE
-) TABLESPACE pg_default;
-
-create index IF not exists idx_group_messages_group on public.group_messages using btree (group_id) TABLESPACE pg_default;
-
-create index IF not exists idx_group_messages_created on public.group_messages using btree (created_at desc) TABLESPACE pg_default;
-
-create index IF not exists idx_group_messages_user on public.group_messages using btree (user_id) TABLESPACE pg_default;
-
-
-create table public.group_members (
-  id uuid not null default gen_random_uuid (),
-  group_id uuid not null,
-  user_id uuid not null,
-  role text null default 'member'::text,
-  joined_at timestamp with time zone null default now(),
-  constraint group_members_pkey primary key (id),
-  constraint group_members_group_id_user_id_key unique (group_id, user_id),
-  constraint group_members_group_id_fkey foreign KEY (group_id) references groups (id) on delete CASCADE,
-  constraint group_members_user_id_fkey foreign KEY (user_id) references profiles (id) on delete CASCADE
-) TABLESPACE pg_default;
-
-create index IF not exists idx_group_members_group on public.group_members using btree (group_id) TABLESPACE pg_default;
-
-create index IF not exists idx_group_members_user on public.group_members using btree (user_id) TABLESPACE pg_default;
-
-
-create table public.follows (
-  id uuid not null default gen_random_uuid (),
-  follower_id uuid null,
-  following_id uuid null,
-  created_at timestamp with time zone null default now(),
-  constraint follows_pkey primary key (id),
-  constraint follows_follower_id_following_id_key unique (follower_id, following_id),
-  constraint follows_follower_id_fkey foreign KEY (follower_id) references auth.users (id) on delete CASCADE,
-  constraint follows_following_id_fkey foreign KEY (following_id) references auth.users (id) on delete CASCADE
-) TABLESPACE pg_default;
-
-create index IF not exists idx_follows_follower on public.follows using btree (follower_id) TABLESPACE pg_default;
-
-create index IF not exists idx_follows_following on public.follows using btree (following_id) TABLESPACE pg_default;
-
-
-create table public.events (
-  id uuid not null default gen_random_uuid (),
-  title text not null,
-  description text not null,
-  location text not null,
-  event_date timestamp with time zone not null,
-  start_time time without time zone not null,
-  end_time time without time zone not null,
-  organizer_id uuid null,
-  max_attendees integer null,
-  event_type text not null,
-  created_at timestamp with time zone null default now(),
-  updated_at timestamp with time zone null default now(),
-  address text null,
-  online_url text null,
-  fee integer not null default 0,
-  image_url text null,
-  format text null,
-  status text null default 'scheduled',
-  constraint events_pkey primary key (id),
-  constraint events_organizer_id_fkey foreign KEY (organizer_id) references profiles (id) on delete CASCADE
-) TABLESPACE pg_default;
-
-create index IF not exists idx_events_date on public.events using btree (event_date) TABLESPACE pg_default;
-
-create trigger handle_events_updated_at BEFORE
-update on events for EACH row
-execute FUNCTION handle_updated_at ();
-
-
-create table public.event_participants (
-  id uuid not null default gen_random_uuid (),
-  event_id uuid null,
-  user_id uuid null,
-  status text null default 'registered'::text,
-  registered_at timestamp with time zone null default now(),
-  constraint event_participants_pkey primary key (id),
-  constraint event_participants_event_id_user_id_key unique (event_id, user_id),
-  constraint event_participants_event_id_fkey foreign KEY (event_id) references events (id) on delete CASCADE,
-  constraint event_participants_user_id_fkey foreign KEY (user_id) references auth.users (id) on delete CASCADE
-) TABLESPACE pg_default;
-
-create index IF not exists idx_event_participants_event on public.event_participants using btree (event_id) TABLESPACE pg_default;
-
-create index IF not exists idx_event_participants_user on public.event_participants using btree (user_id) TABLESPACE pg_default;
-
-
-create table public.blocked_users (
-  id uuid not null default gen_random_uuid (),
-  blocker_id uuid null,
-  blocked_id uuid null,
-  created_at timestamp with time zone null default CURRENT_TIMESTAMP,
-  constraint blocked_users_pkey primary key (id),
-  constraint blocked_users_blocker_id_blocked_id_key unique (blocker_id, blocked_id),
-  constraint blocked_users_blocked_id_fkey foreign KEY (blocked_id) references auth.users (id) on delete CASCADE,
-  constraint blocked_users_blocker_id_fkey foreign KEY (blocker_id) references auth.users (id) on delete CASCADE
-) TABLESPACE pg_default;
-
-create index IF not exists idx_blocked_users_blocker_id on public.blocked_users using btree (blocker_id) TABLESPACE pg_default;
-
-create index IF not exists idx_blocked_users_blocked_id on public.blocked_users using btree (blocked_id) TABLESPACE pg_default;
-
-
-create table public.direct_messages (
-  id uuid not null default gen_random_uuid (),
-  sender_id uuid null,
-  receiver_id uuid null,
-  content text not null,
-  is_read boolean null default false,
-  file_url text[] null default '{}'::text[],
-  created_at timestamp with time zone null default now(),
-  constraint direct_messages_pkey primary key (id),
-  constraint direct_messages_receiver_id_fkey foreign KEY (receiver_id) references profiles (id) on delete CASCADE,
-  constraint direct_messages_sender_id_fkey foreign KEY (sender_id) references profiles (id) on delete CASCADE,
-  constraint direct_messages_sender_id_fkey1 foreign KEY (sender_id) references profiles (id) on delete CASCADE
-) TABLESPACE pg_default;
-
-create index IF not exists idx_direct_messages_sender on public.direct_messages using btree (sender_id) TABLESPACE pg_default;
-
-create index IF not exists idx_direct_messages_receiver on public.direct_messages using btree (receiver_id) TABLESPACE pg_default;
-
-create index IF not exists idx_direct_messages_created on public.direct_messages using btree (created_at desc) TABLESPACE pg_default;
-
-
-create table public.projects (
-  id uuid not null default gen_random_uuid (),
-  user_id uuid null,
-  title text not null,
-  description text null,
-  image_url text null,
-  project_url text null,
-  technologies text[] null default '{}'::text[],
-  start_date date null,
-  end_date date null,
-  status text not null default 'completed'::text,
-  created_at timestamp with time zone null default now(),
-  updated_at timestamp with time zone null default now(),
-  constraint projects_pkey primary key (id),
-  constraint projects_user_id_fkey foreign KEY (user_id) references auth.users (id) on delete CASCADE
-) TABLESPACE pg_default;
-
-create index IF not exists idx_projects_user_id on public.projects using btree (user_id) TABLESPACE pg_default;
-
-create trigger handle_projects_updated_at BEFORE
-update on projects for EACH row
-execute FUNCTION handle_updated_at ();
-
-
-create table public.profiles (
-  id uuid not null,
-  first_name text not null,
-  last_name text not null,
-  location text not null,
-  age_range text not null,
-  bio text null,
-  linkedin_url text null,
-  profile_image_url text null,
-  skills text[] null default '{}'::text[],
-  created_at timestamp with time zone null default now(),
-  updated_at timestamp with time zone null default now(),
-  phone character varying(20) null,
-  timezone character varying(50) null default 'Asia/Tokyo'::character varying,
-  constraint profiles_pkey primary key (id),
-  constraint profiles_id_fkey foreign KEY (id) references auth.users (id)
-) TABLESPACE pg_default;
-
-create index IF not exists idx_profiles_user_id on public.profiles using btree (id) TABLESPACE pg_default;
-
-create trigger create_user_settings_trigger
-after INSERT on profiles for EACH row
-execute FUNCTION create_user_settings ();
-
-create trigger handle_profiles_updated_at BEFORE
-update on profiles for EACH row
-execute FUNCTION handle_updated_at ();
-
-
-create table public.privacy_settings (
-  id uuid not null default gen_random_uuid (),
-  user_id uuid null,
-  profile_visibility character varying(20) null default 'public'::character varying,
-  contact_visibility character varying(20) null default 'connections'::character varying,
-  activity_projects boolean null default true,
-  activity_groups boolean null default true,
-  created_at timestamp with time zone null default CURRENT_TIMESTAMP,
-  updated_at timestamp with time zone null default CURRENT_TIMESTAMP,
-  constraint privacy_settings_pkey primary key (id),
-  constraint privacy_settings_user_id_key unique (user_id),
-  constraint privacy_settings_user_id_fkey foreign KEY (user_id) references auth.users (id) on delete CASCADE,
-  constraint privacy_settings_contact_visibility_check check (
-    (
-      (contact_visibility)::text = any (
-        (
-          array[
-            'public'::character varying,
-            'connections'::character varying,
-            'private'::character varying
-          ]
-        )::text[]
-      )
-    )
-  ),
-  constraint privacy_settings_profile_visibility_check check (
-    (
-      (profile_visibility)::text = any (
-        (
-          array[
-            'public'::character varying,
-            'connections'::character varying,
-            'private'::character varying
-          ]
-        )::text[]
-      )
-    )
-  )
-) TABLESPACE pg_default;
-
-create index IF not exists idx_privacy_settings_user_id on public.privacy_settings using btree (user_id) TABLESPACE pg_default;
-
-create trigger update_privacy_settings_updated_at BEFORE
-update on privacy_settings for EACH row
-execute FUNCTION update_updated_at_column ();
-
-
-create table public.posts (
-  id uuid not null default gen_random_uuid (),
-  user_id uuid null,
-  content text not null,
-  image_urls text[] null default '{}'::text[],
-  likes_count integer not null default 0,
-  comments_count integer not null default 0,
-  created_at timestamp with time zone null default now(),
-  updated_at timestamp with time zone null default now(),
-  constraint posts_pkey primary key (id),
-  constraint posts_user_id_fkey foreign KEY (user_id) references auth.users (id) on delete CASCADE
-) TABLESPACE pg_default;
-
-create index IF not exists idx_posts_user_id on public.posts using btree (user_id) TABLESPACE pg_default;
-
-create index IF not exists idx_posts_created_at on public.posts using btree (created_at) TABLESPACE pg_default;
-
-create trigger handle_posts_updated_at BEFORE
-update on posts for EACH row
-execute FUNCTION handle_updated_at ();
-
-
-create table public.post_likes (
-  id uuid not null default gen_random_uuid (),
-  user_id uuid null,
-  post_id uuid null,
-  created_at timestamp with time zone null default now(),
-  constraint post_likes_pkey primary key (id),
-  constraint post_likes_user_id_post_id_key unique (user_id, post_id),
-  constraint post_likes_post_id_fkey foreign KEY (post_id) references posts (id) on delete CASCADE,
-  constraint post_likes_user_id_fkey foreign KEY (user_id) references auth.users (id) on delete CASCADE
-) TABLESPACE pg_default;
-
-create index IF not exists idx_post_likes_user_id on public.post_likes using btree (user_id) TABLESPACE pg_default;
-
-create index IF not exists idx_post_likes_post_id on public.post_likes using btree (post_id) TABLESPACE pg_default;
-
-
-create table public.post_comments (
-  id uuid not null default gen_random_uuid (),
-  user_id uuid null,
-  post_id uuid null,
-  content text not null,
-  created_at timestamp with time zone null default now(),
-  updated_at timestamp with time zone null default now(),
-  constraint post_comments_pkey primary key (id),
-  constraint post_comments_post_id_fkey foreign KEY (post_id) references posts (id) on delete CASCADE,
-  constraint post_comments_user_id_fkey foreign KEY (user_id) references auth.users (id) on delete CASCADE
-) TABLESPACE pg_default;
-
-create index IF not exists idx_post_comments_user_id on public.post_comments using btree (user_id) TABLESPACE pg_default;
-
-create index IF not exists idx_post_comments_post_id on public.post_comments using btree (post_id) TABLESPACE pg_default;
-
-create trigger handle_post_comments_updated_at BEFORE
-update on post_comments for EACH row
-execute FUNCTION handle_updated_at ();
-
-
-create table public.post_bookmarks (
-  id uuid not null default gen_random_uuid(),
-  user_id uuid not null,
-  post_id uuid not null,
-  created_at timestamp with time zone null default now(),
-  constraint post_bookmarks_pkey primary key (id),
-  constraint post_bookmarks_user_id_post_id_key unique (user_id, post_id),
-  constraint post_bookmarks_user_id_fkey foreign key (user_id) references auth.users(id) on delete cascade,
-  constraint post_bookmarks_post_id_fkey foreign key (post_id) references posts(id) on delete cascade
-) TABLESPACE pg_default;
-
-create index IF not exists idx_post_bookmarks_user on public.post_bookmarks using btree (user_id) TABLESPACE pg_default;
-
-create index IF not exists idx_post_bookmarks_post on public.post_bookmarks using btree (post_id) TABLESPACE pg_default;
-
-
-create table public.notifications (
-  id uuid not null default gen_random_uuid (),
-  user_id uuid null,
-  type text not null,
-  title text not null,
-  content text not null,
-  is_read boolean null default false,
-  related_id uuid null,
-  created_at timestamp with time zone null default now(),
-  constraint notifications_pkey primary key (id),
-  constraint notifications_user_id_fkey foreign KEY (user_id) references auth.users (id) on delete CASCADE
-) TABLESPACE pg_default;
-
-create index IF not exists idx_notifications_user on public.notifications using btree (user_id) TABLESPACE pg_default;
-
-create index IF not exists idx_notifications_read on public.notifications using btree (is_read) TABLESPACE pg_default;
-
-
-create table public.notification_settings (
-  id uuid not null default gen_random_uuid (),
-  user_id uuid null,
-  email_direct_messages boolean null default true,
-  email_mentions boolean null default true,
-  email_follow boolean null default false,
-  email_events boolean null default true,
-  email_marketing boolean null default false,
-  app_messages boolean null default true,
-  app_activity boolean null default true,
-  created_at timestamp with time zone null default CURRENT_TIMESTAMP,
-  updated_at timestamp with time zone null default CURRENT_TIMESTAMP,
-  constraint notification_settings_pkey primary key (id),
-  constraint notification_settings_user_id_key unique (user_id),
-  constraint notification_settings_user_id_fkey foreign KEY (user_id) references auth.users (id) on delete CASCADE
-) TABLESPACE pg_default;
-
-create index IF not exists idx_notification_settings_user_id on public.notification_settings using btree (user_id) TABLESPACE pg_default;
-
-create trigger update_notification_settings_updated_at BEFORE
-update on notification_settings for EACH row
-execute FUNCTION update_updated_at_column ();
-
-
-create table public.user_sessions (
-  id uuid not null default gen_random_uuid (),
-  user_id uuid null,
-  session_token text null,
-  device_info text null,
-  ip_address inet null,
-  location text null,
-  user_agent text null,
-  is_current boolean null default false,
-  created_at timestamp with time zone null default CURRENT_TIMESTAMP,
-  last_activity timestamp with time zone null default CURRENT_TIMESTAMP,
-  expires_at timestamp with time zone null,
-  constraint user_sessions_pkey primary key (id),
-  constraint user_sessions_session_token_key unique (session_token),
-  constraint user_sessions_user_id_fkey foreign KEY (user_id) references auth.users (id) on delete CASCADE
-) TABLESPACE pg_default;
-
-create index IF not exists idx_user_sessions_user_id on public.user_sessions using btree (user_id) TABLESPACE pg_default;
-
-
-create table public.startup_info (
-  id uuid not null default gen_random_uuid (),
-  user_id uuid null,
-  startup_status text not null,
-  industries text[] null default '{}'::text[],
-  business_idea text null,
-  looking_for text not null,
-  challenges text[] null default '{}'::text[],
-  created_at timestamp with time zone null default now(),
-  updated_at timestamp with time zone null default now(),
-  constraint startup_info_pkey primary key (id),
-  constraint startup_info_profile_fkey foreign KEY (user_id) references profiles (id) on delete CASCADE
-) TABLESPACE pg_default;
-
-create index IF not exists idx_startup_info_user_id on public.startup_info using btree (user_id) TABLESPACE pg_default;
-
-create trigger handle_startup_info_updated_at BEFORE
-update on startup_info for EACH row
-execute FUNCTION handle_updated_at ();
-
-
-create table public.shared_files (
-  id uuid not null default gen_random_uuid (),
-  name text not null,
-  file_url text not null,
-  file_size integer null,
-  file_type text null,
-  uploaded_by uuid null,
-  group_id uuid null,
-  message_id uuid null,
-  created_at timestamp with time zone null default now(),
-  constraint shared_files_pkey primary key (id),
-  constraint shared_files_uploaded_by_fkey foreign KEY (uploaded_by) references auth.users (id) on delete CASCADE
-) TABLESPACE pg_default;
-
-
-create table public.security_settings (
-  id uuid not null default gen_random_uuid (),
-  user_id uuid null,
-  two_factor_enabled boolean null default false,
-  two_factor_secret text null,
-  backup_codes text[] null,
-  last_password_change timestamp with time zone null default CURRENT_TIMESTAMP,
-  login_notifications boolean null default true,
-  created_at timestamp with time zone null default CURRENT_TIMESTAMP,
-  updated_at timestamp with time zone null default CURRENT_TIMESTAMP,
-  constraint security_settings_pkey primary key (id),
-  constraint security_settings_user_id_key unique (user_id),
-  constraint security_settings_user_id_fkey foreign KEY (user_id) references auth.users (id) on delete CASCADE
-) TABLESPACE pg_default;
-
-create index IF not exists idx_security_settings_user_id on public.security_settings using btree (user_id) TABLESPACE pg_default;
-
-create trigger update_security_settings_updated_at BEFORE
-update on security_settings for EACH row
-execute FUNCTION update_updated_at_column ();
-
-
-create table public.push_subscriptions (
-  id uuid not null default gen_random_uuid(),
-  user_id uuid not null,
-  endpoint text not null,
-  p256dh text not null,
-  auth text not null,
-  created_at timestamp with time zone null default now(),
-  constraint push_subscriptions_pkey primary key (id),
-  constraint push_subscriptions_user_id_fkey foreign key (user_id) references auth.users(id) on delete cascade
-) tablespace pg_default;
-
-create index if not exists idx_push_subscriptions_user_id on public.push_subscriptions using btree (user_id) tablespace pg_default;
+-- enable vector extension for profile embeddings
+create extension if not exists vector;
+
+-- ========== Groups ==========
+-- 3) トリガー関数定義
+-- 3-1) updated_at を自動更新
+CREATE OR REPLACE FUNCTION handle_updated_at()
+RETURNS trigger AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 3-2) privacy_settings, notification_settings, security_settings を自動作成
+CREATE OR REPLACE FUNCTION create_user_settings()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.privacy_settings   (user_id) VALUES (NEW.id);
+  INSERT INTO public.notification_settings(user_id) VALUES (NEW.id);
+  INSERT INTO public.security_settings  (user_id) VALUES (NEW.id);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 3-3) updated_at 用の共通関数（別名でも可）
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS trigger AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 4) テーブル定義（依存先→依存元の順に）
+
+-- 4-1) Profiles
+CREATE TABLE public.profiles (
+  id uuid PRIMARY KEY REFERENCES auth.users(id),
+  first_name text NOT NULL,
+  last_name text NOT NULL,
+  location text NOT NULL,
+  age_range text NOT NULL,
+  bio text,
+  linkedin_url text,
+  profile_image_url text,
+  skills text[] DEFAULT '{}'::text[],
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  phone varchar(20),
+  timezone varchar(50) DEFAULT 'Asia/Tokyo'
+);
+CREATE INDEX idx_profiles_user_id ON public.profiles(id);
+CREATE TRIGGER create_user_settings_trigger
+  AFTER INSERT ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION create_user_settings();
+CREATE TRIGGER handle_profiles_updated_at
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION handle_updated_at();
+
+-- 4-2) Groups
+CREATE TABLE public.groups (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  description text NOT NULL,
+  category text NOT NULL,
+  is_private boolean DEFAULT false,
+  admin_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  group_image_url text,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+CREATE INDEX idx_groups_admin     ON public.groups(admin_id);
+CREATE INDEX idx_groups_category  ON public.groups(category);
+CREATE INDEX idx_groups_created_at ON public.groups(created_at DESC);
+CREATE TRIGGER handle_groups_updated_at
+  BEFORE UPDATE ON public.groups
+  FOR EACH ROW EXECUTE FUNCTION handle_updated_at();
+
+-- 4-3) Group Messages
+CREATE TABLE public.group_messages (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  group_id uuid NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
+  user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  content text NOT NULL,
+  file_urls text[] DEFAULT '{}'::text[],
+  created_at timestamptz DEFAULT now()
+);
+CREATE INDEX idx_group_messages_group   ON public.group_messages(group_id);
+CREATE INDEX idx_group_messages_created ON public.group_messages(created_at DESC);
+CREATE INDEX idx_group_messages_user    ON public.group_messages(user_id);
+
+-- 4-4) Group Members
+CREATE TABLE public.group_members (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  group_id uuid NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
+  user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  role text DEFAULT 'member',
+  joined_at timestamptz DEFAULT now(),
+  CONSTRAINT group_members_group_id_user_id_key UNIQUE (group_id, user_id)
+);
+CREATE INDEX idx_group_members_group ON public.group_members(group_id);
+CREATE INDEX idx_group_members_user  ON public.group_members(user_id);
+
+-- 4-5) Follows
+CREATE TABLE public.follows (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  follower_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+  following_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_at timestamptz DEFAULT now(),
+  CONSTRAINT follows_follower_id_following_id_key UNIQUE (follower_id, following_id)
+);
+CREATE INDEX idx_follows_follower  ON public.follows(follower_id);
+CREATE INDEX idx_follows_following ON public.follows(following_id);
+
+-- 4-6) Events
+CREATE TABLE public.events (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title text NOT NULL,
+  description text NOT NULL,
+  location text NOT NULL,
+  event_date timestamptz NOT NULL,
+  start_time time NOT NULL,
+  end_time time NOT NULL,
+  organizer_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE,
+  max_attendees integer,
+  event_type text NOT NULL,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  address text,
+  online_url text,
+  fee integer NOT NULL DEFAULT 0,
+  image_url text,
+  format text,
+  status text DEFAULT 'scheduled'
+);
+CREATE INDEX idx_events_date ON public.events(event_date);
+CREATE TRIGGER handle_events_updated_at
+  BEFORE UPDATE ON public.events
+  FOR EACH ROW EXECUTE FUNCTION handle_updated_at();
+
+-- 4-7) Event Participants
+CREATE TABLE public.event_participants (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_id uuid REFERENCES public.events(id) ON DELETE CASCADE,
+  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+  status text DEFAULT 'registered',
+  registered_at timestamptz DEFAULT now(),
+  CONSTRAINT event_participants_event_id_user_id_key UNIQUE (event_id, user_id)
+);
+CREATE INDEX idx_event_participants_event ON public.event_participants(event_id);
+CREATE INDEX idx_event_participants_user  ON public.event_participants(user_id);
+
+-- 4-8) Blocked Users
+CREATE TABLE public.blocked_users (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  blocker_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+  blocked_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_at timestamptz DEFAULT current_timestamp,
+  CONSTRAINT blocked_users_blocker_id_blocked_id_key UNIQUE (blocker_id, blocked_id)
+);
+CREATE INDEX idx_blocked_users_blocker_id ON public.blocked_users(blocker_id);
+CREATE INDEX idx_blocked_users_blocked_id ON public.blocked_users(blocked_id);
+
+-- 4-9) Direct Messages
+CREATE TABLE public.direct_messages (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  sender_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE,
+  receiver_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE,
+  content text NOT NULL,
+  is_read boolean DEFAULT false,
+  file_url text[] DEFAULT '{}'::text[],
+  created_at timestamptz DEFAULT now()
+);
+CREATE INDEX idx_direct_messages_sender   ON public.direct_messages(sender_id);
+CREATE INDEX idx_direct_messages_receiver ON public.direct_messages(receiver_id);
+CREATE INDEX idx_direct_messages_created  ON public.direct_messages(created_at DESC);
+
+-- 4-10) Projects
+CREATE TABLE public.projects (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+  title text NOT NULL,
+  description text,
+  image_url text,
+  project_url text,
+  technologies text[] DEFAULT '{}'::text[],
+  start_date date,
+  end_date date,
+  status text NOT NULL DEFAULT 'completed',
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+CREATE INDEX idx_projects_user_id ON public.projects(user_id);
+CREATE TRIGGER handle_projects_updated_at
+  BEFORE UPDATE ON public.projects
+  FOR EACH ROW EXECUTE FUNCTION handle_updated_at();
+
+-- 4-11) Privacy Settings
+CREATE TABLE public.privacy_settings (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
+  profile_visibility varchar(20) DEFAULT 'public',
+  contact_visibility varchar(20) DEFAULT 'connections',
+  activity_projects boolean DEFAULT true,
+  activity_groups boolean DEFAULT true,
+  created_at timestamptz DEFAULT current_timestamp,
+  updated_at timestamptz DEFAULT current_timestamp,
+  CONSTRAINT privacy_settings_contact_visibility_check
+    CHECK (contact_visibility IN ('public','connections','private')),
+  CONSTRAINT privacy_settings_profile_visibility_check
+    CHECK (profile_visibility IN ('public','connections','private'))
+);
+CREATE INDEX idx_privacy_settings_user_id ON public.privacy_settings(user_id);
+CREATE TRIGGER update_privacy_settings_updated_at
+  BEFORE UPDATE ON public.privacy_settings
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- 4-12) Posts
+CREATE TABLE public.posts (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+  content text NOT NULL,
+  image_urls text[] DEFAULT '{}'::text[],
+  likes_count integer DEFAULT 0,
+  comments_count integer DEFAULT 0,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+CREATE INDEX idx_posts_user_id   ON public.posts(user_id);
+CREATE INDEX idx_posts_created_at ON public.posts(created_at);
+CREATE TRIGGER handle_posts_updated_at
+  BEFORE UPDATE ON public.posts
+  FOR EACH ROW EXECUTE FUNCTION handle_updated_at();
+
+-- 4-13) Post Likes
+CREATE TABLE public.post_likes (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+  post_id uuid REFERENCES public.posts(id) ON DELETE CASCADE,
+  created_at timestamptz DEFAULT now(),
+  CONSTRAINT post_likes_user_id_post_id_key UNIQUE (user_id, post_id)
+);
+CREATE INDEX idx_post_likes_user_id ON public.post_likes(user_id);
+CREATE INDEX idx_post_likes_post_id ON public.post_likes(post_id);
+
+-- 4-14) Post Comments
+CREATE TABLE public.post_comments (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+  post_id uuid REFERENCES public.posts(id) ON DELETE CASCADE,
+  content text NOT NULL,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+CREATE INDEX idx_post_comments_user_id ON public.post_comments(user_id);
+CREATE INDEX idx_post_comments_post_id ON public.post_comments(post_id);
+CREATE TRIGGER handle_post_comments_updated_at
+  BEFORE UPDATE ON public.post_comments
+  FOR EACH ROW EXECUTE FUNCTION handle_updated_at();
+
+-- 4-15) Post Bookmarks
+CREATE TABLE public.post_bookmarks (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  post_id uuid NOT NULL REFERENCES public.posts(id) ON DELETE CASCADE,
+  created_at timestamptz DEFAULT now(),
+  CONSTRAINT post_bookmarks_user_id_post_id_key UNIQUE (user_id, post_id)
+);
+CREATE INDEX idx_post_bookmarks_user ON public.post_bookmarks(user_id);
+CREATE INDEX idx_post_bookmarks_post ON public.post_bookmarks(post_id);
+
+-- 4-16) Notifications
+CREATE TABLE public.notifications (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+  type text NOT NULL,
+  title text NOT NULL,
+  content text NOT NULL,
+  is_read boolean DEFAULT false,
+  related_id uuid,
+  created_at timestamptz DEFAULT now()
+);
+CREATE INDEX idx_notifications_user ON public.notifications(user_id);
+CREATE INDEX idx_notifications_read ON public.notifications(is_read);
+
+-- 4-17) Notification Settings
+CREATE TABLE public.notification_settings (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
+  email_direct_messages boolean DEFAULT true,
+  email_mentions boolean DEFAULT true,
+  email_follow boolean DEFAULT false,
+  email_events boolean DEFAULT true,
+  email_marketing boolean DEFAULT false,
+  app_messages boolean DEFAULT true,
+  app_activity boolean DEFAULT true,
+  created_at timestamptz DEFAULT current_timestamp,
+  updated_at timestamptz DEFAULT current_timestamp
+);
+CREATE INDEX idx_notification_settings_user_id ON public.notification_settings(user_id);
+CREATE TRIGGER update_notification_settings_updated_at
+  BEFORE UPDATE ON public.notification_settings
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- 4-18) User Sessions
+CREATE TABLE public.user_sessions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+  session_token text UNIQUE,
+  device_info text,
+  ip_address inet,
+  location text,
+  user_agent text,
+  is_current boolean DEFAULT false,
+  created_at timestamptz DEFAULT current_timestamp,
+  last_activity timestamptz DEFAULT current_timestamp,
+  expires_at timestamptz
+);
+CREATE INDEX idx_user_sessions_user_id ON public.user_sessions(user_id);
+
+-- 4-19) Startup Info
+CREATE TABLE public.startup_info (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE,
+  startup_status text NOT NULL,
+  industries text[] DEFAULT '{}'::text[],
+  business_idea text,
+  looking_for text NOT NULL,
+  challenges text[] DEFAULT '{}'::text[],
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+CREATE INDEX idx_startup_info_user_id ON public.startup_info(user_id);
+CREATE TRIGGER handle_startup_info_updated_at
+  BEFORE UPDATE ON public.startup_info
+  FOR EACH ROW EXECUTE FUNCTION handle_updated_at();
+
+-- 4-20) Shared Files
+CREATE TABLE public.shared_files (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  file_url text NOT NULL,
+  file_size integer,
+  file_type text,
+  uploaded_by uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+  group_id uuid,
+  message_id uuid,
+  created_at timestamptz DEFAULT now()
+);
+
+-- 4-21) Security Settings
+CREATE TABLE public.security_settings (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
+  two_factor_enabled boolean DEFAULT false,
+  two_factor_secret text,
+  backup_codes text[],
+  last_password_change timestamptz DEFAULT current_timestamp,
+  login_notifications boolean DEFAULT true,
+  created_at timestamptz DEFAULT current_timestamp,
+  updated_at timestamptz DEFAULT current_timestamp
+);
+CREATE INDEX idx_security_settings_user_id ON public.security_settings(user_id);
+CREATE TRIGGER update_security_settings_updated_at
+  BEFORE UPDATE ON public.security_settings
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- 4-22) Push Subscriptions
+CREATE TABLE public.push_subscriptions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  endpoint text NOT NULL,
+  p256dh text NOT NULL,
+  auth text NOT NULL,
+  created_at timestamptz DEFAULT now()
+);
+CREATE INDEX idx_push_subscriptions_user_id ON public.push_subscriptions(user_id);
+
+-- 4-23) Profile Embeddings
+CREATE TABLE public.profile_embeddings (
+  user_id uuid PRIMARY KEY REFERENCES public.profiles(id) ON DELETE CASCADE,
+  embedding vector(1536)
+);
 
 
 
