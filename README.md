@@ -10,8 +10,10 @@ AI-powered matching to streamline building a startup team.
    ```env
    SUPABASE_URL=<your-supabase-url>
    SUPABASE_ANON_KEY=<your-anon-key>
-   PUSH_VAPID_PUBLIC_KEY=<your-vapid-key>
    ```
+
+   To enable optional push notifications, also provide `PUSH_VAPID_PUBLIC_KEY`
+   and `PUSH_VAPID_PRIVATE_KEY`.
 
 2. Generate `config.js` from the template:
 
