@@ -24,6 +24,10 @@
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       }
     </style>
+    <script type="module">
+      import { showToast } from "./js/toast.js";
+      window.showToast = showToast;
+    </script>
   </head>
   <body class="bg-gray-50 dark:bg-dark-bg dark:text-dark-text">
     <!-- ナビゲーションバー -->
@@ -423,6 +427,9 @@
         const errorText = document.getElementById("error-text");
         errorText.textContent = message;
         errorDiv.classList.remove("hidden");
+        if (window.showToast) {
+          window.showToast(message, "error");
+        }
         setTimeout(() => {
           errorDiv.classList.add("hidden");
         }, 5000);
@@ -434,6 +441,9 @@
         const successText = document.getElementById("success-text");
         successText.textContent = message;
         successDiv.classList.remove("hidden");
+        if (window.showToast) {
+          window.showToast(message, "success");
+        }
         setTimeout(() => {
           successDiv.classList.add("hidden");
         }, 5000);

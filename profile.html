@@ -19,6 +19,10 @@
         font-family: "Noto Sans JP", sans-serif;
       }
     </style>
+    <script type="module">
+      import { showToast } from "./js/toast.js";
+      window.showToast = showToast;
+    </script>
   </head>
   <body class="bg-gray-50 min-h-screen">
     <!-- ナビゲーションバー -->
@@ -233,11 +237,6 @@
       >
         <span class="block sm:inline">プロフィールが更新されました。</span>
       </div>
-      <!-- トースト通知 -->
-      <div
-        id="toast"
-        class="hidden fixed bottom-5 right-5 bg-green-500 text-white px-4 py-2 rounded shadow-lg"
-      ></div>
 
       <!-- エラーメッセージ -->
       <div
@@ -1333,12 +1332,9 @@
           successDiv.classList.add("hidden");
         }, 3000);
 
-        const toast = document.getElementById("toast");
-        toast.textContent = "プロフィールを更新しました";
-        toast.classList.remove("hidden");
-        setTimeout(() => {
-          toast.classList.add("hidden");
-        }, 3000);
+        if (window.showToast) {
+          window.showToast("プロフィールを更新しました", "success");
+        }
 
         loadUserData();
       }
@@ -1349,6 +1345,9 @@
         const errorText = document.getElementById("error-text");
         errorText.textContent = message;
         errorDiv.classList.remove("hidden");
+        if (window.showToast) {
+          window.showToast(message, "error");
+        }
         window.scrollTo({ top: 0, behavior: "smooth" });
         setTimeout(() => {
           errorDiv.classList.add("hidden");
