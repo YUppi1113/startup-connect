@@ -174,16 +174,25 @@
             </div>
             <div>
               <label for="password" class="sr-only">パスワード</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autocomplete="current-password"
-                aria-label="パスワード"
-                required
-                class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="パスワード"
-              />
+              <div class="relative">
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autocomplete="current-password"
+                  aria-label="パスワード"
+                  required
+                  class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                  placeholder="パスワード"
+                />
+                <button type="button" id="toggle-login-password" class="absolute inset-y-0 right-3 flex items-center text-sm text-gray-600">表示</button>
+              </div>
+              <div class="mt-1">
+                <span id="login-password-strength-text" class="text-xs"></span>
+                <div class="w-full bg-gray-200 h-1 mt-1">
+                  <div id="login-password-strength-bar" class="h-1 w-0 bg-red-500"></div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -501,6 +510,55 @@
           cancel.addEventListener("click", handleCancel);
         });
       }
+
+      function updateLoginPasswordStrength(value) {
+        const text = document.getElementById("login-password-strength-text");
+        const bar = document.getElementById("login-password-strength-bar");
+        let score = 0;
+        if (value.length >= 8) score++;
+        if (/[0-9]/.test(value)) score++;
+        if (/[a-z]/.test(value) && /[A-Z]/.test(value)) score++;
+        if (/[^A-Za-z0-9]/.test(value)) score++;
+        let label = "弱い";
+        let color = "bg-red-500";
+        let width = "25%";
+        if (score >= 4) {
+          label = "強い";
+          color = "bg-green-500";
+          width = "100%";
+        } else if (score === 3) {
+          label = "普通";
+          color = "bg-yellow-500";
+          width = "75%";
+        } else if (score === 2) {
+          label = "やや弱い";
+          color = "bg-yellow-400";
+          width = "50%";
+        }
+        text.textContent = `強度: ${label}`;
+        bar.className = `h-1 ${color}`;
+        bar.style.width = width;
+      }
+
+      document
+        .getElementById("toggle-login-password")
+        .addEventListener("click", () => {
+          const input = document.getElementById("password");
+          const btn = document.getElementById("toggle-login-password");
+          if (input.type === "password") {
+            input.type = "text";
+            btn.textContent = "非表示";
+          } else {
+            input.type = "password";
+            btn.textContent = "表示";
+          }
+        });
+
+      document.getElementById("password").addEventListener("input", (e) => {
+        updateLoginPasswordStrength(e.target.value);
+      });
+
+      updateLoginPasswordStrength(document.getElementById("password").value || "");
       // ログインフォームの処理
       document
         .getElementById("login-form")
@@ -676,8 +734,8 @@
         });
 
       // 既にログインしている場合はダッシュボードへリダイレクト
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) {
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user) {
           window.location.href = "dashboard.html";
         }
       });
