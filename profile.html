@@ -70,6 +70,11 @@
                 >ホーム</a
               >
               <a
+                href="posts.html"
+                class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                >投稿</a
+              >
+              <a
                 href="search.html"
                 class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
                 >検索</a
@@ -196,6 +201,11 @@
           >ホーム</a
         >
         <a
+          href="posts.html"
+          class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          >投稿</a
+        >
+        <a
           href="search.html"
           class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
           >検索</a
@@ -257,6 +267,29 @@
         role="alert"
       >
         <span class="block sm:inline" id="error-text"></span>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <h2 class="text-lg font-semibold text-gray-800 mb-2">新規投稿</h2>
+        <form id="profile-post-form" class="space-y-2">
+          <textarea
+            id="profile-post-content"
+            class="w-full border border-gray-300 rounded p-2"
+            rows="3"
+            placeholder="いまどうしてる？"
+            required
+          ></textarea>
+          <input
+            type="file"
+            id="profile-post-images"
+            accept="image/*"
+            multiple
+            class="block"
+          />
+          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">
+            投稿する
+          </button>
+        </form>
       </div>
 
       <div class="bg-white rounded-lg shadow-sm">
@@ -1221,6 +1254,48 @@
           document.getElementById("user-menu").classList.add("hidden");
         }
       });
+
+      async function uploadPostFile(file) {
+        const ext = file.name.split(".").pop();
+        const fileName = `${currentUser.id}_${Date.now()}.${ext}`;
+        const filePath = `posts/${fileName}`;
+        const { error } = await supabase.storage
+          .from("post-images")
+          .upload(filePath, file);
+        if (error) throw error;
+        const { data } = supabase.storage
+          .from("post-images")
+          .getPublicUrl(filePath);
+        return data.publicUrl;
+      }
+
+      document
+        .getElementById("profile-post-form")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const content = document
+            .getElementById("profile-post-content")
+            .value.trim();
+          if (!content) return;
+          const files = Array.from(
+            document.getElementById("profile-post-images").files
+          );
+          const urls = [];
+          for (const file of files) {
+            const url = await uploadPostFile(file);
+            urls.push(url);
+          }
+          const { error } = await supabase
+            .from("posts")
+            .insert({ user_id: currentUser.id, content, image_urls: urls });
+          if (!error) {
+            document.getElementById("profile-post-content").value = "";
+            document.getElementById("profile-post-images").value = "";
+            alert("投稿が完了しました");
+          } else {
+            alert("投稿に失敗しました");
+          }
+        });
 
       // ログアウト
       document
