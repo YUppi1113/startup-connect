@@ -996,6 +996,14 @@
         SUPABASE_URL,
         SUPABASE_ANON_KEY
       );
+      if (
+        SUPABASE_URL === 'https://example.supabase.co' ||
+        SUPABASE_ANON_KEY === 'anon'
+      ) {
+        alert(
+          'config.js is not configured. Set environment variables and run `npm run build`.'
+        );
+      }
 
       // グローバル変数
       let currentStep = 1;
