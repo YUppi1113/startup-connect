@@ -132,7 +132,7 @@
                   id="user-menu-button"
                 >
                   <span class="sr-only">メニューを開く</span>
-                  <img
+                  <img loading="lazy"
                     id="current-user-avatar"
                     class="h-8 w-8 rounded-full object-cover"
                     src="/api/placeholder/32/32"
@@ -318,7 +318,7 @@
               class="flex flex-col sm:flex-row sm:items-end sm:justify-between -mt-12 sm:-mt-16"
             >
               <div class="flex items-end">
-                <img
+                <img loading="lazy"
                   id="profile-avatar"
                   src="/api/placeholder/128/128"
                   alt=""
@@ -1240,7 +1240,7 @@
                 <a href="profile-detail.html?user=${
                   conn.profiles.id
                 }" class="group">
-                    <img src="${
+                    <img loading="lazy" src="${
                       conn.profiles.profile_image_url ||
                       "/api/placeholder/40/40"
                     }" 
@@ -1275,7 +1275,7 @@
                               .map(
                                 (conn) => `
                                 <div class="flex items-center space-x-3">
-                                    <img src="${
+                                    <img loading="lazy" src="${
                                       conn.profiles.profile_image_url ||
                                       "/api/placeholder/48/48"
                                     }" 
@@ -1318,7 +1318,7 @@
                               .map(
                                 (conn) => `
                                 <div class="flex items-center space-x-3">
-                                    <img src="${
+                                    <img loading="lazy" src="${
                                       conn.profiles.profile_image_url ||
                                       "/api/placeholder/48/48"
                                     }" 
@@ -1379,13 +1379,13 @@
         const html = posts
           .map((post) => {
             const images = (post.image_urls || [])
-              .map((url) => `<img src="${url}" class="mt-2 rounded-md">`)
+              .map((url) => `<img loading="lazy" src="${url}" class="mt-2 rounded-md">`)
               .join("");
             const comments = (post.post_comments || [])
               .map(
                 (c) => `
                 <div class="flex items-start space-x-2 mt-2 text-sm">
-                  <img src="${
+                  <img loading="lazy" src="${
                     c.profiles?.profile_image_url || "/api/placeholder/24/24"
                   }" class="w-6 h-6 rounded-full object-cover" />
                   <div>

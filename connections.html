@@ -54,7 +54,7 @@
               <div class="flex items-center">
                 <button type="button" class="bg-gray-800 flex text-sm rounded-full focus:outline-none" id="user-menu-button">
                   <span class="sr-only">メニューを開く</span>
-                  <img id="current-user-avatar" class="h-8 w-8 rounded-full object-cover" src="/api/placeholder/32/32" alt="プロフィール" />
+                  <img loading="lazy" id="current-user-avatar" class="h-8 w-8 rounded-full object-cover" src="/api/placeholder/32/32" alt="プロフィール" />
                 </button>
                 <div class="ml-2 hidden md:block">
                   <div id="current-user-name" class="text-sm font-medium text-gray-800">読み込み中...</div>
@@ -237,7 +237,7 @@
         const showBtn = currentUser && currentUser.id !== profile.id;
         return `
           <div class="flex items-center space-x-4">
-            <img src="${profile.profile_image_url || '/api/placeholder/48/48'}" class="h-12 w-12 rounded-full object-cover" alt="${profile.last_name} ${profile.first_name}">
+            <img loading="lazy" src="${profile.profile_image_url || '/api/placeholder/48/48'}" class="h-12 w-12 rounded-full object-cover" alt="${profile.last_name} ${profile.first_name}">
             <div class="flex-1">
               <a href="profile-detail.html?user=${profile.id}" class="font-medium text-gray-900 hover:text-blue-600">${profile.last_name} ${profile.first_name}</a>
               <p class="text-sm text-gray-500">${locationNames[profile.location] || profile.location}</p>

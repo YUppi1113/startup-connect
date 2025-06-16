@@ -144,7 +144,7 @@
                   aria-haspopup="true"
                 >
                   <span class="sr-only">メニューを開く</span>
-                  <img
+                  <img loading="lazy"
                     id="user-avatar"
                     class="h-8 w-8 rounded-full object-cover"
                     src="/api/placeholder/32/32"
@@ -1413,7 +1413,7 @@
 
         card.innerHTML = `
                 <div class="flex items-center mb-4">
-                    <img src="${
+                    <img loading="lazy" src="${
                       user.profile_image_url || "/api/placeholder/48/48"
                     }" alt="${user.last_name} ${
           user.first_name
