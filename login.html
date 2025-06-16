@@ -556,6 +556,12 @@
                 // プロフィールが不完全な場合は登録画面へ
                 window.location.href = "register.html?step=2";
               } else {
+                if (document.getElementById("remember-me").checked) {
+                  await supabase.auth.setSession({
+                    access_token: data.session.access_token,
+                    refresh_token: data.session.refresh_token,
+                  });
+                }
                 await recordSession(data.user.id, data.session.access_token);
                 if (window.__ENV__ && window.__ENV__.PUSH_VAPID_PUBLIC_KEY) {
                   await registerPush(data.user.id);
