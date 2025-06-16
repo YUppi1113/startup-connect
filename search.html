@@ -1061,7 +1061,7 @@
     </footer>
 
     <!-- モバイル検索フィルターモーダル -->
-    <div id="mobile-filter-modal" class="fixed inset-0 z-50 hidden">
+    <div id="mobile-filter-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
       <div class="absolute inset-0 bg-gray-900 bg-opacity-50"></div>
       <div class="absolute inset-y-0 right-0 max-w-full flex">
         <div class="relative w-screen max-w-md">
@@ -1652,31 +1652,31 @@
       document
         .querySelector(".mobile-menu-button")
         .addEventListener("click", function () {
-          document.querySelector(".mobile-menu").classList.toggle("hidden");
+          const menu = document.querySelector(".mobile-menu");
+          const expanded = menu.classList.toggle("hidden") ? false : true;
+          this.setAttribute("aria-expanded", expanded);
         });
 
       // ユーザーメニュー
       document
         .getElementById("user-menu-button")
         .addEventListener("click", function () {
-          document.getElementById("user-menu").classList.toggle("hidden");
+          const menu = document.getElementById("user-menu");
+          const expanded = menu.classList.toggle("hidden") ? false : true;
+          this.setAttribute("aria-expanded", expanded);
         });
 
       // モバイルフィルターモーダル
       document
         .getElementById("mobile-filter-button")
         .addEventListener("click", function () {
-          document
-            .getElementById("mobile-filter-modal")
-            .classList.remove("hidden");
+          openModal("mobile-filter-modal", this);
         });
 
       document
         .getElementById("close-mobile-filter")
         .addEventListener("click", function () {
-          document
-            .getElementById("mobile-filter-modal")
-            .classList.add("hidden");
+          closeModal("mobile-filter-modal");
         });
 
       // ログアウト
@@ -1716,8 +1716,10 @@
       window.addEventListener("click", function (e) {
         if (!document.getElementById("user-menu-button").contains(e.target)) {
           document.getElementById("user-menu").classList.add("hidden");
+          document.getElementById("user-menu-button").setAttribute("aria-expanded", false);
         }
       });
     </script>
+    <script src="accessibility.js"></script>
   </body>
 </html>
