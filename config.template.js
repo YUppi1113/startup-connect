@@ -1,0 +1,6 @@
+// config.template.js
+window.__ENV__ = {
+  SUPABASE_URL: '__SUPABASE_URL__',
+  SUPABASE_ANON_KEY: '__SUPABASE_ANON_KEY__',
+  PUSH_VAPID_PUBLIC_KEY: '__PUSH_VAPID_PUBLIC_KEY__'
+};

@@ -410,6 +410,49 @@
         }, 5000);
       }
 
+      async function registerPush(userId) {
+        if (!('serviceWorker' in navigator)) return;
+        try {
+          const reg = await navigator.serviceWorker.register('sw.js');
+          const permission = await Notification.requestPermission();
+          if (permission !== 'granted') return;
+          const sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: window.__ENV__.PUSH_VAPID_PUBLIC_KEY,
+          });
+          const p256dh = btoa(String.fromCharCode(...new Uint8Array(sub.getKey('p256dh'))));
+          const auth = btoa(String.fromCharCode(...new Uint8Array(sub.getKey('auth'))));
+          await supabase.from('push_subscriptions').upsert({
+            user_id: userId,
+            endpoint: sub.endpoint,
+            p256dh,
+            auth,
+          });
+        } catch (e) {
+          console.warn('push registration failed', e);
+        }
+      }
+
+      async function recordSession(userId, token) {
+        try {
+          let ip = null;
+          try {
+            const res = await fetch('https://api.ipify.org?format=json');
+            ip = (await res.json()).ip;
+          } catch (e) {}
+          await supabase.from('user_sessions').insert({
+            user_id: userId,
+            session_token: token,
+            user_agent: navigator.userAgent,
+            ip_address: ip,
+            device_info: navigator.platform,
+            is_current: true,
+          });
+        } catch (e) {
+          console.warn('session record error', e);
+        }
+      }
+
 
       function promptTwoFactor(secret, backupCodes, userId) {
         return new Promise((resolve) => {
@@ -504,6 +547,8 @@
                 // プロフィールが不完全な場合は登録画面へ
                 window.location.href = "register.html?step=2";
               } else {
+                await recordSession(data.user.id, data.session.access_token);
+                await registerPush(data.user.id);
                 // ダッシュボードへリダイレクト
                 window.location.href = "dashboard.html";
               }

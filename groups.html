@@ -843,6 +843,12 @@
             </div>
 
             <div class="mb-6">
+              <label for="create-group-image" class="block text-sm font-medium text-gray-700 mb-1">グループ画像</label>
+              <img id="create-group-image-preview" src="/api/placeholder/80/80" alt="" class="w-20 h-20 rounded-full object-cover mb-2">
+              <input type="file" id="create-group-image" name="group-image" accept="image/*" />
+            </div>
+
+            <div class="mb-6">
               <div class="flex items-center">
                 <input
                   type="checkbox"
@@ -1562,6 +1568,17 @@
           );
         }
 
+        const imageFile = formData.get("group-image");
+        if (imageFile && imageFile.size > 0) {
+          try {
+            const url = await uploadGroupImage(group.id, null, imageFile);
+            await supabase.from("groups").update({ group_image_url: url }).eq("id", group.id);
+            group.group_image_url = url;
+          } catch (err) {
+            console.error("image upload error", err);
+          }
+        }
+
         // 作成者をメンバーに追加
         const members = [
           {
@@ -2085,6 +2102,15 @@
           }
         });
 
+      document
+        .getElementById("create-group-image")
+        .addEventListener("change", function (e) {
+          const file = e.target.files[0];
+          if (file) {
+            document.getElementById("create-group-image-preview").src = URL.createObjectURL(file);
+          }
+        });
+
       // メンバー検索
       let searchTimeout;
       document
@@ -2193,6 +2219,7 @@
         document.getElementById("create-group-form").reset();
         selectedMembers = [];
         displaySelectedMembers();
+        document.getElementById("create-group-image-preview").src = "/api/placeholder/80/80";
       }
 
       function openEditGroupModal() {
@@ -2207,17 +2234,15 @@
         openModal("edit-group-modal");
       }
 
-      async function uploadGroupImage(file) {
+      async function uploadGroupImage(groupId, currentUrl, file) {
         const fileExt = file.name.split(".").pop();
-        const fileName = `${currentGroup.id}_${Date.now()}.${fileExt}`;
-        const filePath = `${currentGroup.id}/${fileName}`;
+        const fileName = `${groupId}_${Date.now()}.${fileExt}`;
+        const filePath = `${groupId}/${fileName}`;
 
-        if (currentGroup.group_image_url) {
-          const oldName = currentGroup.group_image_url.split("/").pop();
+        if (currentUrl) {
+          const oldName = currentUrl.split("/").pop();
           try {
-            await supabase.storage
-              .from("group-images")
-              .remove([`${currentGroup.id}/${oldName}`]);
+            await supabase.storage.from("group-images").remove([`${groupId}/${oldName}`]);
           } catch (err) {
             console.warn("Old image remove error", err);
           }
@@ -2229,9 +2254,7 @@
 
         if (uploadError) throw uploadError;
 
-        const { data } = supabase.storage
-          .from("group-images")
-          .getPublicUrl(filePath);
+        const { data } = supabase.storage.from("group-images").getPublicUrl(filePath);
         return data.publicUrl;
       }
 
@@ -2303,7 +2326,7 @@
             };
             const imageFile = formData.get("group-image");
             if (imageFile && imageFile.size > 0) {
-              const url = await uploadGroupImage(imageFile);
+              const url = await uploadGroupImage(currentGroup.id, currentGroup.group_image_url, imageFile);
               updates.group_image_url = url;
             }
             const { data, error } = await supabase
