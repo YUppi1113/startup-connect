@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/otplib@12.0.1/dist/otplib.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
     <link
       href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap"
       rel="stylesheet"
@@ -1100,6 +1102,21 @@
       </div>
     </div>
 
+    <!-- 二段階認証設定モーダル -->
+    <div id="twofa-setup-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+          <h3 class="text-lg font-medium text-gray-900">二段階認証設定</h3>
+          <canvas id="twofa-qr" class="mx-auto"></canvas>
+          <p class="mt-2 text-sm text-gray-500">QRコードを認証アプリでスキャンし、コードを入力してください。</p>
+          <input id="twofa-code-input" type="text" class="w-full mt-2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+          <div class="items-center px-4 py-3 flex justify-center gap-3 mt-4">
+            <button id="twofa-cancel" class="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300">キャンセル</button>
+            <button id="twofa-confirm" class="px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300">確認</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <script>
       // Supabase設定
       const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.__ENV__;
@@ -1592,6 +1609,8 @@
           .addEventListener("click", () => {
             document.getElementById("confirm-modal").classList.add("hidden");
           });
+          document.getElementById("twofa-confirm").addEventListener("click", confirmTwoFactorSetup);
+          document.getElementById("twofa-cancel").addEventListener("click", cancelTwoFactorSetup);
       }
 
       // アカウント設定保存
@@ -1965,36 +1984,67 @@
         }
       }
 
-      // 二段階認証切り替え
-      async function toggleTwoFactor(e) {
-        const enabled = e.target.checked;
 
-        showLoading();
-        try {
-          const { error } = await supabase.from("security_settings").upsert(
-            {
-              user_id: currentUser.id,
-              two_factor_enabled: enabled,
-            },
-            {
-              onConflict: "user_id",
-            }
-          );
-
-          if (error) throw error;
-
-          showSuccess(
-            enabled
-              ? "二段階認証を有効にしました。"
-              : "二段階認証を無効にしました。"
-          );
-        } catch (error) {
-          showError("二段階認証の設定に失敗しました: " + error.message);
-          e.target.checked = !enabled; // 元に戻す
-        } finally {
-          hideLoading();
+        let twoFaSecret = "";
+        function startTwoFactorSetup() {
+          twoFaSecret = window.otplib.authenticator.generateSecret();
+          const url = window.otplib.authenticator.keyuri(currentUser.email, "Startup Connect", twoFaSecret);
+          window.QRCode.toCanvas(document.getElementById("twofa-qr"), url, function () {});
+          document.getElementById("twofa-code-input").value = "";
+          document.getElementById("twofa-setup-modal").classList.remove("hidden");
         }
-      }
+
+        async function confirmTwoFactorSetup() {
+          const code = document.getElementById("twofa-code-input").value.trim();
+          if (!window.otplib.authenticator.check(code, twoFaSecret)) {
+            showError("コードが正しくありません。");
+            return;
+          }
+          const backupCodes = Array.from({ length: 5 }, () => Math.random().toString(36).slice(-8));
+          showLoading();
+          try {
+            const { error } = await supabase.from("security_settings").upsert({ user_id: currentUser.id, two_factor_enabled: true, two_factor_secret: twoFaSecret, backup_codes: backupCodes }, { onConflict: "user_id" });
+            if (error) throw error;
+            document.getElementById("twofa-setup-modal").classList.add("hidden");
+            alert("バックアップコードを安全な場所に保存してください:\n" + backupCodes.join("\n"));
+            showSuccess("二段階認証を有効にしました。");
+          } catch (error) {
+            showError("二段階認証の設定に失敗しました: " + error.message);
+            document.getElementById("two-factor-auth").checked = false;
+          } finally {
+            hideLoading();
+          }
+        }
+
+        function cancelTwoFactorSetup() {
+          document.getElementById("twofa-setup-modal").classList.add("hidden");
+          document.getElementById("two-factor-auth").checked = false;
+        }
+      // 二段階認証切り替え
+        // 二段階認証切り替え
+        async function toggleTwoFactor(e) {
+          const enabled = e.target.checked;
+          if (enabled) {
+            startTwoFactorSetup();
+          } else {
+            const confirmed = await showConfirm("二段階認証無効化","二段階認証を無効にしますか？");
+            if (!confirmed) {
+              e.target.checked = true;
+              return;
+            }
+            showLoading();
+            try {
+              const { error } = await supabase.from("security_settings").upsert({ user_id: currentUser.id, two_factor_enabled: false, two_factor_secret: null, backup_codes: null }, { onConflict: "user_id" });
+              if (error) throw error;
+              showSuccess("二段階認証を無効にしました。");
+            } catch (error) {
+              showError("二段階認証の設定に失敗しました: " + error.message);
+              e.target.checked = true;
+            } finally {
+              hideLoading();
+            }
+          }
+        }
 
       // 全セッション終了
       async function revokeAllSessions() {

@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/otplib@12.0.1/dist/otplib.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
     <link
       href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap"
       rel="stylesheet"
@@ -336,6 +338,22 @@
         </div>
       </div>
     </div>
+    <!-- 二段階認証モーダル -->
+    <div id="twofa-login-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
+      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+          <h3 class="text-lg font-medium text-gray-900">二段階認証</h3>
+          <div class="mt-2 px-7 py-3">
+            <p class="text-sm text-gray-500">認証アプリのコードを入力してください。</p>
+            <input id="twofa-login-code" type="text" class="w-full mt-2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+          </div>
+          <div class="items-center px-4 py-3 flex justify-center gap-3">
+            <button id="twofa-login-cancel" class="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300">キャンセル</button>
+            <button id="twofa-login-ok" class="px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300">確認</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- フッター -->
     <footer class="bg-gray-100 py-6 mt-12">
@@ -391,6 +409,44 @@
         }, 5000);
       }
 
+
+      function promptTwoFactor(secret, backupCodes, userId) {
+        return new Promise((resolve) => {
+          const modal = document.getElementById("twofa-login-modal");
+          const input = document.getElementById("twofa-login-code");
+          const ok = document.getElementById("twofa-login-ok");
+          const cancel = document.getElementById("twofa-login-cancel");
+          modal.classList.remove("hidden");
+          function cleanup() {
+            modal.classList.add("hidden");
+            ok.removeEventListener("click", handleOk);
+            cancel.removeEventListener("click", handleCancel);
+          }
+          async function handleOk() {
+            const code = input.value.trim();
+            if (window.otplib.authenticator.check(code, secret)) {
+              cleanup();
+              resolve(true);
+            } else {
+              const idx = (backupCodes || []).indexOf(code);
+              if (idx !== -1) {
+                backupCodes.splice(idx, 1);
+                await supabase.from("security_settings").update({ backup_codes: backupCodes }).eq("user_id", userId);
+                cleanup();
+                resolve(true);
+              } else {
+                showError("コードが正しくありません。");
+              }
+            }
+          }
+          function handleCancel() {
+            cleanup();
+            resolve(false);
+          }
+          ok.addEventListener("click", handleOk);
+          cancel.addEventListener("click", handleCancel);
+        });
+      }
       // ログインフォームの処理
       document
         .getElementById("login-form")
@@ -419,6 +475,21 @@
                 showError("ログインに失敗しました。もう一度お試しください。");
               }
             } else {
+              const { data: settings } = await supabase
+                .from("security_settings")
+                .select("two_factor_enabled, two_factor_secret, backup_codes")
+                .eq("user_id", data.user.id)
+                .single();
+
+              if (settings && settings.two_factor_enabled) {
+                const verified = await promptTwoFactor(settings.two_factor_secret, settings.backup_codes || [], data.user.id);
+                if (!verified) {
+                  await supabase.auth.signOut();
+                  loginButton.disabled = false;
+                  loginButton.textContent = "ログイン";
+                  return;
+                }
+              }
               showSuccess("ログインに成功しました。リダイレクトしています...");
 
               // プロフィール情報を確認
