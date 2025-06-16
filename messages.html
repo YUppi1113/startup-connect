@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="styles/styles.css" />
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
       href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap"
       rel="stylesheet"
@@ -34,24 +36,6 @@
       }
       .messages-height {
         height: calc(100vh - 300px);
-      }
-      .skeleton {
-        animation: shimmer 1.5s infinite;
-        background: linear-gradient(
-          90deg,
-          #f0f0f0 25%,
-          #e0e0e0 50%,
-          #f0f0f0 75%
-        );
-        background-size: 200% 100%;
-      }
-      @keyframes shimmer {
-        0% {
-          background-position: 200% 0;
-        }
-        100% {
-          background-position: -200% 0;
-        }
       }
     </style>
   </head>
@@ -154,7 +138,7 @@
                   id="user-menu-button"
                 >
                   <span class="sr-only">メニューを開く</span>
-                  <img
+                  <img loading="lazy"
                     id="user-avatar"
                     class="h-8 w-8 rounded-full object-cover"
                     src="/api/placeholder/32/32"
@@ -473,7 +457,7 @@
               >
                 <div class="flex items-center">
                   <div class="relative">
-                    <img
+                    <img loading="lazy"
                       id="chat-user-avatar"
                       class="h-10 w-10 rounded-full object-cover"
                       src="/api/placeholder/40/40"
@@ -587,7 +571,7 @@
               <!-- タイピングインジケーター -->
               <div id="typing-indicator" class="hidden px-4 py-2">
                 <div class="flex items-start">
-                  <img
+                  <img loading="lazy"
                     id="typing-user-avatar"
                     class="h-8 w-8 rounded-full object-cover mr-2"
                     src="/api/placeholder/32/32"
@@ -821,7 +805,7 @@
       >
         <div class="p-6 text-center">
           <div class="mb-6">
-            <img
+            <img loading="lazy"
               id="call-user-avatar"
               src="/api/placeholder/96/96"
               alt=""
@@ -1153,7 +1137,7 @@
               conv.user.id
             }')">
                         <div class="relative flex-shrink-0">
-                            <img class="w-12 h-12 rounded-full object-cover" src="${
+                            <img loading="lazy" class="w-12 h-12 rounded-full object-cover" src="${
                               conv.user.profile_image_url ||
                               "/api/placeholder/48/48"
                             }" alt="${conv.user.last_name} ${
@@ -1331,7 +1315,7 @@
                                       message.file_url.match(
                                         /\.(jpg|jpeg|png|gif)$/i
                                       )
-                                        ? `<img src="${message.file_url}" class="max-w-full rounded">`
+                                        ? `<img loading="lazy" src="${message.file_url}" class="max-w-full rounded">`
                                         : typeof message.file_url === "string"
                                         ? `<a href="${message.file_url}" target="_blank" class="text-blue-200 underline">📎 ファイルを開く</a>`
                                         : ``
@@ -1352,7 +1336,7 @@
                             ${
                               showAvatar
                                 ? `
-                                <img src="${
+                                <img loading="lazy" src="${
                                   message.sender.profile_image_url ||
                                   "/api/placeholder/32/32"
                                 }" alt="${
@@ -1389,7 +1373,7 @@
                                         <div class="mb-2">
                                             ${
                                                 message.file_url.match(/\.(jpg|jpeg|png|gif)$/i)
-                                                ? `<img src="${message.file_url}" alt="画像" class="max-w-full rounded">`
+                                                ? `<img loading="lazy" src="${message.file_url}" alt="画像" class="max-w-full rounded">`
                                                 : `<a href="${message.file_url}" target="_blank" class="text-blue-600 underline">📎 ファイルを開く</a>`
                                             }
                                         </div>
@@ -1500,7 +1484,7 @@
 
         container.innerHTML = `
                 <div class="flex justify-center">
-                    <img src="${
+                    <img loading="lazy" src="${
                       user.profile_image_url || "/api/placeholder/96/96"
                     }" alt="${user.last_name} ${
           user.first_name
@@ -1875,7 +1859,7 @@
                 <div class="p-2 hover:bg-gray-100 cursor-pointer flex items-center" onclick="selectRecipient('${
                   user.id
                 }')">
-                    <img src="${
+                    <img loading="lazy" src="${
                       user.profile_image_url || "/api/placeholder/32/32"
                     }" alt="" class="w-8 h-8 rounded-full object-cover mr-2">
                     <div>

@@ -10,6 +10,8 @@
     </title>
     <link rel="stylesheet" href="styles/styles.css" />
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
       href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap"
       rel="stylesheet"
@@ -692,7 +694,7 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div class="bg-white rounded-lg shadow-sm p-6">
             <div class="flex items-center mb-4">
-              <img
+              <img loading="lazy"
                 src="https://randomuser.me/api/portraits/men/32.jpg"
                 alt="田中 健太"
                 class="w-12 h-12 rounded-full mr-4"
@@ -708,7 +710,7 @@
           </div>
           <div class="bg-white rounded-lg shadow-sm p-6">
             <div class="flex items-center mb-4">
-              <img
+              <img loading="lazy"
                 src="https://randomuser.me/api/portraits/women/44.jpg"
                 alt="山田 恵子"
                 class="w-12 h-12 rounded-full mr-4"
@@ -724,7 +726,7 @@
           </div>
           <div class="bg-white rounded-lg shadow-sm p-6">
             <div class="flex items-center mb-4">
-              <img
+              <img loading="lazy"
                 src="https://randomuser.me/api/portraits/men/22.jpg"
                 alt="佐藤 太郎"
                 class="w-12 h-12 rounded-full mr-4"
@@ -891,5 +893,14 @@
     <script src="i18n.js"></script>
     <script src="js/theme.js"></script>
     <script src="accessibility.js"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          if (!navigator.serviceWorker.controller) {
+            navigator.serviceWorker.register('sw.js').catch(console.error);
+          }
+        });
+      }
+    </script>
   </body>
 </html>

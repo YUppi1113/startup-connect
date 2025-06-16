@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="styles/styles.css" />
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
       href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap"
       rel="stylesheet"
@@ -34,24 +36,6 @@
       }
       .messages-height {
         height: calc(100vh - 300px);
-      }
-      .skeleton {
-        animation: shimmer 1.5s infinite;
-        background: linear-gradient(
-          90deg,
-          #f0f0f0 25%,
-          #e0e0e0 50%,
-          #f0f0f0 75%
-        );
-        background-size: 200% 100%;
-      }
-      @keyframes shimmer {
-        0% {
-          background-position: 200% 0;
-        }
-        100% {
-          background-position: -200% 0;
-        }
       }
       .line-clamp-1 {
         overflow: hidden;
@@ -151,7 +135,7 @@
                   aria-haspopup="true"
                 >
                   <span class="sr-only">メニューを開く</span>
-                  <img
+                  <img loading="lazy"
                     id="user-avatar"
                     class="h-8 w-8 rounded-full object-cover"
                     src="/api/placeholder/32/32"
@@ -834,7 +818,7 @@
 
             <div class="mb-6">
               <label for="create-group-image" class="block text-sm font-medium text-gray-700 mb-1">グループ画像</label>
-              <img id="create-group-image-preview" src="/api/placeholder/80/80" alt="" class="w-20 h-20 rounded-full object-cover mb-2">
+              <img loading="lazy" id="create-group-image-preview" src="/api/placeholder/80/80" alt="" class="w-20 h-20 rounded-full object-cover mb-2">
               <input type="file" id="create-group-image" name="group-image" accept="image/*" />
             </div>
 
@@ -932,7 +916,7 @@
 
             <div class="mb-6">
               <label for="edit-group-image" class="block text-sm font-medium text-gray-700 mb-1">グループ画像</label>
-              <img id="edit-group-image-preview" src="/api/placeholder/80/80" alt="" class="w-20 h-20 rounded-full object-cover mb-2">
+              <img loading="lazy" id="edit-group-image-preview" src="/api/placeholder/80/80" alt="" class="w-20 h-20 rounded-full object-cover mb-2">
               <input type="file" id="edit-group-image" name="group-image" accept="image/*" />
             </div>
 
@@ -1213,7 +1197,7 @@
                 <div class="relative flex-shrink-0">
                   ${
                     group.group_image_url
-                      ? `<img src="${group.group_image_url}" alt="${group.name}" class="w-12 h-12 rounded-full object-cover">`
+                      ? `<img loading="lazy" src="${group.group_image_url}" alt="${group.name}" class="w-12 h-12 rounded-full object-cover">`
                       : `
                   <div class="w-12 h-12 rounded-full bg-${color}-100 flex items-center justify-center">
                     <svg class="h-6 w-6 text-${color}-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1284,7 +1268,7 @@
         const iconElement = document.getElementById("group-icon");
         if (group.group_image_url) {
           iconElement.className = "w-10 h-10 rounded-full overflow-hidden";
-          iconElement.innerHTML = `<img src="${group.group_image_url}" alt="${group.name}" class="w-full h-full object-cover">`;
+          iconElement.innerHTML = `<img loading="lazy" src="${group.group_image_url}" alt="${group.name}" class="w-full h-full object-cover">`;
         } else {
           iconElement.className = `w-10 h-10 rounded-full bg-${color}-100 flex items-center justify-center`;
           iconElement.innerHTML = `
@@ -1417,7 +1401,7 @@
                       <div class="mb-2">
                         ${
                           url.match(/\.(jpg|jpeg|png|gif)$/i)
-                            ? `<img src="${url}" alt="画像" class="max-w-full rounded">`
+                            ? `<img loading="lazy" src="${url}" alt="画像" class="max-w-full rounded">`
                             : `<a href="${url}" target="_blank" class="text-blue-200 underline">📎 ファイルを開く</a>`
                         }
                       </div>
@@ -1427,7 +1411,7 @@
                     <p>${escapeHtml(message.content)}</p>
                   </div>
                 </div>
-                <img
+                <img loading="lazy"
                   src="${
                     message.user.profile_image_url || "/api/placeholder/32/32"
                   }"
@@ -1447,7 +1431,7 @@
               <div class="flex items-start mb-4">
                 ${
                   showAvatar
-                    ? `<img
+                    ? `<img loading="lazy"
                        src="${
                          message.user.profile_image_url ||
                          "/api/placeholder/32/32"
@@ -1482,7 +1466,7 @@
                       <div class="mb-2">
                         ${
                           url.match(/\.(jpg|jpeg|png|gif)$/i)
-                            ? `<img src="${url}" alt="画像" class="max-w-full rounded">`
+                            ? `<img loading="lazy" src="${url}" alt="画像" class="max-w-full rounded">`
                             : `<a href="${url}" target="_blank" class="text-blue-600 underline">📎 ファイルを開く</a>`
                         }
                       </div>
@@ -1616,7 +1600,7 @@
           <div class="flex justify-center">
             ${
               group.group_image_url
-                ? `<img src="${group.group_image_url}" alt="${group.name}" class="w-20 h-20 rounded-full object-cover">`
+                ? `<img loading="lazy" src="${group.group_image_url}" alt="${group.name}" class="w-20 h-20 rounded-full object-cover">`
                 : `<div class="w-20 h-20 rounded-full bg-${color}-100 flex items-center justify-center">
               <svg class="h-10 w-10 text-${color}-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -1649,7 +1633,7 @@
                 .map(
                   (member) => `
                 <div class="flex items-center">
-                  <img src="${
+                  <img loading="lazy" src="${
                     member.profile_image_url || "/api/placeholder/32/32"
                   }" alt="${member.last_name} ${
                     member.first_name
@@ -2143,7 +2127,7 @@
             }', '${user.last_name}', '${user.first_name}', '${
               user.profile_image_url || ""
             }')">
-              <img src="${
+              <img loading="lazy" src="${
                 user.profile_image_url || "/api/placeholder/32/32"
               }" alt="" class="w-8 h-8 rounded-full object-cover mr-2">
               <div>
@@ -2179,7 +2163,7 @@
           .map(
             (member) => `
             <div class="inline-flex items-center bg-blue-100 rounded-full px-3 py-1">
-              <img src="${
+              <img loading="lazy" src="${
                 member.profile_image_url || "/api/placeholder/24/24"
               }" alt="" class="w-6 h-6 rounded-full object-cover mr-1">
               <span class="text-sm text-blue-800">${member.last_name} ${
