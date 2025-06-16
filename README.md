@@ -31,7 +31,7 @@ update on groups for EACH row
 execute FUNCTION handle_updated_at ();
 
 
-zcreate table public.group_messages (
+create table public.group_messages (
   id uuid not null default gen_random_uuid (),
   group_id uuid not null,
   user_id uuid not null,
