@@ -210,6 +210,13 @@
               </div>
             </div>
           </div>
+          <div class="text-right mb-4">
+            <button
+              type="button"
+              id="start-over"
+              class="text-sm text-blue-600 underline"
+            >最初からやり直す</button>
+          </div>
 
           <!-- 登録フォーム -->
           <form id="registration-form" class="max-w-2xl mx-auto" novalidate>
@@ -1010,6 +1017,87 @@
       let profileImageFile = null;
       let userId = null;
 
+      function saveFormData() {
+        const data = {
+          last_name: document.getElementById("last_name").value,
+          first_name: document.getElementById("first_name").value,
+          email: document.getElementById("email").value,
+          password: document.getElementById("password").value,
+          password_confirm: document.getElementById("password_confirm").value,
+          terms: document.getElementById("terms").checked,
+          location: document.getElementById("location").value,
+          age: document.getElementById("age").value,
+          bio: document.getElementById("bio").value,
+          linkedin: document.getElementById("linkedin").value,
+          startup_status: document.getElementById("startup_status").value,
+          business_idea: document.getElementById("business_idea").value,
+          looking_for: document.getElementById("looking_for").value,
+          skills: Array.from(
+            document.querySelectorAll('input[name="skills[]"]:checked')
+          ).map((el) => el.value),
+          industries: Array.from(
+            document.querySelectorAll('input[name="industries[]"]:checked')
+          ).map((el) => el.value),
+          challenges: Array.from(
+            document.querySelectorAll('input[name="challenges[]"]:checked')
+          ).map((el) => el.value),
+        };
+        localStorage.setItem("registrationData", JSON.stringify(data));
+        localStorage.setItem("registrationStep", currentStep);
+      }
+
+      function restoreFormData() {
+        const raw = localStorage.getItem("registrationData");
+        if (!raw) return;
+        try {
+          const data = JSON.parse(raw);
+          const simpleFields = [
+            "last_name",
+            "first_name",
+            "email",
+            "password",
+            "password_confirm",
+            "location",
+            "age",
+            "bio",
+            "linkedin",
+            "startup_status",
+            "business_idea",
+            "looking_for",
+          ];
+          simpleFields.forEach((id) => {
+            if (data[id]) {
+              const el = document.getElementById(id);
+              if (el) el.value = data[id];
+            }
+          });
+          if (data.terms) {
+            const terms = document.getElementById("terms");
+            if (terms) terms.checked = true;
+          }
+          (data.skills || []).forEach((val) => {
+            const el = document.querySelector(
+              `input[name="skills[]"][value="${val}"]`
+            );
+            if (el) el.checked = true;
+          });
+          (data.industries || []).forEach((val) => {
+            const el = document.querySelector(
+              `input[name="industries[]"][value="${val}"]`
+            );
+            if (el) el.checked = true;
+          });
+          (data.challenges || []).forEach((val) => {
+            const el = document.querySelector(
+              `input[name="challenges[]"][value="${val}"]`
+            );
+            if (el) el.checked = true;
+          });
+        } catch (e) {
+          console.error("restore", e);
+        }
+      }
+
       // モバイルメニューの表示/非表示
       document
         .querySelector(".mobile-menu-button")
@@ -1035,6 +1123,7 @@
       function nextStep(currentStepNumber) {
         hideError();
         if (validateStep(currentStepNumber)) {
+          saveFormData();
           if (currentStepNumber === 1) {
             // ステップ1の場合、アカウント作成を実行
             createAccount();
@@ -1046,6 +1135,7 @@
 
       function prevStep(currentStepNumber) {
         hideError();
+        saveFormData();
         moveToStep(currentStepNumber - 1);
       }
 
@@ -1065,6 +1155,7 @@
         updateProgressBars(stepNumber);
 
         currentStep = stepNumber;
+        localStorage.setItem("registrationStep", currentStep);
 
         // ページトップにスクロール
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1423,7 +1514,10 @@
               console.error("embedding", e);
             }
 
-            // 登録完了後、ログインページへリダイレクト
+            // 登録完了後に保存データをクリア
+            localStorage.removeItem("registrationData");
+            localStorage.removeItem("registrationStep");
+            // ログインページへリダイレクト
             window.location.href = "login.html?message=registered";
           } catch (error) {
             console.error("Unexpected error:", error);
@@ -1434,8 +1528,28 @@
           }
         });
 
-      // 既存のユーザーの続き処理
+      // 既存のユーザーの続き処理と保存データの復元
       window.addEventListener("load", async () => {
+        restoreFormData();
+
+        document
+          .querySelectorAll(
+            "#registration-form input, #registration-form select, #registration-form textarea"
+          )
+          .forEach((el) => {
+            el.addEventListener("input", saveFormData);
+            el.addEventListener("change", saveFormData);
+          });
+
+        document.getElementById("start-over").addEventListener("click", () => {
+          localStorage.removeItem("registrationData");
+          localStorage.removeItem("registrationStep");
+          window.location.href = "register.html";
+        });
+
+        let stepToShow =
+          parseInt(localStorage.getItem("registrationStep"), 10) || 1;
+
         const urlParams = new URLSearchParams(window.location.search);
         const step = urlParams.get("step");
 
@@ -1446,10 +1560,15 @@
           } = await supabase.auth.getUser();
           if (user) {
             userId = user.id;
-            moveToStep(2);
+            stepToShow = 2;
           } else {
             window.location.href = "login.html";
+            return;
           }
+        }
+
+        if (stepToShow > 1) {
+          moveToStep(stepToShow);
         }
       });
     </script>
