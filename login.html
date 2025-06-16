@@ -614,7 +614,24 @@
                 .eq("id", data.user.id)
                 .single();
 
-              if (profileError || !profile.first_name || !profile.last_name) {
+              if (
+                profileError &&
+                profileError.message &&
+                profileError.message.toLowerCase().includes("no rows")
+              ) {
+                await supabase.from("profiles").insert({
+                  id: data.user.id,
+                  first_name: data.user.user_metadata.first_name,
+                  last_name: data.user.user_metadata.last_name,
+                });
+              }
+
+              if (
+                profileError ||
+                !profile ||
+                !profile.first_name ||
+                !profile.last_name
+              ) {
                 // プロフィールが不完全な場合は登録画面へ
                 window.location.href = "register.html?step=2";
               } else {
