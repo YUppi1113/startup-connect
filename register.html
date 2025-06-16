@@ -261,6 +261,7 @@
                   placeholder="user@example.com"
                   required
                 />
+                <p id="email-error" class="mt-1 text-sm text-red-600 hidden"></p>
                 <p class="mt-1 text-xs text-gray-500">
                   ※ログインや通知の受け取りに使用されます
                 </p>
@@ -281,6 +282,7 @@
                   minlength="8"
                   required
                 />
+                <p id="password-error" class="mt-1 text-sm text-red-600 hidden"></p>
                 <p class="mt-1 text-xs text-gray-500">
                   ※8文字以上で、英字・数字を含めてください
                 </p>
@@ -301,6 +303,7 @@
                   minlength="8"
                   required
                 />
+                <p id="password_confirm-error" class="mt-1 text-sm text-red-600 hidden"></p>
               </div>
 
               <div class="mb-6">
@@ -1104,6 +1107,67 @@
       function validateStep(step) {
         let isValid = true;
 
+        if (step === 1 && !validateStep.listenersAttached) {
+          const emailField = document.getElementById("email");
+          const passwordField = document.getElementById("password");
+          const confirmField = document.getElementById("password_confirm");
+
+          const emailError = document.getElementById("email-error");
+          const passwordError = document.getElementById("password-error");
+          const confirmError = document.getElementById("password_confirm-error");
+
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+          emailField.addEventListener("input", () => {
+            const value = emailField.value.trim();
+            if (value && !emailRegex.test(value)) {
+              emailError.textContent = "有効なメールアドレスを入力してください。";
+              emailError.classList.remove("hidden");
+              emailField.classList.add("border-red-500");
+            } else {
+              emailError.classList.add("hidden");
+              emailField.classList.remove("border-red-500");
+              hideError();
+            }
+          });
+
+          passwordField.addEventListener("input", () => {
+            const value = passwordField.value;
+            if (value.length < 8) {
+              passwordError.textContent = "パスワードは8文字以上で入力してください。";
+              passwordError.classList.remove("hidden");
+              passwordField.classList.add("border-red-500");
+            } else {
+              passwordError.classList.add("hidden");
+              passwordField.classList.remove("border-red-500");
+              hideError();
+            }
+
+            if (confirmField.value && confirmField.value !== value) {
+              confirmError.textContent = "パスワードが一致しません。";
+              confirmError.classList.remove("hidden");
+              confirmField.classList.add("border-red-500");
+            } else {
+              confirmError.classList.add("hidden");
+              confirmField.classList.remove("border-red-500");
+            }
+          });
+
+          confirmField.addEventListener("input", () => {
+            if (confirmField.value !== passwordField.value) {
+              confirmError.textContent = "パスワードが一致しません。";
+              confirmError.classList.remove("hidden");
+              confirmField.classList.add("border-red-500");
+            } else {
+              confirmError.classList.add("hidden");
+              confirmField.classList.remove("border-red-500");
+              hideError();
+            }
+          });
+
+          validateStep.listenersAttached = true;
+        }
+
         if (step === 1) {
           // ステップ1のバリデーション
           const requiredFields = [
@@ -1128,9 +1192,30 @@
             } else {
               if (!element.value.trim()) {
                 element.classList.add("border-red-500");
+                if (field === "email") {
+                  document.getElementById("email-error").textContent = "メールアドレスを入力してください。";
+                  document.getElementById("email-error").classList.remove("hidden");
+                }
+                if (field === "password") {
+                  document.getElementById("password-error").textContent = "パスワードを入力してください。";
+                  document.getElementById("password-error").classList.remove("hidden");
+                }
+                if (field === "password_confirm") {
+                  document.getElementById("password_confirm-error").textContent = "パスワード（確認）を入力してください。";
+                  document.getElementById("password_confirm-error").classList.remove("hidden");
+                }
                 isValid = false;
               } else {
                 element.classList.remove("border-red-500");
+                if (field === "email") {
+                  document.getElementById("email-error").classList.add("hidden");
+                }
+                if (field === "password") {
+                  document.getElementById("password-error").classList.add("hidden");
+                }
+                if (field === "password_confirm") {
+                  document.getElementById("password_confirm-error").classList.add("hidden");
+                }
               }
             }
           });
@@ -1144,23 +1229,48 @@
             document
               .getElementById("password_confirm")
               .classList.add("border-red-500");
+            const confirmError = document.getElementById("password_confirm-error");
+            confirmError.textContent = "パスワードが一致しません。";
+            confirmError.classList.remove("hidden");
             showError("パスワードが一致しません。");
             isValid = false;
+          } else {
+            document
+              .getElementById("password_confirm")
+              .classList.remove("border-red-500");
+            document
+              .getElementById("password_confirm-error")
+              .classList.add("hidden");
           }
 
           // パスワード強度チェック
           if (password.length < 8) {
+            const passwordError = document.getElementById("password-error");
+            passwordError.textContent = "パスワードは8文字以上で入力してください。";
+            passwordError.classList.remove("hidden");
+            document.getElementById("password").classList.add("border-red-500");
             showError("パスワードは8文字以上で入力してください。");
             isValid = false;
+          } else {
+            document.getElementById("password").classList.remove("border-red-500");
+            document.getElementById("password-error").classList.add("hidden");
           }
 
           // メールアドレスの簡易バリデーション
           const email = document.getElementById("email").value;
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           if (email && !emailRegex.test(email)) {
+            const emailError = document.getElementById("email-error");
             document.getElementById("email").classList.add("border-red-500");
+            emailError.textContent = "有効なメールアドレスを入力してください。";
+            emailError.classList.remove("hidden");
             showError("有効なメールアドレスを入力してください。");
             isValid = false;
+          } else {
+            if (emailRegex.test(email)) {
+              document.getElementById("email").classList.remove("border-red-500");
+              document.getElementById("email-error").classList.add("hidden");
+            }
           }
         } else if (step === 2) {
           // ステップ2のバリデーション
