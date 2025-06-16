@@ -149,6 +149,7 @@
                   type="button"
                   class="bg-gray-800 flex text-sm rounded-full focus:outline-none"
                   id="user-menu-button"
+                  aria-haspopup="true" aria-expanded="false" aria-controls="user-menu"
                 >
                   <span class="sr-only">メニューを開く</span>
                   <img
@@ -170,21 +171,25 @@
               <div
                 id="user-menu"
                 class="hidden origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-30"
+                role="menu"
               >
                 <a
                   href="profile.html"
                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  role="menuitem"
                   >プロフィール</a
                 >
                 <a
                   href="settings.html"
                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  role="menuitem"
                   >設定</a
                 >
                 <a
                   href="#"
                   id="logout-link"
                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  role="menuitem"
                   >ログアウト</a
                 >
               </div>
@@ -215,46 +220,54 @@
       </div>
 
       <!-- モバイルメニュー -->
-      <div class="mobile-menu hidden md:hidden bg-white border-t">
+      <div class="mobile-menu hidden md:hidden bg-white border-t" role="menu">
         <a
           href="dashboard.html"
           class="block px-4 py-2 bg-blue-50 text-blue-600"
+          role="menuitem"
           >ホーム</a
         >
         <a
           href="search.html"
           class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          role="menuitem"
           >検索</a
         >
         <a
           href="messages.html"
           class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          role="menuitem"
           >メッセージ</a
         >
         <a
           href="groups.html"
           class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          role="menuitem"
           >グループ</a
         >
         <a
           href="events.html"
           class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          role="menuitem"
           >イベント</a
         >
         <div class="border-t border-gray-200 my-1"></div>
         <a
           href="profile.html"
           class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          role="menuitem"
           >プロフィール</a
         >
         <a
           href="settings.html"
           class="block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          role="menuitem"
           >設定</a
         >
         <a
           href="#"
           class="logout-link-mobile block px-4 py-2 text-gray-500 hover:bg-gray-100"
+          role="menuitem"
           >ログアウト</a
         >
       </div>
@@ -1238,18 +1251,23 @@
       document
         .querySelector(".mobile-menu-button")
         .addEventListener("click", function () {
-          document.querySelector(".mobile-menu").classList.toggle("hidden");
+          const menu = document.querySelector(".mobile-menu");
+          const expanded = menu.classList.toggle("hidden") ? false : true;
+          this.setAttribute("aria-expanded", expanded);
         });
 
       document
         .getElementById("user-menu-button")
         .addEventListener("click", function () {
-          document.getElementById("user-menu").classList.toggle("hidden");
+          const menu = document.getElementById("user-menu");
+          const expanded = menu.classList.toggle("hidden") ? false : true;
+          this.setAttribute("aria-expanded", expanded);
         });
 
       window.addEventListener("click", function (e) {
         if (!document.getElementById("user-menu-button").contains(e.target)) {
           document.getElementById("user-menu").classList.add("hidden");
+          document.getElementById("user-menu-button").setAttribute("aria-expanded", false);
         }
       });
 

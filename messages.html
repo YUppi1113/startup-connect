@@ -707,7 +707,7 @@
     </main>
 
     <!-- 新規メッセージモーダル -->
-    <div id="new-message-modal" class="fixed inset-0 z-30 hidden">
+    <div id="new-message-modal" class="fixed inset-0 z-30 hidden" role="dialog" aria-modal="true">
       <div class="absolute inset-0 bg-gray-900 bg-opacity-50"></div>
       <div
         class="relative max-w-lg mx-auto mt-20 bg-white rounded-lg shadow-xl"
@@ -805,7 +805,7 @@
     </div>
 
     <!-- 通話モーダル -->
-    <div id="call-modal" class="fixed inset-0 z-30 hidden">
+    <div id="call-modal" class="fixed inset-0 z-30 hidden" role="dialog" aria-modal="true">
       <div class="absolute inset-0 bg-gray-900 bg-opacity-75"></div>
       <div
         class="relative max-w-md mx-auto mt-20 bg-white rounded-lg shadow-xl overflow-hidden"
@@ -1589,7 +1589,7 @@
         document.getElementById("call-status").textContent =
           type === "video" ? "ビデオ通話を発信中..." : "音声通話を発信中...";
 
-        document.getElementById("call-modal").classList.remove("hidden");
+        openModal("call-modal");
 
         // 模擬的な接続
         setTimeout(() => {
@@ -1817,28 +1817,26 @@
       document
         .getElementById("end-call-btn")
         .addEventListener("click", function () {
-          document.getElementById("call-modal").classList.add("hidden");
+          closeModal("call-modal");
         });
 
       // 新規メッセージモーダル
       document
         .getElementById("new-message-btn")
         .addEventListener("click", function () {
-          document
-            .getElementById("new-message-modal")
-            .classList.remove("hidden");
+          openModal("new-message-modal", this);
         });
 
       document
         .getElementById("close-new-message-modal")
         .addEventListener("click", function () {
-          document.getElementById("new-message-modal").classList.add("hidden");
+          closeModal("new-message-modal");
         });
 
       document
         .getElementById("cancel-new-message")
         .addEventListener("click", function () {
-          document.getElementById("new-message-modal").classList.add("hidden");
+          closeModal("new-message-modal");
         });
 
       // 宛先検索
@@ -1977,5 +1975,6 @@
       window.selectRecipient = selectRecipient;
       window.startCall = startCall;
     </script>
+    <script src="accessibility.js"></script>
   </body>
 </html>

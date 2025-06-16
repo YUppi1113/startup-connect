@@ -1038,6 +1038,7 @@
     <div
       id="block-user-modal"
       class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50"
+      role="dialog" aria-modal="true"
     >
       <div
         class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white"
@@ -1073,6 +1074,7 @@
     <div
       id="confirm-modal"
       class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50"
+      role="dialog" aria-modal="true"
     >
       <div
         class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white"
@@ -2109,9 +2111,10 @@
         alert.className =
           "fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-md shadow-lg z-[9999]";
         alert.textContent = message;
-        document.body.appendChild(alert);
-        setTimeout(() => alert.remove(), 5000);
-      }
+      document.body.appendChild(alert);
+      setTimeout(() => alert.remove(), 5000);
+    }
     </script>
+    <script src="accessibility.js"></script>
   </body>
 </html>
