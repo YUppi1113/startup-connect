@@ -782,6 +782,22 @@
             </div>
 
             <div class="mb-6">
+              <label for="group-image" class="block text-sm font-medium text-gray-700 mb-1">グループ画像</label>
+              <div class="flex items-center justify-center w-full">
+                <label class="flex flex-col w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:bg-gray-50">
+                  <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <p class="pt-1 text-sm text-gray-500">画像をアップロード</p>
+                    <p class="text-xs text-gray-500">PNG, JPG, GIF（最大2MB）</p>
+                  </div>
+                  <input id="group-image" name="group-image" type="file" class="hidden" accept="image/*" />
+                </label>
+              </div>
+            </div>
+
+            <div class="mb-6">
               <label
                 for="group-members"
                 class="block text-sm font-medium text-gray-700 mb-1"
@@ -856,6 +872,65 @@
               >
                 作成する
               </button>
+            </div>
+          </form>
+    </div>
+  </div>
+</div>
+
+    <div id="edit-group-modal" class="fixed inset-0 z-30 hidden">
+      <div class="absolute inset-0 bg-gray-900 bg-opacity-50"></div>
+      <div class="relative max-w-lg mx-auto mt-20 bg-white rounded-lg shadow-xl">
+        <div class="p-6">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-semibold text-gray-900">グループを編集</h3>
+            <button id="close-edit-modal" class="text-gray-400 hover:text-gray-500">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <form id="edit-group-form">
+            <div class="mb-6">
+              <label for="edit-group-name" class="block text-sm font-medium text-gray-700 mb-1">グループ名 <span class="text-red-600">*</span></label>
+              <input type="text" id="edit-group-name" name="group-name" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+            </div>
+            <div class="mb-6">
+              <label for="edit-group-description" class="block text-sm font-medium text-gray-700 mb-1">グループの説明 <span class="text-red-600">*</span></label>
+              <textarea id="edit-group-description" name="group-description" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required></textarea>
+            </div>
+            <div class="mb-6">
+              <label class="block text-sm font-medium text-gray-700 mb-1">カテゴリ <span class="text-red-600">*</span></label>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="flex items-center"><input type="radio" id="edit-category-tech" name="category" value="tech" class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500" /><label for="edit-category-tech" class="ml-2 block text-sm text-gray-700">テクノロジー</label></div>
+                <div class="flex items-center"><input type="radio" id="edit-category-finance" name="category" value="finance" class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500" /><label for="edit-category-finance" class="ml-2 block text-sm text-gray-700">金融・投資</label></div>
+                <div class="flex items-center"><input type="radio" id="edit-category-health" name="category" value="health" class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500" /><label for="edit-category-health" class="ml-2 block text-sm text-gray-700">健康・医療</label></div>
+                <div class="flex items-center"><input type="radio" id="edit-category-education" name="category" value="education" class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500" /><label for="edit-category-education" class="ml-2 block text-sm text-gray-700">教育</label></div>
+                <div class="flex items-center"><input type="radio" id="edit-category-environment" name="category" value="environment" class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500" /><label for="edit-category-environment" class="ml-2 block text-sm text-gray-700">環境・エネルギー</label></div>
+                <div class="flex items-center"><input type="radio" id="edit-category-other" name="category" value="other" class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500" /><label for="edit-category-other" class="ml-2 block text-sm text-gray-700">その他</label></div>
+              </div>
+            </div>
+            <div class="mb-6">
+              <label for="edit-group-image" class="block text-sm font-medium text-gray-700 mb-1">グループ画像</label>
+              <div class="flex items-center justify-center w-full">
+                <label class="flex flex-col w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:bg-gray-50">
+                  <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <p class="pt-1 text-sm text-gray-500">画像をアップロード</p>
+                    <p class="text-xs text-gray-500">PNG, JPG, GIF（最大2MB）</p>
+                  </div>
+                  <input id="edit-group-image" name="group-image" type="file" class="hidden" accept="image/*" />
+                </label>
+              </div>
+            </div>
+            <div class="mb-6">
+              <div class="flex items-center"><input type="checkbox" id="edit-group-private" name="group-private" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" /><label for="edit-group-private" class="ml-2 block text-sm text-gray-700">非公開グループにする（招待されたメンバーのみ参加可能）</label></div>
+            </div>
+            <div class="flex justify-end space-x-3">
+              <button type="button" id="cancel-edit-group" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-50 transition duration-200">キャンセル</button>
+              <button type="submit" id="submit-edit-group" class="px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 transition duration-200">保存する</button>
             </div>
           </form>
         </div>
@@ -1108,10 +1183,12 @@
               group.id
             }')">
                 <div class="relative flex-shrink-0">
-                  <div class="w-12 h-12 rounded-full bg-${color}-100 flex items-center justify-center">
-                    <svg class="h-6 w-6 text-${color}-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
+                  <div class="w-12 h-12 rounded-full flex items-center justify-center bg-${color}-100 overflow-hidden">
+                    ${
+                      group.group_image_url
+                        ? `<img src="${group.group_image_url}" alt="" class="w-12 h-12 object-cover">`
+                        : `<svg class="h-6 w-6 text-${color}-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>`
+                    }
                   </div>
                 </div>
                 <div class="ml-3 flex-1">
@@ -1172,12 +1249,13 @@
       function updateGroupHeader(group) {
         const color = categoryColors[group.category] || "gray";
         const iconElement = document.getElementById("group-icon");
-        iconElement.className = `w-10 h-10 rounded-full bg-${color}-100 flex items-center justify-center`;
-        iconElement.innerHTML = `
+        iconElement.className = `w-10 h-10 rounded-full flex items-center justify-center bg-${color}-100 overflow-hidden`;
+        iconElement.innerHTML = group.group_image_url
+          ? `<img src="${group.group_image_url}" alt="" class="w-10 h-10 object-cover">`
+          : `
           <svg class="h-6 w-6 text-${color}-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-          </svg>
-        `;
+          </svg>`;
 
         document.getElementById("group-name").textContent = group.name;
       }
@@ -1427,6 +1505,8 @@
           admin_id: currentUser.id,
         };
 
+        const imageFile = formData.get("group-image");
+
         // グループを作成
         const { data: group, error: groupError } = await supabase
           .from("groups")
@@ -1439,6 +1519,27 @@
           throw new Error(
             `グループの作成に失敗しました: ${groupError.message}`
           );
+        }
+
+        if (imageFile && imageFile.size > 0) {
+          const fileExt = imageFile.name.split(".").pop();
+          const fileName = `${currentUser.id}_${Date.now()}.${fileExt}`;
+          const filePath = `groups/${group.id}/${fileName}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from("group-images")
+            .upload(filePath, imageFile);
+
+          if (!uploadError) {
+            const { data } = supabase.storage
+              .from("group-images")
+              .getPublicUrl(filePath);
+            await supabase
+              .from("groups")
+              .update({ group_image_url: data.publicUrl })
+              .eq("id", group.id);
+            group.group_image_url = data.publicUrl;
+          }
         }
 
         // 作成者をメンバーに追加
@@ -1479,6 +1580,51 @@
         return group;
       }
 
+      async function updateGroup(formData) {
+        const updateData = {
+          name: formData.get("group-name"),
+          description: formData.get("group-description"),
+          category: formData.get("category"),
+          is_private: formData.get("group-private") === "on",
+        };
+
+        const { data: group, error } = await supabase
+          .from("groups")
+          .update(updateData)
+          .eq("id", currentGroup.id)
+          .select()
+          .single();
+
+        if (error) {
+          console.error("Supabase groups.update error:", error);
+          throw new Error(`グループの更新に失敗しました: ${error.message}`);
+        }
+
+        const imageFile = formData.get("group-image");
+        if (imageFile && imageFile.size > 0) {
+          const fileExt = imageFile.name.split(".").pop();
+          const fileName = `${currentUser.id}_${Date.now()}.${fileExt}`;
+          const filePath = `groups/${group.id}/${fileName}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from("group-images")
+            .upload(filePath, imageFile, { upsert: true });
+
+          if (!uploadError) {
+            const { data } = supabase.storage
+              .from("group-images")
+              .getPublicUrl(filePath);
+            await supabase
+              .from("groups")
+              .update({ group_image_url: data.publicUrl })
+              .eq("id", group.id);
+            group.group_image_url = data.publicUrl;
+          }
+        }
+
+        return group;
+      }
+
       // グループ情報更新
       function updateGroupInfo(group) {
         const container = document.getElementById("group-info-content");
@@ -1486,10 +1632,12 @@
 
         container.innerHTML = `
           <div class="flex justify-center">
-            <div class="w-20 h-20 rounded-full bg-${color}-100 flex items-center justify-center">
-              <svg class="h-10 w-10 text-${color}-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
+            <div class="w-20 h-20 rounded-full flex items-center justify-center bg-${color}-100 overflow-hidden">
+              ${
+                group.group_image_url
+                  ? `<img src="${group.group_image_url}" alt="" class="w-20 h-20 object-cover">`
+                  : `<svg class="h-10 w-10 text-${color}-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>`
+              }
             </div>
           </div>
           <h3 class="font-medium text-lg text-gray-900 text-center mt-4">${
@@ -1538,6 +1686,11 @@
           </div>
           
           <div class="mt-8 flex flex-col gap-2">
+            ${
+              currentUser.id === group.admin_id
+                ? '<button id="edit-group-btn" class="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition duration-200">編集</button>'
+                : ''
+            }
             <button id="leave-group-btn" class="flex items-center justify-center px-4 py-2 border border-red-500 rounded-lg text-red-500 font-medium hover:bg-red-50 transition duration-200">
               <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -1559,6 +1712,13 @@
               await leaveGroup(group.id);
             }
           });
+
+        const editBtn = document.getElementById("edit-group-btn");
+        if (editBtn) {
+          editBtn.addEventListener("click", () => {
+            openEditGroupModal(group);
+          });
+        }
       }
 
       // グループ退出
@@ -1882,12 +2042,26 @@
           resetCreateGroupForm();
         });
 
-      document
-        .getElementById("cancel-create-group")
-        .addEventListener("click", function () {
-          document.getElementById("create-group-modal").classList.add("hidden");
-          resetCreateGroupForm();
-        });
+        document
+          .getElementById("cancel-create-group")
+          .addEventListener("click", function () {
+            document.getElementById("create-group-modal").classList.add("hidden");
+            resetCreateGroupForm();
+          });
+
+        document
+          .getElementById("close-edit-modal")
+          .addEventListener("click", function () {
+            document.getElementById("edit-group-modal").classList.add("hidden");
+            resetEditGroupForm();
+          });
+
+        document
+          .getElementById("cancel-edit-group")
+          .addEventListener("click", function () {
+            document.getElementById("edit-group-modal").classList.add("hidden");
+            resetEditGroupForm();
+          });
 
       // メンバー検索
       let searchTimeout;
@@ -1999,6 +2173,20 @@
         displaySelectedMembers();
       }
 
+      function resetEditGroupForm() {
+        document.getElementById("edit-group-form").reset();
+      }
+
+      function openEditGroupModal(group) {
+        document.getElementById("edit-group-name").value = group.name;
+        document.getElementById("edit-group-description").value = group.description;
+        document.querySelectorAll('#edit-group-form input[name="category"]').forEach((el) => {
+          el.checked = el.value === group.category;
+        });
+        document.getElementById("edit-group-private").checked = group.is_private;
+        document.getElementById("edit-group-modal").classList.remove("hidden");
+      }
+
       // グループ作成フォーム送信
       document
         .getElementById("create-group-form")
@@ -2011,6 +2199,13 @@
 
           try {
             const formData = new FormData(this);
+            const imageFile = formData.get("group-image");
+            if (imageFile && imageFile.size > 2 * 1024 * 1024) {
+              alert("画像ファイルは2MB以下にしてください。");
+              submitButton.disabled = false;
+              submitButton.textContent = "作成する";
+              return;
+            }
             const group = await createGroup(formData);
 
             document
@@ -2027,6 +2222,40 @@
           } finally {
             submitButton.disabled = false;
             submitButton.textContent = "作成する";
+          }
+        });
+
+      document
+        .getElementById("edit-group-form")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const submitButton = document.getElementById("submit-edit-group");
+          submitButton.disabled = true;
+          submitButton.textContent = "保存中...";
+
+          try {
+            const formData = new FormData(this);
+            const imageFile = formData.get("group-image");
+            if (imageFile && imageFile.size > 2 * 1024 * 1024) {
+              alert("画像ファイルは2MB以下にしてください。");
+              submitButton.disabled = false;
+              submitButton.textContent = "保存する";
+              return;
+            }
+            const group = await updateGroup(formData);
+
+            document.getElementById("edit-group-modal").classList.add("hidden");
+            resetEditGroupForm();
+
+            await loadGroups();
+            await selectGroup(group.id);
+          } catch (error) {
+            console.error("Error updating group:", error);
+            alert(error.message || "グループの更新に失敗しました");
+          } finally {
+            submitButton.disabled = false;
+            submitButton.textContent = "保存する";
           }
         });
 
