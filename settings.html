@@ -55,6 +55,10 @@
         display: none;
       }
     </style>
+    <script type="module">
+      import { showToast } from "./js/toast.js";
+      window.showToast = showToast;
+    </script>
   </head>
   <body class="bg-gray-50 min-h-screen">
     <!-- Loading Overlay -->
@@ -2159,24 +2163,17 @@
 
       // 成功メッセージ表示
       function showSuccess(message) {
-        // 簡単な実装（通常はトーストライブラリを使用）
-        const alert = document.createElement("div");
-        alert.className =
-          "fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-md shadow-lg z-[9999]";
-        alert.textContent = message;
-        document.body.appendChild(alert);
-        setTimeout(() => alert.remove(), 3000);
+        if (window.showToast) {
+          window.showToast(message, "success");
+        }
       }
 
       // エラーメッセージ表示
       function showError(message) {
-        const alert = document.createElement("div");
-        alert.className =
-          "fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-md shadow-lg z-[9999]";
-        alert.textContent = message;
-      document.body.appendChild(alert);
-      setTimeout(() => alert.remove(), 5000);
-    }
+        if (window.showToast) {
+          window.showToast(message, "error");
+        }
+      }
     </script>
     <script src="accessibility.js"></script>
   </body>
