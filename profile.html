@@ -1148,6 +1148,25 @@
               }
             }
 
+            const embedText = [
+              document.getElementById("bio").value,
+              skills.join(" "),
+              industries.join(" "),
+              document.getElementById("looking_for").value,
+            ].join(" ");
+            try {
+              await fetch("/api/compute_embedding", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  user_id: currentUser.id,
+                  profile_text: embedText,
+                }),
+              });
+            } catch (e) {
+              console.error("embedding", e);
+            }
+
             showSuccess();
             profileImageFile = null;
 
