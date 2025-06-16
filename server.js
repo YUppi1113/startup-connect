@@ -86,6 +86,39 @@ app.get('/api/recommendations', async (req, res) => {
   res.json(profiles || []);
 });
 
+app.post('/api/user_sessions', async (req, res) => {
+  const { user_id, session_token, device_info, ip_address, user_agent, last_activity, expires_at } = req.body;
+  if (!user_id || !session_token) return res.status(400).json({ error: 'missing parameters' });
+  const { error } = await supabase.from('user_sessions').upsert({
+    user_id,
+    session_token,
+    device_info,
+    ip_address,
+    user_agent,
+    last_activity,
+    expires_at,
+    is_current: true
+  });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ status: 'ok' });
+});
+
+app.post('/api/revoke_session', async (req, res) => {
+  const { session_token } = req.body;
+  if (!session_token) return res.status(400).json({ error: 'missing session_token' });
+  await supabase.auth.admin.signOut(session_token, 'local');
+  await supabase.from('user_sessions').delete().eq('session_token', session_token);
+  res.json({ status: 'ok' });
+});
+
+app.post('/api/revoke_all_sessions', async (req, res) => {
+  const { user_id, current_token } = req.body;
+  if (!user_id || !current_token) return res.status(400).json({ error: 'missing parameters' });
+  await supabase.auth.admin.signOut(current_token, 'global');
+  await supabase.from('user_sessions').delete().eq('user_id', user_id);
+  res.json({ status: 'ok' });
+});
+
 const port = process.env.PORT || 3001;
 app.listen(port, () => {
   console.log(`Embedding service running on port ${port}`);

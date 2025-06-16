@@ -564,6 +564,32 @@
       let currentUser = null;
       let userProfile = null;
 
+      async function recordSession(user) {
+        try {
+          const { data: sessionData } = await supabase.auth.getSession();
+          if (!sessionData.session) return;
+          const ipRes = await fetch("https://api.ipify.org?format=json");
+          const ipData = await ipRes.json();
+          await fetch("/api/user_sessions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              user_id: user.id,
+              session_token: sessionData.session.access_token,
+              ip_address: ipData.ip,
+              device_info: navigator.platform,
+              user_agent: navigator.userAgent,
+              last_activity: new Date().toISOString(),
+              expires_at: new Date(
+                sessionData.session.expires_at * 1000
+              ).toISOString(),
+            }),
+          });
+        } catch (e) {
+          console.error("session record failed", e);
+        }
+      }
+
       // 地域名マッピング
       const locationNames = {
         hokkaido: "北海道",
@@ -653,6 +679,7 @@
           return;
         }
         currentUser = user;
+        await recordSession(user);
         await loadUserProfile();
       }
 

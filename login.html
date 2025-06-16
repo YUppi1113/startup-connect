@@ -421,6 +421,27 @@
             } else {
               showSuccess("ログインに成功しました。リダイレクトしています...");
 
+              // セッション情報保存
+              try {
+                const ipRes = await fetch("https://api.ipify.org?format=json");
+                const ipData = await ipRes.json();
+                await fetch("/api/user_sessions", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    user_id: data.user.id,
+                    session_token: data.session.access_token,
+                    ip_address: ipData.ip,
+                    device_info: navigator.platform,
+                    user_agent: navigator.userAgent,
+                    last_activity: new Date().toISOString(),
+                    expires_at: new Date(data.session.expires_at * 1000).toISOString(),
+                  }),
+                });
+              } catch (e) {
+                console.error("session record failed", e);
+              }
+
               // プロフィール情報を確認
               const { data: profile, error: profileError } = await supabase
                 .from("profiles")
