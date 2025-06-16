@@ -4,7 +4,9 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "generate-env": "node generate-env.js",
+    "prestart": "npm run generate-env"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.5",
