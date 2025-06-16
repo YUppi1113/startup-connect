@@ -1099,39 +1099,12 @@
 
       // おすすめユーザー読み込み
       async function loadRecommendedUsers() {
-        // 同じスキルまたは業界のユーザーを検索
-        const { data: users } = await supabase
-          .from("profiles")
-          .select(
-            `
-                    *,
-                    startup_info!inner(*)
-                `
-          )
-          .neq("id", currentUser.id)
-          .or(
-            `skills.cs.{${userProfile?.skills?.join(
-              ","
-            )}},startup_info.industries.cs.{${userProfile?.startup_info?.industries?.join(
-              ","
-            )}}`
-          )
-          .limit(3);
-
-        const container = document.getElementById("recommended-users");
-
-        if (!users || users.length === 0) {
-          // ランダムなユーザーを表示
-          const { data: randomUsers } = await supabase
-            .from("profiles")
-            .select("*")
-            .neq("id", currentUser.id)
-            .limit(3);
-
-          displayRecommendedUsers(randomUsers || []);
-        } else {
-          displayRecommendedUsers(users);
+        const res = await fetch(`/api/recommendations?user_id=${currentUser.id}`);
+        let users = [];
+        if (res.ok) {
+          users = await res.json();
         }
+        displayRecommendedUsers(users);
       }
 
       function displayRecommendedUsers(users) {

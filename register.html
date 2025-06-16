@@ -1395,6 +1395,26 @@
               return;
             }
 
+            // プロフィール埋め込みの計算
+            const profileText = [
+              document.getElementById("bio").value,
+              skills.join(" "),
+              industriesArray.join(" "),
+              document.getElementById("looking_for").value,
+            ].join(" ");
+            try {
+              await fetch("/api/compute_embedding", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  user_id: user.id,
+                  profile_text: profileText,
+                }),
+              });
+            } catch (e) {
+              console.error("embedding", e);
+            }
+
             // 登録完了後、ログインページへリダイレクト
             window.location.href = "login.html?message=registered";
           } catch (error) {
