@@ -321,7 +321,7 @@
 
               <!-- メッセージ入力エリア -->
               <div class="border-t border-gray-200 p-4">
-                <div class="flex items-center">
+                <div class="flex items-center relative">
                   <button
                     type="button"
                     id="attach-file-btn"
@@ -387,6 +387,11 @@
                       />
                     </svg>
                   </button>
+                  <button type="button" id="sticker-btn" class="p-2" title="スタンプ">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197.106 1.043-3.137-1.778-2.057 2.39-.454L12 2l1.79 3.626 2.39.454-1.778 2.057 1.043 3.137z" />
+                    </svg>
+                  </button>
                   <input
                     type="file"
                     id="file-input"
@@ -399,6 +404,12 @@
                     class="hidden"
                     accept="image/*"
                   />
+                  <div id="sticker-panel" class="hidden absolute bottom-12 right-0 bg-white border rounded shadow p-2 flex gap-2">
+                    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABs0lEQVR4nO2bSw7DIAxEoer9r0xXVBFqhX/jIYpnVykJ44dNSeL0MdpoD9aLbYCtAsA2wFYBYBtgqwCwDbD1zh6w9/0xI3FnAgcgCXh3DhIIDMC/wCXBrOfO3wgQPXorjJg9ZEaEArgahcwW4PohANCBI8dz/w1mB7+OY1lkr3IBYAT/azwPBHMJIFdmrTxeTBngTTuULL5cJXDC7Lfm86EGcFLqXzX9aLNABeDU4KcsEB5/NygGcPrsT2mzoDJActBdZn9KkwWVAVkDaf+esjZbaQC05ZNVblsAd6v/Kek6UGsA2wBbBSD6gr3jVnDEtSsD2AbYKgDRF7Q+mNgJtR/ZAkAFhJYUGKQEoqEhd6PwNcALAZ15MAARLy4yXryIAFhT2gPBE7ymZOAlsELYgViPQd+Fql6NeRcjTRZ4x5Cen9ojJCml7OcO6pejJz8gsXhTrwGnboysExPWH8CUx4cJwInp35rNl6tHiNkhEjV+WH9AdjlEwXdvhBgQIjOv+gSrUxT01Vhkr7DmXK1gAL4DBKwLt+wWn1rNP+57gVWnbaLqsTjbAFsFgG2ArQLANsDWB6aCsmtqqLzHAAAAAElFTkSuQmCC" class="w-10 h-10 cursor-pointer sticker-option" alt="smile">
+                    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAA1klEQVR4nO3YwQ3CMBAFUYLoCfo/maqcBiLlYK8eaP8UkIxGG2udY8wxH415agFNAmgBTQJoAU0CaAFNAmgBTQJoAU0CaAFNAmgBTQJoAU0CaAHNq/oFn+O9/IwxvxtMrmk/AQmgBTQJoAU0CaAFNOV7wA7udomVPaH9BCSAFtAsnwE7dn1J+wlIAC2gaR/gLxah/BApJAG0gGb5DLj7Pn99UWo/AQmgBTQJoAU0CaAFNOV3gco9fgftJyABtIAmAbSAJgG0gCYBtIAmAbSAJgG0gKZ9gBPWSRKqiZB+sgAAAABJRU5ErkJggg==" class="w-10 h-10 cursor-pointer sticker-option" alt="thumbs">
+                    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABTUlEQVR4nO2ZOxKDQAxDk5yK+1d7K1LRMMPwWUmvQDqALT/bwC7fdYz182L9aAO0CoA2QKsAaAO0CoA2QIsHsCxoehbAVjwIgQOwLxqCwAA4KhaAkAdwVmQYQhbA1eKCEHIA7hYVgpAB8LSYAAQ/gNkizBC8AFTmjRB8ANSmTRA8AFwdM8TVA3A/uMTxtQBS729hHh2A9GesKJ8GAHWaE+SdBwCf52fzzwMYYzoEmZ+/EYKlAUBNgSCvbgLSEET5ugLSaKkpEObRT4Abgjh+V8AS1TUFhri+CVCbNUHtClijq7pmfLD6J2DWvPmt0hWIZHnaxcCHVW4C7hYT+qrsCkSzXe1q8GSZn4Cz4sLH6q4AkvWoy8DNEjcB+2Kha7WuAJp96zp4tc5PAPxfgQcAqwBoA7QKgDZAqwBoA7QKgDZAqwBoA7QKgDZA6/UA/qT6Rg7J0JKoAAAAAElFTkSuQmCC" class="w-10 h-10 cursor-pointer sticker-option" alt="heart">
+                    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABeUlEQVR4nO2ZXQ7CMAyDGeJQnIUDchZuNZ4moYnRPyffKuwnJLTEc5y1aZd1fa2XP8aVJkDDAtAEaFgAmgANC0AToMEL8Lyj6XkBYLACbNUHXWAH0ARocALsbQ+1gR2AZD2qNuACO4AmQCNfgJLNk9vADqAJ0MgVoNbeiW1gB6Rlaq1qkguW4r0APK9L8Hgd/lV2wI+Hp0CBf10LzCpCBe9yC+wxQ0s0FKz9I3h2NzTy61sFzipCB6/+ZfBsInTyGdsHnEWEAR7jGyFahMH87avAL2SuECLhtVvhLDcI8+hngWgRxPFjhqEoEQLiehwOiRr1MQyIawfQBGhYAHnE6M2QOL4dQBOgoRWgx549mxthG9xkkVrx+eLb77+5Hj+qOjBa6wSorV7pJWtFELklrwVaqpvYEjkt0GvthJaIF2D0JYJF0ByJfbNqBPGAPD4QkUec7EhsvAU2WxLH44LcGgdQdwOCvNp7gQnhaZAmQMMC0ARoWACaAI03YaJpAQBXP6kAAAAASUVORK5CYII=" class="w-10 h-10 cursor-pointer sticker-option" alt="star">
+                  </div>
                 </div>
               </div>
             </div>
@@ -1109,9 +1120,10 @@
           const { data: messages, error } = await supabase
             .from("group_messages")
             .select(
-              `
+            `
               *,
-              user:profiles!group_messages_user_id_fkey(*)
+              user:profiles!group_messages_user_id_fkey(*),
+              reactions:group_message_reactions!group_message_reactions_message_id_fkey(*)
             `
             )
             .eq("group_id", groupId)
@@ -1202,6 +1214,10 @@
                       .join("")}
                     <p>${escapeHtml(message.content)}</p>
                   </div>
+                  <div class="flex items-center gap-1 mt-1">
+                    ${summarizeReactions(message.reactions)}
+                    ${reactionButtons(message.id, true)}
+                  </div>
                 </div>
                 <img loading="lazy"
                   src="${
@@ -1266,6 +1282,10 @@
                       )
                       .join("")}
                     <p class="text-gray-800">${escapeHtml(message.content)}</p>
+                  </div>
+                  <div class="flex items-center gap-1 mt-1">
+                    ${summarizeReactions(message.reactions)}
+                    ${reactionButtons(message.id, true)}
                   </div>
                 </div>
               </div>
@@ -1683,6 +1703,50 @@
         return div.innerHTML;
       }
 
+      function summarizeReactions(reactions) {
+        if (!reactions || reactions.length === 0) return "";
+        const counts = {};
+        reactions.forEach((r) => {
+          counts[r.reaction] = (counts[r.reaction] || 0) + 1;
+        });
+        return Object.entries(counts)
+          .map(
+            ([e, c]) => `<span class="text-sm mr-1">${e} ${c}</span>`
+          )
+          .join("");
+      }
+
+      function reactionButtons(id, isGroup = true) {
+        return `
+          <button class="text-sm" onclick="addReaction('${id}','👍',${isGroup})">👍</button>
+          <button class="text-sm" onclick="addReaction('${id}','❤️',${isGroup})">❤️</button>
+          <button class="text-sm" onclick="addReaction('${id}','😂',${isGroup})">😂</button>
+        `;
+      }
+
+      async function addReaction(id, emoji, isGroup = true) {
+        const table = isGroup
+          ? "group_message_reactions"
+          : "direct_message_reactions";
+        await supabase.from(table).insert({
+          message_id: id,
+          user_id: currentUser.id,
+          reaction: emoji,
+        });
+
+        const msg = (currentMessages || []).find((m) => m.id === id);
+        if (msg && msg.user_id !== currentUser.id) {
+          await supabase.from("notifications").insert({
+            user_id: msg.user_id,
+            type: "reaction",
+            title: "リアクション",
+            content: `${userProfile.last_name} ${userProfile.first_name}さんがあなたのメッセージにリアクションしました`,
+            related_id: id,
+          });
+        }
+        await loadGroupMessages(currentGroup.id);
+      }
+
       // イベントリスナー設定
       document
         .querySelector(".mobile-menu-button")
@@ -1825,6 +1889,19 @@
             this.value = "";
           }
         });
+
+      document
+        .getElementById("sticker-btn")
+        .addEventListener("click", function () {
+          document.getElementById("sticker-panel").classList.toggle("hidden");
+        });
+
+      document.querySelectorAll(".sticker-option").forEach((img) => {
+        img.addEventListener("click", () => {
+          document.getElementById("sticker-panel").classList.add("hidden");
+          sendMessage("", [img.src]);
+        });
+      });
 
       // グループ作成モーダル
       document

@@ -112,7 +112,18 @@ CREATE INDEX idx_group_messages_group   ON public.group_messages(group_id);
 CREATE INDEX idx_group_messages_created ON public.group_messages(created_at DESC);
 CREATE INDEX idx_group_messages_user    ON public.group_messages(user_id);
 
--- 4-4) Group Members
+-- 4-4) Group Message Reactions
+CREATE TABLE public.group_message_reactions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  message_id uuid REFERENCES public.group_messages(id) ON DELETE CASCADE,
+  user_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE,
+  reaction text NOT NULL,
+  created_at timestamptz DEFAULT now()
+);
+CREATE INDEX idx_gm_reactions_message ON public.group_message_reactions(message_id);
+CREATE INDEX idx_gm_reactions_user ON public.group_message_reactions(user_id);
+
+-- 4-5) Group Members
 CREATE TABLE public.group_members (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   group_id uuid NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
@@ -124,7 +135,7 @@ CREATE TABLE public.group_members (
 CREATE INDEX idx_group_members_group ON public.group_members(group_id);
 CREATE INDEX idx_group_members_user  ON public.group_members(user_id);
 
--- 4-5) Follows
+-- 4-6) Follows
 CREATE TABLE public.follows (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   follower_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -135,7 +146,7 @@ CREATE TABLE public.follows (
 CREATE INDEX idx_follows_follower  ON public.follows(follower_id);
 CREATE INDEX idx_follows_following ON public.follows(following_id);
 
--- 4-6) Follow Requests
+-- 4-7) Follow Requests
 CREATE TABLE public.follow_requests (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   requester_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -147,7 +158,7 @@ CREATE TABLE public.follow_requests (
 CREATE INDEX idx_follow_requests_requester ON public.follow_requests(requester_id);
 CREATE INDEX idx_follow_requests_target   ON public.follow_requests(target_id);
 
--- 4-7) Events
+-- 4-8) Events
 CREATE TABLE public.events (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   title text NOT NULL,
@@ -173,7 +184,7 @@ CREATE TRIGGER handle_events_updated_at
   BEFORE UPDATE ON public.events
   FOR EACH ROW EXECUTE FUNCTION handle_updated_at();
 
--- 4-8) Event Participants
+-- 4-9) Event Participants
 CREATE TABLE public.event_participants (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   event_id uuid REFERENCES public.events(id) ON DELETE CASCADE,
@@ -185,7 +196,7 @@ CREATE TABLE public.event_participants (
 CREATE INDEX idx_event_participants_event ON public.event_participants(event_id);
 CREATE INDEX idx_event_participants_user  ON public.event_participants(user_id);
 
--- 4-9) Blocked Users
+-- 4-10) Blocked Users
 CREATE TABLE public.blocked_users (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   blocker_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -196,7 +207,7 @@ CREATE TABLE public.blocked_users (
 CREATE INDEX idx_blocked_users_blocker_id ON public.blocked_users(blocker_id);
 CREATE INDEX idx_blocked_users_blocked_id ON public.blocked_users(blocked_id);
 
--- 4-10) Direct Messages
+-- 4-11) Direct Messages
 CREATE TABLE public.direct_messages (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   sender_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -210,7 +221,18 @@ CREATE INDEX idx_direct_messages_sender   ON public.direct_messages(sender_id);
 CREATE INDEX idx_direct_messages_receiver ON public.direct_messages(receiver_id);
 CREATE INDEX idx_direct_messages_created  ON public.direct_messages(created_at DESC);
 
--- 4-11) Projects
+-- 4-12) Direct Message Reactions
+CREATE TABLE public.direct_message_reactions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  message_id uuid REFERENCES public.direct_messages(id) ON DELETE CASCADE,
+  user_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE,
+  reaction text NOT NULL,
+  created_at timestamptz DEFAULT now()
+);
+CREATE INDEX idx_dm_reactions_message ON public.direct_message_reactions(message_id);
+CREATE INDEX idx_dm_reactions_user ON public.direct_message_reactions(user_id);
+
+-- 4-13) Projects
 CREATE TABLE public.projects (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -230,7 +252,7 @@ CREATE TRIGGER handle_projects_updated_at
   BEFORE UPDATE ON public.projects
   FOR EACH ROW EXECUTE FUNCTION handle_updated_at();
 
--- 4-12) Privacy Settings
+-- 4-14) Privacy Settings
 CREATE TABLE public.privacy_settings (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -250,7 +272,7 @@ CREATE TRIGGER update_privacy_settings_updated_at
   BEFORE UPDATE ON public.privacy_settings
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- 4-13) Posts
+-- 4-15) Posts
 CREATE TABLE public.posts (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -267,7 +289,7 @@ CREATE TRIGGER handle_posts_updated_at
   BEFORE UPDATE ON public.posts
   FOR EACH ROW EXECUTE FUNCTION handle_updated_at();
 
--- 4-14) Post Likes
+-- 4-16) Post Likes
 CREATE TABLE public.post_likes (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -278,7 +300,7 @@ CREATE TABLE public.post_likes (
 CREATE INDEX idx_post_likes_user_id ON public.post_likes(user_id);
 CREATE INDEX idx_post_likes_post_id ON public.post_likes(post_id);
 
--- 4-15) Post Comments
+-- 4-17) Post Comments
 CREATE TABLE public.post_comments (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -293,7 +315,7 @@ CREATE TRIGGER handle_post_comments_updated_at
   BEFORE UPDATE ON public.post_comments
   FOR EACH ROW EXECUTE FUNCTION handle_updated_at();
 
--- 4-16) Post Bookmarks
+-- 4-18) Post Bookmarks
 CREATE TABLE public.post_bookmarks (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -304,7 +326,7 @@ CREATE TABLE public.post_bookmarks (
 CREATE INDEX idx_post_bookmarks_user ON public.post_bookmarks(user_id);
 CREATE INDEX idx_post_bookmarks_post ON public.post_bookmarks(post_id);
 
--- 4-17) Notifications
+-- 4-19) Notifications
 CREATE TABLE public.notifications (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -318,7 +340,7 @@ CREATE TABLE public.notifications (
 CREATE INDEX idx_notifications_user ON public.notifications(user_id);
 CREATE INDEX idx_notifications_read ON public.notifications(is_read);
 
--- 4-18) Notification Settings
+-- 4-20) Notification Settings
 CREATE TABLE public.notification_settings (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -337,7 +359,7 @@ CREATE TRIGGER update_notification_settings_updated_at
   BEFORE UPDATE ON public.notification_settings
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- 4-19) User Sessions
+-- 4-21) User Sessions
 CREATE TABLE public.user_sessions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -353,7 +375,7 @@ CREATE TABLE public.user_sessions (
 );
 CREATE INDEX idx_user_sessions_user_id ON public.user_sessions(user_id);
 
--- 4-20) Startup Info
+-- 4-22) Startup Info
 CREATE TABLE public.startup_info (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -370,7 +392,7 @@ CREATE TRIGGER handle_startup_info_updated_at
   BEFORE UPDATE ON public.startup_info
   FOR EACH ROW EXECUTE FUNCTION handle_updated_at();
 
--- 4-21) Shared Files
+-- 4-23) Shared Files
 CREATE TABLE public.shared_files (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text NOT NULL,
@@ -383,7 +405,7 @@ CREATE TABLE public.shared_files (
   created_at timestamptz DEFAULT now()
 );
 
--- 4-22) Security Settings
+-- 4-24) Security Settings
 CREATE TABLE public.security_settings (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -400,7 +422,7 @@ CREATE TRIGGER update_security_settings_updated_at
   BEFORE UPDATE ON public.security_settings
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- 4-23) Push Subscriptions
+-- 4-25) Push Subscriptions
 CREATE TABLE public.push_subscriptions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -411,7 +433,7 @@ CREATE TABLE public.push_subscriptions (
 );
 CREATE INDEX idx_push_subscriptions_user_id ON public.push_subscriptions(user_id);
 
--- 4-24) Profile Embeddings
+-- 4-26) Profile Embeddings
 CREATE TABLE public.profile_embeddings (
   user_id uuid PRIMARY KEY REFERENCES public.profiles(id) ON DELETE CASCADE,
   embedding vector(1536)
