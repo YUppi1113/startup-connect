@@ -19,10 +19,15 @@ AI-powered matching to streamline building a startup team.
 2. Generate `config.js` from the template:
 
    ```bash
-   npm run build
-   ```
+    npm run build
+    ```
 
-3. Install dependencies, build Tailwind CSS and start the server:
+3. *(Optional)* Build ES5-compatible scripts for older browsers:
+
+   ```bash
+   npm run build:legacy
+   ```
+4. Install dependencies, build Tailwind CSS and start the server:
 
    ```bash
    npm install
