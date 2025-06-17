@@ -458,6 +458,7 @@
       // ページ読み込み時の初期化
       window.addEventListener("load", async () => {
         await loadHeaderFooter();
+        if (window.initI18n) window.initI18n();
         // ヘッダー関連のイベント
         document
           .querySelector(".mobile-menu-button")
@@ -1171,6 +1172,7 @@
       // 初期ステップ表示
       showGuideStep(guideIndex);
     </script>
+    <script src="i18n.js"></script>
     <script src="js/theme.js"></script>
     <script src="accessibility.js"></script>
   </body>

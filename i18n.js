@@ -10,7 +10,7 @@ async function loadLanguage(lang) {
   document.documentElement.lang = lang;
 }
 
-window.addEventListener('DOMContentLoaded', () => {
+function setupI18n() {
   const selector = document.getElementById('language-selector');
   const mobileSelector = document.getElementById('mobile-language');
   const initialLang = selector ? selector.value : 'ja';
@@ -22,4 +22,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   if (selector) selector.addEventListener('change', e => change(e.target.value));
   if (mobileSelector) mobileSelector.addEventListener('change', e => change(e.target.value));
-});
+}
+
+window.initI18n = setupI18n;
+window.addEventListener('DOMContentLoaded', setupI18n);
