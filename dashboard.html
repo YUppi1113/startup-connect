@@ -325,6 +325,22 @@
             </div>
           </div>
         </div>
+
+        <!-- 最近の投稿 -->
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-800">最近の投稿</h2>
+          </div>
+          <div id="dashboard-posts" class="divide-y divide-gray-200">
+            <div class="px-6 py-8 text-center text-gray-500 skeleton">
+              <div class="h-4 bg-gray-200 rounded w-3/4 mx-auto mb-2"></div>
+              <div class="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
+            </div>
+          </div>
+          <div class="px-6 py-3 bg-gray-50 text-center">
+            <a href="posts.html" class="text-sm text-blue-600 hover:underline">もっと見る</a>
+          </div>
+        </div>
       </div>
   </main>
 
@@ -631,6 +647,7 @@
           loadMessages(),
           loadGroups(),
           loadEvents(),
+          loadPosts(),
           loadStats(),
           loadRecommendedUsers(),
         ]);
@@ -959,6 +976,70 @@
                         </div>
                     </div>
                 `;
+          })
+          .join("");
+      }
+
+      // 投稿読み込み
+      async function loadPosts() {
+        const { data: follows } = await supabase
+          .from("follows")
+          .select("following_id")
+          .eq("follower_id", currentUser.id);
+
+        const ids = follows ? follows.map((f) => f.following_id) : [];
+        const container = document.getElementById("dashboard-posts");
+
+        if (ids.length === 0) {
+          container.innerHTML = `
+                    <div class="px-6 py-8 text-center text-gray-500">
+                        <p class="text-sm">まだ投稿がありません</p>
+                    </div>
+                `;
+          return;
+        }
+
+        const { data: posts } = await supabase
+          .from("posts")
+          .select(
+            "*, profiles(id, first_name, last_name, profile_image_url)"
+          )
+          .in("user_id", ids)
+          .order("created_at", { ascending: false })
+          .limit(5);
+
+        if (!posts || posts.length === 0) {
+          container.innerHTML = `
+                    <div class="px-6 py-8 text-center text-gray-500">
+                        <p class="text-sm">まだ投稿がありません</p>
+                    </div>
+                `;
+          return;
+        }
+
+        container.innerHTML = posts
+          .map((post) => {
+            const images = (post.image_urls || [])
+              .map(
+                (url) => `<img loading="lazy" src="${url}" class="mt-2 rounded-md">`
+              )
+              .join("");
+            return `
+                <div class="px-6 py-4 flex items-start space-x-3 hover:bg-gray-50 cursor-pointer" onclick="window.location.href='profile-detail.html?user=${post.user_id}'">
+                    <img loading="lazy" class="h-8 w-8 rounded-full object-cover" src="${
+                      post.profiles?.profile_image_url || "/api/placeholder/32/32"
+                    }" alt="${post.profiles?.last_name || ""} ${
+              post.profiles?.first_name || ""
+            }">
+                    <div class="flex-1">
+                        <p class="font-medium text-gray-900">${post.profiles?.last_name || ""} ${post.profiles?.first_name || ""}</p>
+                        <p class="whitespace-pre-wrap">${post.content}</p>
+                        ${images}
+                        <p class="text-xs text-gray-500 mt-1">${new Date(
+                          post.created_at
+                        ).toLocaleString("ja-JP")}</p>
+                    </div>
+                </div>`;
           })
           .join("");
       }
