@@ -605,81 +605,43 @@
     <!-- 通話モーダル -->
     <div id="call-modal" class="fixed inset-0 z-30 hidden" role="dialog" aria-modal="true">
       <div class="absolute inset-0 bg-gray-900 bg-opacity-75"></div>
-      <div
-        class="relative max-w-md mx-auto mt-20 bg-white rounded-lg shadow-xl overflow-hidden"
-      >
+      <div class="relative max-w-md mx-auto mt-20 bg-white rounded-lg shadow-xl overflow-hidden">
         <div class="p-6 text-center">
-          <div class="mb-6">
-            <img loading="lazy"
-              id="call-user-avatar"
-              src="/api/placeholder/96/96"
-              alt=""
-              class="h-24 w-24 rounded-full object-cover mx-auto"
-            />
-            <h3
-              id="call-user-name"
-              class="text-xl font-semibold text-gray-900 mt-4"
-            >
-              -
-            </h3>
+          <div class="mb-4">
+            <img loading="lazy" id="call-user-avatar" src="/api/placeholder/96/96" alt="" class="h-24 w-24 rounded-full object-cover mx-auto" />
+            <h3 id="call-user-name" class="text-xl font-semibold text-gray-900 mt-4">-</h3>
             <p id="call-status" class="text-gray-600 mt-2">発信中...</p>
           </div>
-          <div class="flex justify-center space-x-4">
-            <button
-              id="mute-btn"
-              class="p-4 bg-gray-200 text-gray-600 rounded-full hover:bg-gray-300 transition duration-200"
-              title="ミュート"
-            >
-              <svg
-                class="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-                />
+          <div class="relative">
+            <video id="remote-video" class="w-full rounded bg-black" autoplay playsinline></video>
+            <video id="local-video" class="w-24 h-24 rounded-full bg-black absolute bottom-2 right-2" autoplay muted playsinline></video>
+          </div>
+          <div id="incoming-controls" class="flex justify-center space-x-4 mt-4 hidden">
+            <button id="accept-call-btn" class="p-4 bg-green-600 text-white rounded-full hover:bg-green-700 transition duration-200" title="通話開始">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-            <button
-              id="end-call-btn"
-              class="p-4 bg-red-600 text-white rounded-full hover:bg-red-700 transition duration-200"
-              title="通話終了"
-            >
-              <svg
-                class="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M16 8l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-3.28a1 1 0 00-.684-.948l-4.493-1.498a1 1 0 00-1.21.502l-1.13 2.257a11.042 11.042 0 01-5.516-5.517l2.257-1.128a1 1 0 00.502-1.21L9.228 3.683A1 1 0 008.279 3H5z"
-                />
+            <button id="reject-call-btn" class="p-4 bg-red-600 text-white rounded-full hover:bg-red-700 transition duration-200" title="拒否">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-            <button
-              id="speaker-btn"
-              class="p-4 bg-gray-200 text-gray-600 rounded-full hover:bg-gray-300 transition duration-200"
-              title="スピーカー"
-            >
-              <svg
-                class="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
-                />
+          </div>
+          <div id="in-call-controls" class="flex justify-center space-x-4 mt-4">
+            <button id="mute-btn" class="p-4 bg-gray-200 text-gray-600 rounded-full hover:bg-gray-300 transition duration-200" title="ミュート">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+              </svg>
+            </button>
+            <button id="end-call-btn" class="p-4 bg-red-600 text-white rounded-full hover:bg-red-700 transition duration-200" title="通話終了">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-3.28a1 1 0 00-.684-.948l-4.493-1.498a1 1 0 00-1.21.502l-1.13 2.257a11.042 11.042 0 01-5.516-5.517l2.257-1.128a1 1 0 00.502-1.21L9.228 3.683A1 1 0 008.279 3H5z" />
+              </svg>
+            </button>
+            <button id="speaker-btn" class="p-4 bg-gray-200 text-gray-600 rounded-full hover:bg-gray-300 transition duration-200" title="スピーカー">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
               </svg>
             </button>
           </div>
@@ -697,6 +659,7 @@
 
     <script type="module">
       import { composeMessage, sendMessage as sendMessageAPI } from './js/message.js';
+      import { WebRTCManager } from './js/webrtc.js';
       // Supabase設定
       const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.__ENV__;
       const supabase = window.supabase.createClient(
@@ -712,6 +675,9 @@
       let currentMessages = [];
       let selectedRecipient = null;
       let typingTimeout = null;
+      let rtc = new WebRTCManager(supabase);
+      rtc.onIncoming = handleIncomingCall;
+      rtc.onEnded = () => closeModal("call-modal");
 
       // 地域名マッピング
       const locationNames = {
@@ -788,6 +754,7 @@
           return;
         }
         currentUser = user;
+        rtc.init(currentUser);
         await loadUserProfile();
       }
 
@@ -1000,6 +967,8 @@
 
         // メッセージを読み込み
         await loadMessages(userId);
+
+        rtc.subscribe(userId);
 
         // 未読メッセージを既読にする
         await markMessagesAsRead(userId);
@@ -1374,13 +1343,24 @@
         ).textContent = `${currentChatUser.last_name} ${currentChatUser.first_name}`;
         document.getElementById("call-status").textContent =
           type === "video" ? "ビデオ通話を発信中..." : "音声通話を発信中...";
-
+        document.getElementById("incoming-controls").classList.add("hidden");
         openModal("call-modal");
+        rtc.startCall(currentChatUser.id, type);
+      }
 
-        // 模擬的な接続
-        setTimeout(() => {
-          document.getElementById("call-status").textContent = "接続されました";
-        }, 2000);
+      function handleIncomingCall(fromId, callType) {
+        fetchUser(fromId).then((user) => {
+          document.getElementById("call-user-avatar").src =
+            user.profile_image_url || "/api/placeholder/96/96";
+          document.getElementById("call-user-name").textContent = `${user.last_name} ${user.first_name}`;
+          document.getElementById("call-status").textContent = "着信中...";
+          document.getElementById("incoming-controls").classList.remove("hidden");
+          openModal("call-modal");
+        });
+      }
+
+      function fetchUser(id) {
+        return supabase.from("profiles").select("*").eq("id", id).single().then(({ data }) => data);
       }
 
       // リアルタイム更新設定
@@ -1605,6 +1585,20 @@
       document
         .getElementById("end-call-btn")
         .addEventListener("click", function () {
+          rtc.endCall();
+          closeModal("call-modal");
+        });
+      document
+        .getElementById("accept-call-btn")
+        .addEventListener("click", () => {
+          document.getElementById("incoming-controls").classList.add("hidden");
+          document.getElementById("call-status").textContent = "接続中...";
+          rtc.acceptOffer();
+        });
+      document
+        .getElementById("reject-call-btn")
+        .addEventListener("click", () => {
+          rtc.rejectOffer();
           closeModal("call-modal");
         });
 
