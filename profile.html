@@ -289,8 +289,7 @@
             >
             <select
               id="skills"
-              name="skills[]"
-              multiple
+              name="skills"
               class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="tech">テクノロジー・IT</option>
@@ -789,11 +788,8 @@
         }
 
         // スキル
-        if (profile.skills && profile.skills.length > 0) {
-          const select = document.getElementById("skills");
-          Array.from(select.options).forEach((opt) => {
-            opt.selected = profile.skills.includes(opt.value);
-          });
+        if (profile.skills) {
+          document.getElementById("skills").value = profile.skills;
         }
       }
 
@@ -937,11 +933,9 @@
             }
 
             // スキルの収集
-            const skills = Array.from(
-              document.getElementById("skills").selectedOptions
-            ).map((o) => o.value);
+            const skills = document.getElementById("skills").value;
 
-            if (skills.length === 0) {
+            if (!skills) {
               throw new Error("少なくとも1つのスキルを選択してください");
             }
 
@@ -1061,7 +1055,7 @@
 
             const embedText = [
               document.getElementById("bio").value,
-              skills.join(" "),
+              skills,
               industries.join(" "),
               document.getElementById("looking_for").value,
             ].join(" ");
