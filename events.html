@@ -1032,6 +1032,25 @@
 
       // イベント作成
       async function createEvent(formData) {
+        const eventDateStr = formData.get("event-date");
+        const startTime = formData.get("event-start-time");
+        const endTime = formData.get("event-end-time");
+
+        const today = new Date();
+        const selectedDate = new Date(`${eventDateStr}T00:00:00`);
+        selectedDate.setHours(0, 0, 0, 0);
+        const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+        if (selectedDate < todayStart) {
+          alert("開催日は今日以降の日付を選択してください。");
+          throw new Error("Invalid event date");
+        }
+
+        if (startTime >= endTime) {
+          alert("開始時間は終了時間より前である必要があります。");
+          throw new Error("Invalid event time");
+        }
+
         const eventData = {
           title: formData.get("event-title"),
           description: formData.get("event-description"),
@@ -1077,6 +1096,25 @@
 
       // イベント更新
       async function updateEvent(eventId, formData) {
+        const eventDateStr = formData.get("event-date");
+        const startTime = formData.get("event-start-time");
+        const endTime = formData.get("event-end-time");
+
+        const today = new Date();
+        const selectedDate = new Date(`${eventDateStr}T00:00:00`);
+        selectedDate.setHours(0, 0, 0, 0);
+        const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+        if (selectedDate < todayStart) {
+          alert("開催日は今日以降の日付を選択してください。");
+          throw new Error("Invalid event date");
+        }
+
+        if (startTime >= endTime) {
+          alert("開始時間は終了時間より前である必要があります。");
+          throw new Error("Invalid event time");
+        }
+
         const updateData = {
           title: formData.get("event-title"),
           description: formData.get("event-description"),
