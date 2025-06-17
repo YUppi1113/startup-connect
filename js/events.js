@@ -19,7 +19,8 @@ export function filterEvents(allEvents, { type = '', location = '', date = '' } 
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     filtered = filtered.filter(event => {
-      const eventDate = new Date(event.event_date);
+      // Parse the event date as a local date to avoid timezone issues
+      const eventDate = new Date(`${event.event_date}T00:00:00`);
       switch (date) {
         case 'today':
           return eventDate.getTime() === today.getTime();
