@@ -261,6 +261,20 @@
                 </select>
               </div>
             </div>
+
+            <div class="mt-4">
+              <div class="flex items-center">
+                <input
+                  type="checkbox"
+                  id="is-private"
+                  name="is_private"
+                  class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label for="is-private" class="ml-2 block text-sm text-gray-700"
+                  >プロフィールを非公開にする</label
+                >
+              </div>
+            </div>
           </div>
 
           <!-- スキル・専門分野セクション -->
@@ -722,6 +736,7 @@
         document.getElementById("phone").value = profile.phone || "";
         document.getElementById("timezone").value =
           profile.timezone || "Asia/Tokyo";
+        document.getElementById("is-private").checked = !!profile.is_private;
 
         // プロフィール画像
         if (profile.profile_image_url) {
@@ -878,6 +893,7 @@
               profile_image_url: profileImageUrl,
               phone: document.getElementById("phone").value || null,
               timezone: document.getElementById("timezone").value || "Asia/Tokyo",
+              is_private: document.getElementById("is-private").checked,
               skills: skills,
             };
 
@@ -887,13 +903,14 @@
               .eq("id", currentUser.id)
               .single();
 
-            if (!existingProfile) {
+              if (!existingProfile) {
               const { error: insertError } = await supabase.from("profiles").insert({
                 id: currentUser.id,
                 first_name: document.getElementById("first_name").value,
                 last_name: document.getElementById("last_name").value,
                 location: document.getElementById("location").value,
                 age_range: document.getElementById("age_range").value,
+                is_private: document.getElementById("is-private").checked,
               });
               if (insertError) {
                 throw new Error("プロフィール情報の保存に失敗しました");
