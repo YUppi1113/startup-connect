@@ -925,15 +925,26 @@
           const groupIds = memberGroups.map((g) => g.group_id);
           const unreadCounts = {};
           if (groupIds.length > 0) {
-            const { data: unreadMsgs } = await supabase
+            const { data: messages } = await supabase
               .from("group_messages")
-              .select("group_id")
-              .eq("is_read", false)
-              .eq("user_id", currentUser.id)
+              .select("id, group_id")
               .in("group_id", groupIds);
 
-            (unreadMsgs || []).forEach((m) => {
-              unreadCounts[m.group_id] = (unreadCounts[m.group_id] || 0) + 1;
+            const messageIds = (messages || []).map((m) => m.id);
+            let readIds = [];
+            if (messageIds.length > 0) {
+              const { data: reads } = await supabase
+                .from("group_message_reads")
+                .select("message_id")
+                .eq("user_id", currentUser.id)
+                .in("message_id", messageIds);
+              readIds = (reads || []).map((r) => r.message_id);
+            }
+            const readSet = new Set(readIds);
+            (messages || []).forEach((m) => {
+              if (!readSet.has(m.id)) {
+                unreadCounts[m.group_id] = (unreadCounts[m.group_id] || 0) + 1;
+              }
             });
           }
 
@@ -1117,6 +1128,23 @@
             .eq("group_id", groupId)
             .order("created_at", { ascending: true });
 
+          const messageIds = (messages || []).map((m) => m.id);
+          let readCounts = {};
+          if (messageIds.length > 0) {
+            const { data: reads } = await supabase
+              .from("group_message_reads")
+              .select("message_id")
+              .in("message_id", messageIds);
+            readCounts = (reads || []).reduce((acc, r) => {
+              acc[r.message_id] = (acc[r.message_id] || 0) + 1;
+              return acc;
+            }, {});
+          }
+
+          (messages || []).forEach((m) => {
+            m.read_count = readCounts[m.id] || 0;
+          });
+
           if (error) throw error;
 
           currentMessages = messages || [];
@@ -1201,6 +1229,9 @@
                       )
                       .join("")}
                     <p>${escapeHtml(message.content)}</p>
+                  </div>
+                  <div class="flex justify-end mt-1">
+                    <span class="text-xs text-gray-500">既読${message.read_count || 0}</span>
                   </div>
                 </div>
                 <img loading="lazy"
@@ -1584,12 +1615,20 @@
         const messageIds = currentMessages.map((m) => m.id);
         if (messageIds.length === 0) return;
 
-        await supabase
-          .from("group_messages")
-          .update({ is_read: true })
-          .in("id", messageIds)
+        const { data: existing } = await supabase
+          .from("group_message_reads")
+          .select("message_id")
           .eq("user_id", currentUser.id)
-          .eq("is_read", false);
+          .in("message_id", messageIds);
+
+        const existingIds = new Set((existing || []).map((r) => r.message_id));
+        const inserts = messageIds
+          .filter((id) => !existingIds.has(id))
+          .map((id) => ({ message_id: id, user_id: currentUser.id }));
+
+        if (inserts.length > 0) {
+          await supabase.from("group_message_reads").insert(inserts);
+        }
         loadGroups();
       }
 
