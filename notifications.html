@@ -1138,6 +1138,33 @@
       }
 
       async function participateEvent(eventId) {
+        const { data: event, error: fetchError } = await supabase
+          .from("events")
+          .select("status, max_attendees, event_participants(count)")
+          .eq("id", eventId)
+          .single();
+
+        if (fetchError || !event) {
+          alert("イベント情報の取得に失敗しました");
+          return;
+        }
+
+        const participantCount = event.event_participants?.[0]?.count || 0;
+        const remainingSeats =
+          event.max_attendees !== null
+            ? event.max_attendees - participantCount
+            : Infinity;
+
+        if (event.status === "canceled") {
+          alert("このイベントは中止されています");
+          return;
+        }
+
+        if (event.max_attendees !== null && remainingSeats <= 0) {
+          alert("イベントは満席です");
+          return;
+        }
+
         const { error } = await supabase.from("event_participants").insert({
           event_id: eventId,
           user_id: currentUser.id,
@@ -1150,6 +1177,33 @@
       }
 
       async function declineEvent(eventId) {
+        const { data: event, error: fetchError } = await supabase
+          .from("events")
+          .select("status, max_attendees, event_participants(count)")
+          .eq("id", eventId)
+          .single();
+
+        if (fetchError || !event) {
+          alert("イベント情報の取得に失敗しました");
+          return;
+        }
+
+        const participantCount = event.event_participants?.[0]?.count || 0;
+        const remainingSeats =
+          event.max_attendees !== null
+            ? event.max_attendees - participantCount
+            : Infinity;
+
+        if (event.status === "canceled") {
+          alert("このイベントは中止されています");
+          return;
+        }
+
+        if (event.max_attendees !== null && remainingSeats <= 0) {
+          alert("イベントは満席です");
+          return;
+        }
+
         const { error } = await supabase.from("event_participants").insert({
           event_id: eventId,
           user_id: currentUser.id,
