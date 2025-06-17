@@ -1095,8 +1095,8 @@
         let { error } = await supabase
           .from("follow_requests")
           .update({ status: "approved" })
-          .eq("follower_id", userId)
-          .eq("following_id", currentUser.id);
+          .eq("requester_id", userId)
+          .eq("target_id", currentUser.id);
 
         if (error) {
           console.error("Error updating follow request:", error);
@@ -1112,8 +1112,8 @@
           await supabase
             .from("follow_requests")
             .delete()
-            .eq("follower_id", userId)
-            .eq("following_id", currentUser.id);
+            .eq("requester_id", userId)
+            .eq("target_id", currentUser.id);
 
           const { data: notif } = await supabase
             .from("notifications")
@@ -1151,8 +1151,8 @@
         let { error } = await supabase
           .from("follow_requests")
           .update({ status: "rejected" })
-          .eq("follower_id", userId)
-          .eq("following_id", currentUser.id);
+          .eq("requester_id", userId)
+          .eq("target_id", currentUser.id);
 
         if (error) {
           console.error("Error rejecting follow request:", error);
@@ -1162,8 +1162,8 @@
         await supabase
           .from("follow_requests")
           .delete()
-          .eq("follower_id", userId)
-          .eq("following_id", currentUser.id);
+          .eq("requester_id", userId)
+          .eq("target_id", currentUser.id);
 
         const { data: notif } = await supabase
           .from("notifications")

@@ -1037,11 +1037,11 @@
       async function loadFollowRequests() {
         const { data } = await supabase
           .from("follow_requests")
-          .select("following_id")
-          .eq("follower_id", currentUser.id);
+          .select("target_id")
+          .eq("requester_id", currentUser.id);
 
         if (data) {
-          followRequests = new Set(data.map((r) => r.following_id));
+          followRequests = new Set(data.map((r) => r.target_id));
         }
       }
 

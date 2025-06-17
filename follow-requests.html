@@ -132,14 +132,14 @@
       async function loadRequests() {
         const { data: received } = await supabase
           .from('follow_requests')
-          .select('id, follower_id, requester:profiles!follow_requests_follower_id_fkey(*)')
-          .eq('following_id', currentUser.id)
+          .select('id, requester_id, requester:profiles!follow_requests_requester_id_fkey(*)')
+          .eq('target_id', currentUser.id)
           .eq('status', 'pending');
 
         const { data: sent } = await supabase
           .from('follow_requests')
-          .select('id, following_id, target:profiles!follow_requests_following_id_fkey(*)')
-          .eq('follower_id', currentUser.id)
+          .select('id, target_id, target:profiles!follow_requests_target_id_fkey(*)')
+          .eq('requester_id', currentUser.id)
           .eq('status', 'pending');
 
         document.getElementById('received-count').textContent = received ? received.length : 0;
@@ -158,9 +158,9 @@
         const profile = role === 'received' ? req.requester : req.target;
         const actions =
           role === 'received'
-            ? `<button onclick="approveFollowRequest('${req.follower_id}')" class="bg-blue-600 text-white rounded-md px-3 py-1 text-sm mr-2">承認</button>
-               <button onclick="rejectFollowRequest('${req.follower_id}')" class="border border-gray-300 text-gray-700 rounded-md px-3 py-1 text-sm">拒否</button>`
-            : `<button onclick="cancelRequest('${req.following_id}')" class="border border-red-600 text-red-600 rounded-md px-3 py-1 text-sm">キャンセル</button>`;
+            ? `<button onclick="approveFollowRequest('${req.requester_id}')" class="bg-blue-600 text-white rounded-md px-3 py-1 text-sm mr-2">承認</button>
+               <button onclick="rejectFollowRequest('${req.requester_id}')" class="border border-gray-300 text-gray-700 rounded-md px-3 py-1 text-sm">拒否</button>`
+            : `<button onclick="cancelRequest('${req.target_id}')" class="border border-red-600 text-red-600 rounded-md px-3 py-1 text-sm">キャンセル</button>`;
         return `
           <div class="flex items-center space-x-4">
             <img loading="lazy" src="${profile.profile_image_url || '/api/placeholder/48/48'}" class="h-12 w-12 rounded-full object-cover" alt="${profile.last_name} ${profile.first_name}">
@@ -177,8 +177,8 @@
         const { error } = await supabase
           .from('follow_requests')
           .delete()
-          .eq('follower_id', currentUser.id)
-          .eq('following_id', userId);
+          .eq('requester_id', currentUser.id)
+          .eq('target_id', userId);
         if (error) {
           console.error('cancel request error', error);
           return;
@@ -190,8 +190,8 @@
         let { error } = await supabase
           .from('follow_requests')
           .update({ status: 'approved' })
-          .eq('follower_id', userId)
-          .eq('following_id', currentUser.id);
+          .eq('requester_id', userId)
+          .eq('target_id', currentUser.id);
 
         if (error) {
           console.error('Error updating follow request:', error);
@@ -207,8 +207,8 @@
           await supabase
             .from('follow_requests')
             .delete()
-            .eq('follower_id', userId)
-            .eq('following_id', currentUser.id);
+            .eq('requester_id', userId)
+            .eq('target_id', currentUser.id);
 
           await supabase
             .from('notifications')
@@ -229,8 +229,8 @@
         let { error } = await supabase
           .from('follow_requests')
           .update({ status: 'rejected' })
-          .eq('follower_id', userId)
-          .eq('following_id', currentUser.id);
+          .eq('requester_id', userId)
+          .eq('target_id', currentUser.id);
 
         if (error) {
           console.error('Error rejecting follow request:', error);
@@ -240,8 +240,8 @@
         await supabase
           .from('follow_requests')
           .delete()
-          .eq('follower_id', userId)
-          .eq('following_id', currentUser.id);
+          .eq('requester_id', userId)
+          .eq('target_id', currentUser.id);
 
         alert('フォローリクエストを拒否しました');
         await loadRequests();

@@ -11,8 +11,8 @@ export async function checkFollowStatus(supabase, followerId, followingId) {
     const { data: request } = await supabase
       .from('follow_requests')
       .select('*')
-      .eq('follower_id', followerId)
-      .eq('following_id', followingId)
+      .eq('requester_id', followerId)
+      .eq('target_id', followingId)
       .single();
     isRequested = !!request;
   }
@@ -21,8 +21,8 @@ export async function checkFollowStatus(supabase, followerId, followingId) {
 
 export async function sendFollowRequest(supabase, followerId, followingId) {
   return supabase.from('follow_requests').insert({
-    follower_id: followerId,
-    following_id: followingId,
+    requester_id: followerId,
+    target_id: followingId,
   });
 }
 
@@ -45,8 +45,8 @@ export async function cancelFollowRequest(supabase, followerId, followingId) {
   return supabase
     .from('follow_requests')
     .delete()
-    .eq('follower_id', followerId)
-    .eq('following_id', followingId);
+    .eq('requester_id', followerId)
+    .eq('target_id', followingId);
 }
 
 export function updateFollowButton(button, isFollowing, isRequested) {
