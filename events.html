@@ -70,7 +70,7 @@
 
       <!-- フィルターセクション -->
       <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-5 lg:grid-cols-6 gap-4">
           <div>
             <label
               for="event-type"
@@ -140,6 +140,12 @@
             >
               検索
             </button>
+          </div>
+          <div class="flex items-end">
+            <label class="inline-flex items-center text-sm font-medium text-gray-700">
+              <input id="my-events-toggle" type="checkbox" class="mr-2">
+              My Events
+            </label>
           </div>
         </div>
       </div>
@@ -989,6 +995,23 @@
 
       // イベント参加
       async function joinEvent(eventId) {
+        const { data: evt } = await supabase
+          .from("events")
+          .select("*, participants:event_participants(count)")
+          .eq("id", eventId)
+          .single();
+
+        if (!evt || evt.status === "canceled") {
+          alert("このイベントには参加できません");
+          return;
+        }
+
+        const count = evt.participants?.[0]?.count || 0;
+        if (evt.max_attendees && count >= evt.max_attendees) {
+          alert("満席のため参加できません");
+          return;
+        }
+
         const { error } = await supabase.from("event_participants").insert({
           event_id: eventId,
           user_id: currentUser.id,
@@ -1277,12 +1300,16 @@
         const locationFilter = document.getElementById("event-location-filter").value;
         const dateFilter = document.getElementById("event-date-filter").value;
         const keywordFilter = document.getElementById("event-keyword").value.trim();
+        const myEventsOnly = document.getElementById("my-events-toggle").checked;
 
         const filteredEvents = applyFilterEvents(allEvents, {
           type: typeFilter,
           location: locationFilter,
           date: dateFilter,
           keyword: keywordFilter,
+          myEvents: myEventsOnly,
+          userId: currentUser.id,
+          participatingEventIds: participatingEvents,
         });
 
         displayEvents(filteredEvents);
