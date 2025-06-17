@@ -70,7 +70,7 @@
 
       <!-- フィルターセクション -->
       <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-4">
           <div>
             <label
               for="event-type"
@@ -131,6 +131,16 @@
             >
               検索
             </button>
+          </div>
+          <div class="flex items-end">
+            <label class="inline-flex items-center">
+              <input
+                type="checkbox"
+                id="my-events-toggle"
+                class="h-4 w-4 text-blue-600 border-gray-300 rounded"
+              />
+              <span class="ml-2 text-sm text-gray-700">My Events</span>
+            </label>
           </div>
         </div>
       </div>
@@ -713,8 +723,8 @@
       // ページ読み込み時の初期化
       window.addEventListener("load", async () => {
         await checkAuth();
-        await loadEvents();
         await loadParticipatingEvents();
+        await loadEvents();
         setupRealtimeSubscriptions();
       });
 
@@ -780,7 +790,7 @@
         }
 
         allEvents = events || [];
-        displayEvents(allEvents);
+        filterEvents();
         hideLoading();
       }
 
@@ -793,6 +803,7 @@
 
         if (participations) {
           participatingEvents = new Set(participations.map((p) => p.event_id));
+          filterEvents();
         }
       }
 
@@ -1229,11 +1240,15 @@
         const typeFilter = document.getElementById("event-type").value;
         const locationFilter = document.getElementById("event-location-filter").value;
         const dateFilter = document.getElementById("event-date-filter").value;
+        const myEventsOnly = document.getElementById("my-events-toggle").checked;
 
         const filteredEvents = applyFilterEvents(allEvents, {
           type: typeFilter,
           location: locationFilter,
           date: dateFilter,
+          myEvents: myEventsOnly,
+          userId: currentUser.id,
+          participatingIds: participatingEvents,
         });
 
         displayEvents(filteredEvents);
@@ -1452,7 +1467,7 @@
         .addEventListener("click", filterEvents);
 
       // フィルター変更時の自動検索
-      ["event-type", "event-location-filter", "event-date-filter"].forEach(
+      ["event-type", "event-location-filter", "event-date-filter", "my-events-toggle"].forEach(
         (id) => {
           document.getElementById(id).addEventListener("change", filterEvents);
         }
