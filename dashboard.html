@@ -50,10 +50,8 @@
     <script type="module">
       import { showToast } from "./js/toast.js";
       import { registerPush } from "./js/push.js";
-      import { createPost } from "./js/post.js";
       window.showToast = showToast;
       window.registerPush = registerPush;
-      window.createPost = createPost;
     </script>
   </head>
   <body class="bg-gray-50 dark:bg-dark-bg dark:text-dark-text min-h-screen">
@@ -334,43 +332,6 @@
           </div>
         </div>
 
-        <!-- 最近の投稿 -->
-        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-          <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-800">最近の投稿</h2>
-          </div>
-          <div class="px-6 py-4 space-y-2 border-b border-gray-200">
-            <textarea
-              id="post-content"
-              class="w-full border rounded p-2"
-              rows="3"
-              maxlength="280"
-              placeholder="今どうしてる？"
-            ></textarea>
-            <input
-              id="post-images"
-              type="file"
-              accept="image/*"
-              multiple
-              class="block"
-            />
-            <div class="text-right">
-              <button
-                id="post-submit"
-                class="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
-              >投稿</button>
-            </div>
-          </div>
-          <div id="dashboard-posts" class="divide-y divide-gray-200">
-            <div class="px-6 py-8 text-center text-gray-500 skeleton">
-              <div class="h-4 bg-gray-200 rounded w-3/4 mx-auto mb-2"></div>
-              <div class="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
-            </div>
-          </div>
-          <div class="px-6 py-3 bg-gray-50 text-center">
-            <a href="feed.html" class="text-sm text-blue-600 hover:underline">もっと見る</a>
-          </div>
-        </div>
       </div>
   </main>
 
@@ -571,9 +532,7 @@
 
         await checkAuth();
         await loadDashboardData();
-        document
-          .getElementById("post-submit")
-          ?.addEventListener("click", handleCreatePost);
+        // 投稿機能は削除
         setupRealtimeSubscriptions();
 
         if (window.registerPush && window.__ENV__ && window.__ENV__.PUSH_VAPID_PUBLIC_KEY) {
@@ -699,7 +658,6 @@
           loadFollowRequestCount(),
           loadGroups(),
           loadEvents(),
-          loadPosts(),
           loadStats(),
           loadRecommendedUsers(),
         ]);
@@ -1048,98 +1006,7 @@
           .join("");
       }
 
-      // 投稿読み込み
-      async function loadPosts() {
-        const { data: follows } = await supabase
-          .from("follows")
-          .select("following_id")
-          .eq("follower_id", currentUser.id);
-
-        const ids = follows ? follows.map((f) => f.following_id) : [];
-        const container = document.getElementById("dashboard-posts");
-
-        if (ids.length === 0) {
-          container.innerHTML = `
-                    <div class="px-6 py-8 text-center text-gray-500">
-                        <p class="text-sm">まだ投稿がありません</p>
-                    </div>
-                `;
-          return;
-        }
-
-        const { data: posts } = await supabase
-          .from("posts")
-          .select(
-            "*, profiles(id, first_name, last_name, profile_image_url)"
-          )
-          .in("user_id", ids)
-          .order("created_at", { ascending: false })
-          .limit(5);
-
-        if (!posts || posts.length === 0) {
-          container.innerHTML = `
-                    <div class="px-6 py-8 text-center text-gray-500">
-                        <p class="text-sm">まだ投稿がありません</p>
-                    </div>
-                `;
-          return;
-        }
-
-        container.innerHTML = posts
-          .map((post) => {
-            const images = (post.image_urls || [])
-              .map(
-                (url) => `<img loading="lazy" src="${url}" class="mt-2 rounded-md">`
-              )
-              .join("");
-            return `
-                <div class="px-6 py-4 flex items-start space-x-3 hover:bg-gray-50 cursor-pointer" onclick="window.location.href='profile-detail.html?user=${post.user_id}'">
-                    <img loading="lazy" class="h-8 w-8 rounded-full object-cover" src="${
-                      post.profiles?.profile_image_url || "/api/placeholder/32/32"
-                    }" alt="${post.profiles?.last_name || ""} ${
-              post.profiles?.first_name || ""
-            }">
-                    <div class="flex-1">
-                        <p class="font-medium text-gray-900">${post.profiles?.last_name || ""} ${post.profiles?.first_name || ""}</p>
-                        <p class="whitespace-pre-wrap">${post.content}</p>
-                        ${images}
-                        <p class="text-xs text-gray-500 mt-1">${new Date(
-                          post.created_at
-                        ).toLocaleString("ja-JP")}</p>
-                    </div>
-                </div>`;
-          })
-          .join("");
-      }
-
-      const MAX_TEXT = 280;
-      const MAX_IMAGES = 4;
-
-      async function handleCreatePost() {
-        const contentEl = document.getElementById("post-content");
-        const filesEl = document.getElementById("post-images");
-        const content = contentEl.value.trim();
-        const files = Array.from(filesEl.files || []);
-        if (content.length === 0 && files.length === 0) return;
-        if (content.length > MAX_TEXT) {
-          window.showToast && window.showToast(`最大${MAX_TEXT}文字までです`, "error");
-          return;
-        }
-        if (files.length > MAX_IMAGES) {
-          window.showToast && window.showToast(`画像は${MAX_IMAGES}枚までです`, "error");
-          return;
-        }
-        try {
-          await window.createPost(supabase, content, files);
-          contentEl.value = "";
-          filesEl.value = "";
-          await loadPosts();
-          window.showToast && window.showToast("投稿しました", "success");
-        } catch (e) {
-          console.error(e);
-          window.showToast && window.showToast("投稿に失敗しました", "error");
-        }
-      }
+      
 
       // 統計情報読み込み
       async function loadStats() {
