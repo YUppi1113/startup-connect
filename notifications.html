@@ -646,11 +646,11 @@
             if (event && notification.type === "event") {
               actions = `
                             <button onclick="participateEvent('${notification.related_id}')" class="bg-blue-600 text-white py-1 px-3 rounded-md text-xs font-medium hover:bg-blue-700 transition duration-200">参加する</button>
-                            <a href="events.html?id=${notification.related_id}" class="border border-gray-300 text-gray-700 py-1 px-3 rounded-md text-xs font-medium hover:bg-gray-50 transition duration-200">詳細を見る</a>
+                            <a href="event-detail.html?event=${notification.related_id}" class="border border-gray-300 text-gray-700 py-1 px-3 rounded-md text-xs font-medium hover:bg-gray-50 transition duration-200">詳細を見る</a>
                             <button onclick="declineEvent('${notification.related_id}')" class="border border-gray-300 text-gray-700 py-1 px-3 rounded-md text-xs font-medium hover:bg-gray-50 transition duration-200">辞退する</button>
                         `;
             } else if (event) {
-              actions = `<a href="events.html?id=${notification.related_id}" class="text-blue-600 hover:text-blue-800 text-xs font-medium">イベント詳細を見る</a>`;
+              actions = `<a href="event-detail.html?event=${notification.related_id}" class="text-blue-600 hover:text-blue-800 text-xs font-medium">イベント詳細を見る</a>`;
             }
             break;
 
