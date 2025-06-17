@@ -536,7 +536,7 @@
       // 通知HTML作成
       function createNotificationHTML(notification) {
         const isUnread = !notification.is_read;
-        const { icon, iconColor, content, actions } =
+        const { icon, content, actions } =
           getNotificationDetails(notification);
 
         return `
@@ -589,7 +589,7 @@
 
       // 通知詳細取得
       function getNotificationDetails(notification) {
-        let icon, iconColor, content, actions;
+        let icon, content, actions;
 
         switch (notification.type) {
           case "follow":
@@ -749,7 +749,7 @@
             actions = "";
         }
 
-        return { icon, iconColor, content, actions };
+        return { icon, content, actions };
       }
 
       // すべて既読にする
