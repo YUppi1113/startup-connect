@@ -50,8 +50,10 @@
     <script type="module">
       import { showToast } from "./js/toast.js";
       import { registerPush } from "./js/push.js";
+      import { createPost } from "./js/post.js";
       window.showToast = showToast;
       window.registerPush = registerPush;
+      window.createPost = createPost;
     </script>
   </head>
   <body class="bg-gray-50 dark:bg-dark-bg dark:text-dark-text min-h-screen">
@@ -337,6 +339,28 @@
           <div class="px-6 py-4 border-b border-gray-200">
             <h2 class="text-lg font-semibold text-gray-800">最近の投稿</h2>
           </div>
+          <div class="px-6 py-4 space-y-2 border-b border-gray-200">
+            <textarea
+              id="post-content"
+              class="w-full border rounded p-2"
+              rows="3"
+              maxlength="280"
+              placeholder="今どうしてる？"
+            ></textarea>
+            <input
+              id="post-images"
+              type="file"
+              accept="image/*"
+              multiple
+              class="block"
+            />
+            <div class="text-right">
+              <button
+                id="post-submit"
+                class="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
+              >投稿</button>
+            </div>
+          </div>
           <div id="dashboard-posts" class="divide-y divide-gray-200">
             <div class="px-6 py-8 text-center text-gray-500 skeleton">
               <div class="h-4 bg-gray-200 rounded w-3/4 mx-auto mb-2"></div>
@@ -547,6 +571,9 @@
 
         await checkAuth();
         await loadDashboardData();
+        document
+          .getElementById("post-submit")
+          ?.addEventListener("click", handleCreatePost);
         setupRealtimeSubscriptions();
 
         if (window.registerPush && window.__ENV__ && window.__ENV__.PUSH_VAPID_PUBLIC_KEY) {
@@ -1083,6 +1110,35 @@
                 </div>`;
           })
           .join("");
+      }
+
+      const MAX_TEXT = 280;
+      const MAX_IMAGES = 4;
+
+      async function handleCreatePost() {
+        const contentEl = document.getElementById("post-content");
+        const filesEl = document.getElementById("post-images");
+        const content = contentEl.value.trim();
+        const files = Array.from(filesEl.files || []);
+        if (content.length === 0 && files.length === 0) return;
+        if (content.length > MAX_TEXT) {
+          window.showToast && window.showToast(`最大${MAX_TEXT}文字までです`, "error");
+          return;
+        }
+        if (files.length > MAX_IMAGES) {
+          window.showToast && window.showToast(`画像は${MAX_IMAGES}枚までです`, "error");
+          return;
+        }
+        try {
+          await window.createPost(supabase, content, files);
+          contentEl.value = "";
+          filesEl.value = "";
+          await loadPosts();
+          window.showToast && window.showToast("投稿しました", "success");
+        } catch (e) {
+          console.error(e);
+          window.showToast && window.showToast("投稿に失敗しました", "error");
+        }
       }
 
       // 統計情報読み込み
