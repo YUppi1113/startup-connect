@@ -318,6 +318,11 @@ CREATE TABLE public.notifications (
 CREATE INDEX idx_notifications_user ON public.notifications(user_id);
 CREATE INDEX idx_notifications_read ON public.notifications(is_read);
 
+-- Notification types include:
+--  follow, follow_request, follow_back, message,
+--  event, event_reminder, group_invite, group_activity,
+--  mention, reaction
+
 -- 4-18) Notification Settings
 CREATE TABLE public.notification_settings (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
