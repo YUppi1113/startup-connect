@@ -1183,6 +1183,11 @@
       async function toggleFollow() {
         if (profileUser === currentUser.id) return;
 
+        const followBtn = document.getElementById("follow-btn");
+        followBtn.disabled = true;
+        followBtn.textContent = "リクエスト済み";
+        followBtn.classList.add("follow-requested");
+
         try {
           if (isFollowing) {
             // アンフォロー
@@ -1219,6 +1224,9 @@
         } catch (error) {
           console.error("Error toggling follow:", error);
           alert("フォロー状態の変更に失敗しました");
+        } finally {
+          followBtn.disabled = false;
+          followBtn.classList.remove("follow-requested");
         }
       }
 

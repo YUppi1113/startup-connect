@@ -181,6 +181,8 @@
         const button = document.querySelector(`[data-user-id="${userId}"]`);
         const isFollowing = followingSet.has(userId);
         button.disabled = true;
+        button.textContent = 'リクエスト済み';
+        button.classList.add('follow-requested');
         if (isFollowing) {
           const { error } = await supabase.from('follows').delete().eq('follower_id', currentUser.id).eq('following_id', userId);
           if (!error) {
@@ -189,6 +191,7 @@
             button.classList.remove('text-gray-600', 'border-gray-600');
             button.classList.add('text-blue-600', 'border-blue-600');
           }
+          button.classList.remove('follow-requested');
         } else {
           const { error } = await supabase.from('follows').insert({ follower_id: currentUser.id, following_id: userId });
           if (!error) {
@@ -204,6 +207,7 @@
               related_id: currentUser.id,
             });
           }
+          button.classList.remove('follow-requested');
         }
         button.disabled = false;
       }

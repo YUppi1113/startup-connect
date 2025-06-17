@@ -1244,6 +1244,8 @@
         const isFollowing = followingUsers.has(userId);
 
         button.disabled = true;
+        button.textContent = "リクエスト済み";
+        button.classList.add("follow-requested");
 
         if (isFollowing) {
           // アンフォロー
@@ -1257,6 +1259,7 @@
             followingUsers.delete(userId);
             button.textContent = "フォローする";
           }
+          button.classList.remove("follow-requested");
         } else {
           // フォロー
           const { error } = await supabase.from("follows").insert({
@@ -1279,6 +1282,8 @@
               related_id: currentUser.id,
             });
           }
+          button.classList.remove("follow-requested");
+          
         }
 
         button.disabled = false;
