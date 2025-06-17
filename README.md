@@ -56,3 +56,12 @@ build step has been executed.
 5. **Dashboard Access** – Upon completion you return to the login screen with a
    success message. Signing in then takes you to `dashboard.html` where your
    personalized feed and messages appear.
+
+## Maintenance
+
+To automatically mark past events as completed, run the following command. This
+can be scheduled with cron for daily execution.
+
+```bash
+npm run complete-events
+```

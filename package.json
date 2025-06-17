@@ -9,7 +9,8 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "build": "node generate-config.js",
     "build:css": "tailwindcss -i ./styles/input.css -o ./styles/styles.css --minify",
-    "build:legacy": "node transpile-supabase.js && npx babel js --out-dir legacy/js --presets=@babel/preset-env"
+    "build:legacy": "node transpile-supabase.js && npx babel js --out-dir legacy/js --presets=@babel/preset-env",
+    "complete-events": "node complete-events.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.5",
