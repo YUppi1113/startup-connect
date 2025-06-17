@@ -399,6 +399,7 @@
           if (notification.related_id) {
             switch (notification.type) {
               case "follow":
+              case "follow_request":
               case "message":
               case "mention":
                 userIds.add(notification.related_id);
@@ -590,6 +591,26 @@
               ? `
                         <button onclick="followBack('${notification.related_id}')" class="bg-blue-600 text-white py-1 px-3 rounded-md text-xs font-medium hover:bg-blue-700 transition duration-200">フォローバック</button>
                         <a href="profile-detail.html?user=${notification.related_id}" class="border border-gray-300 text-gray-700 py-1 px-3 rounded-md text-xs font-medium hover:bg-gray-50 transition duration-200">プロフィールを見る</a>
+                    `
+              : "";
+            break;
+
+          case "follow_request":
+            const requester = relatedUsers.get(notification.related_id);
+            icon = requester
+              ? `<img loading="lazy" class="h-12 w-12 rounded-full object-cover" src="${
+                  requester.profile_image_url || "/api/placeholder/48/48"
+                }" alt="${requester.last_name} ${requester.first_name}">`
+              : `<div class="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+                            <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                        </div>`;
+            content = notification.content;
+            actions = requester
+              ? `
+                        <button onclick="approveFollowRequest('${notification.related_id}','${notification.id}')" class="bg-blue-600 text-white py-1 px-3 rounded-md text-xs font-medium hover:bg-blue-700 transition duration-200 mr-2">承認</button>
+                        <button onclick="rejectFollowRequest('${notification.related_id}','${notification.id}')" class="border border-gray-300 text-gray-700 py-1 px-3 rounded-md text-xs font-medium hover:bg-gray-50 transition duration-200">拒否</button>
                     `
               : "";
             break;
@@ -963,6 +984,61 @@
         alert("グループへの参加を辞退しました。");
       }
 
+      async function approveFollowRequest(requesterId, notificationId) {
+        const { error } = await supabase
+          .from("follow_requests")
+          .update({ status: "approved" })
+          .eq("requester_id", requesterId)
+          .eq("target_id", currentUser.id);
+
+        if (!error) {
+          await supabase.from("follows").insert({
+            follower_id: requesterId,
+            following_id: currentUser.id,
+          });
+
+          await supabase
+            .from("follow_requests")
+            .delete()
+            .eq("requester_id", requesterId)
+            .eq("target_id", currentUser.id);
+
+          await supabase.from("notifications").insert({
+            user_id: requesterId,
+            type: "follow_request_accepted",
+            title: "フォローリクエスト承認",
+            content: `${userProfile.last_name} ${userProfile.first_name}さんがあなたのフォローリクエストを承認しました`,
+            related_id: currentUser.id,
+          });
+
+          await supabase.from("notifications").delete().eq("id", notificationId);
+
+          alert("フォローリクエストを承認しました。");
+          loadNotifications();
+        }
+      }
+
+      async function rejectFollowRequest(requesterId, notificationId) {
+        const { error } = await supabase
+          .from("follow_requests")
+          .update({ status: "rejected" })
+          .eq("requester_id", requesterId)
+          .eq("target_id", currentUser.id);
+
+        if (!error) {
+          await supabase
+            .from("follow_requests")
+            .delete()
+            .eq("requester_id", requesterId)
+            .eq("target_id", currentUser.id);
+
+          await supabase.from("notifications").delete().eq("id", notificationId);
+
+          alert("フォローリクエストを拒否しました。");
+          loadNotifications();
+        }
+      }
+
       // イベントリスナー設定
       document
         .querySelector(".mobile-menu-button")
@@ -1070,6 +1146,8 @@
       window.declineEvent = declineEvent;
       window.joinGroup = joinGroup;
       window.declineGroup = declineGroup;
+      window.approveFollowRequest = approveFollowRequest;
+      window.rejectFollowRequest = rejectFollowRequest;
 
       // 通知クリックで既読にする
       document.addEventListener("click", function (e) {
