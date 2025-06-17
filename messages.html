@@ -696,7 +696,12 @@
 </script>
 
     <script type="module">
-      import { composeMessage, sendMessage as sendMessageAPI } from './js/message.js';
+      import {
+        composeMessage,
+        sendMessage as sendMessageAPI,
+        updateDirectMessage,
+        deleteDirectMessage
+      } from './js/message.js';
       // Supabase設定
       const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.__ENV__;
       const supabase = window.supabase.createClient(
@@ -1097,7 +1102,7 @@
           // メッセージ
           if (isMyMessage) {
             html += `
-                        <div class="flex items-start justify-end mb-4">
+                        <div class="flex items-start justify-end mb-4" data-id="${message.id}" oncontextmenu="openMessageMenu(event, '${message.id}')">
                             <div class="max-w-[80%]">
                                 <div class="flex items-center justify-end">
                                     <span class="text-xs text-gray-500">${formatTime(
@@ -1127,7 +1132,7 @@
                     `;
           } else {
             html += `
-                        <div class="flex items-start mb-4">
+                        <div class="flex items-start mb-4" data-id="${message.id}" oncontextmenu="openMessageMenu(event, '${message.id}')">
                             ${
                               showAvatar
                                 ? `
@@ -1393,16 +1398,17 @@
               event: "INSERT",
               schema: "public",
               table: "direct_messages",
-              filter: `receiver_id=eq.${currentUser.id}`,
             },
             (payload) => {
-              // 新しいメッセージを受信
               if (
                 currentChatUser &&
-                payload.new.sender_id === currentChatUser.id
+                (payload.new.sender_id === currentChatUser.id ||
+                  payload.new.receiver_id === currentChatUser.id)
               ) {
                 loadMessages(currentChatUser.id);
-                markMessagesAsRead(currentChatUser.id);
+                if (payload.new.sender_id === currentChatUser.id) {
+                  markMessagesAsRead(currentChatUser.id);
+                }
               }
               loadConversations();
             }
@@ -1413,16 +1419,34 @@
               event: "UPDATE",
               schema: "public",
               table: "direct_messages",
-              filter: `sender_id=eq.${currentUser.id}`,
             },
             (payload) => {
-              // 既読ステータス更新
               if (
                 currentChatUser &&
-                payload.new.receiver_id === currentChatUser.id
+                (payload.new.sender_id === currentChatUser.id ||
+                  payload.new.receiver_id === currentChatUser.id)
               ) {
                 loadMessages(currentChatUser.id);
               }
+              loadConversations();
+            }
+          )
+          .on(
+            "postgres_changes",
+            {
+              event: "DELETE",
+              schema: "public",
+              table: "direct_messages",
+            },
+            (payload) => {
+              if (
+                currentChatUser &&
+                (payload.old.sender_id === currentChatUser.id ||
+                  payload.old.receiver_id === currentChatUser.id)
+              ) {
+                loadMessages(currentChatUser.id);
+              }
+              loadConversations();
             }
           )
           .subscribe();
@@ -1762,6 +1786,47 @@
       window.selectConversation = selectConversation;
       window.selectRecipient = selectRecipient;
       window.startCall = startCall;
+    </script>
+    <div id="message-menu" class="hidden absolute bg-white border rounded shadow z-50">
+      <button id="edit-msg-btn" class="block w-full px-4 py-2 text-left hover:bg-gray-100">編集</button>
+      <button id="delete-msg-btn" class="block w-full px-4 py-2 text-left text-red-600 hover:bg-gray-100">削除</button>
+    </div>
+    <script>
+      let targetMessageId = null;
+      function openMessageMenu(event, id) {
+        event.preventDefault();
+        targetMessageId = id;
+        const menu = document.getElementById('message-menu');
+        menu.style.top = event.clientY + 'px';
+        menu.style.left = event.clientX + 'px';
+        menu.classList.remove('hidden');
+      }
+      document.addEventListener('click', () => {
+        document.getElementById('message-menu').classList.add('hidden');
+      });
+      document.getElementById('edit-msg-btn').addEventListener('click', async () => {
+        document.getElementById('message-menu').classList.add('hidden');
+        const msg = currentMessages.find(m => m.id === targetMessageId);
+        if (!msg) return;
+        const text = prompt('メッセージを編集', msg.content);
+        if (text !== null) {
+          await updateDirectMessage(supabase, targetMessageId, { content: text });
+          if (currentChatUser) {
+            await loadMessages(currentChatUser.id);
+            await loadConversations();
+          }
+        }
+      });
+      document.getElementById('delete-msg-btn').addEventListener('click', async () => {
+        document.getElementById('message-menu').classList.add('hidden');
+        if (confirm('このメッセージを削除しますか?')) {
+          await deleteDirectMessage(supabase, targetMessageId);
+          if (currentChatUser) {
+            await loadMessages(currentChatUser.id);
+            await loadConversations();
+          }
+        }
+      });
     </script>
     <script src="js/theme.js"></script>
     <script src="accessibility.js"></script>
