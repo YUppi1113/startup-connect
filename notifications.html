@@ -319,6 +319,7 @@
       window.addEventListener("load", async () => {
         await checkAuth();
         await loadNotifications();
+        await loadFollowRequestCount();
         setupRealtimeSubscriptions();
         updateUnreadBadges();
       });
@@ -387,6 +388,22 @@
 
         // フィルタリングと表示
         applyFilter();
+      }
+
+      // フォローリクエスト数読み込み
+      async function loadFollowRequestCount() {
+        const { count } = await supabase
+          .from("follow_requests")
+          .select("*", { count: "exact", head: true })
+          .eq("target_id", currentUser.id)
+          .eq("status", "pending");
+        const badge = document.getElementById("request-badge");
+        if (count && count > 0) {
+          badge.classList.remove("hidden");
+          badge.textContent = count;
+        } else {
+          badge.classList.add("hidden");
+        }
       }
 
       // 関連エンティティ読み込み
@@ -919,6 +936,22 @@
             async (payload) => {
               await loadNotifications();
               updateUnreadBadges();
+            }
+          )
+          .subscribe();
+
+        supabase
+          .channel("requests-channel")
+          .on(
+            "postgres_changes",
+            {
+              event: "INSERT",
+              schema: "public",
+              table: "follow_requests",
+              filter: `target_id=eq.${currentUser.id}`,
+            },
+            async (payload) => {
+              await loadFollowRequestCount();
             }
           )
           .subscribe();

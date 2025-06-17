@@ -646,6 +646,7 @@
         await Promise.all([
           loadNotifications(),
           loadMessages(),
+          loadFollowRequestCount(),
           loadGroups(),
           loadEvents(),
           loadPosts(),
@@ -796,6 +797,22 @@
             `
           )
           .join("");
+      }
+
+      // フォローリクエスト数読み込み
+      async function loadFollowRequestCount() {
+        const { count } = await supabase
+          .from("follow_requests")
+          .select("*", { count: "exact", head: true })
+          .eq("target_id", currentUser.id)
+          .eq("status", "pending");
+        const badge = document.getElementById("request-badge");
+        if (count && count > 0) {
+          badge.classList.remove("hidden");
+          badge.textContent = count;
+        } else {
+          badge.classList.add("hidden");
+        }
       }
 
       // グループ読み込み
@@ -1185,6 +1202,26 @@
             (payload) => {
               loadMessages();
               const badge = document.getElementById("message-badge");
+              badge.classList.remove("hidden");
+              badge.textContent = parseInt(badge.textContent || 0) + 1;
+            }
+          )
+          .subscribe();
+
+        // フォローリクエストのリアルタイム監視
+        supabase
+          .channel("dashboard-requests")
+          .on(
+            "postgres_changes",
+            {
+              event: "INSERT",
+              schema: "public",
+              table: "follow_requests",
+              filter: `target_id=eq.${currentUser.id}`,
+            },
+            (payload) => {
+              loadFollowRequestCount();
+              const badge = document.getElementById("request-badge");
               badge.classList.remove("hidden");
               badge.textContent = parseInt(badge.textContent || 0) + 1;
             }
