@@ -547,7 +547,6 @@
         <div class="p-6 border-b border-gray-200">
           <h2 class="text-lg font-semibold text-gray-800 mb-4">プロジェクト</h2>
           <div id="projects-container"></div>
-          <button type="button" id="add-project" class="mt-2 text-blue-600 text-sm">+ プロジェクトを追加</button>
         </div>
 
         <!-- ボタンセクション -->
@@ -652,13 +651,6 @@
       window.addEventListener("load", async () => {
         await checkAuth();
         await loadUserData();
-        document
-          .getElementById("add-project")
-          .addEventListener("click", () => {
-            document
-              .getElementById("projects-container")
-              .appendChild(createProjectForm());
-          });
       });
 
       // 認証チェック
