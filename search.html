@@ -870,13 +870,21 @@
       </div>
     </div>
 
-    <script>
+    <script type="module">
       // Supabase設定
       const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.__ENV__;
       const supabase = window.supabase.createClient(
         SUPABASE_URL,
         SUPABASE_ANON_KEY
       );
+
+      const {
+        sendFollowRequest,
+        followUser,
+        unfollowUser,
+        cancelFollowRequest,
+        updateFollowButton,
+      } = await import('./js/follow.js');
       
       // グローバル変数
       let currentUser = null;
@@ -1267,34 +1275,28 @@
         button.disabled = true;
 
         if (isRequested) {
-          // リクエストキャンセル
-          const { error } = await supabase
-            .from("follow_requests")
-            .delete()
-            .eq("follower_id", currentUser.id)
-            .eq("following_id", userId);
+          const { error } = await cancelFollowRequest(
+            supabase,
+            currentUser.id,
+            userId
+          );
 
           if (!error) {
             followRequests.delete(userId);
-            button.textContent = "フォローする";
-            button.classList.remove("follow-requested");
-            button.classList.remove("text-gray-600", "border-gray-600");
-            button.classList.add("text-blue-600", "border-blue-600");
+            updateFollowButton(button, false, false);
           }
         } else if (isFollowing) {
-          // アンフォロー
-          const { error } = await supabase
-            .from("follows")
-            .delete()
-            .eq("follower_id", currentUser.id)
-            .eq("following_id", userId);
+          const { error } = await unfollowUser(
+            supabase,
+            currentUser.id,
+            userId
+          );
 
           if (!error) {
             followingUsers.delete(userId);
-            button.textContent = "フォローする";
+            updateFollowButton(button, false, false);
           }
         } else {
-          // 対象ユーザーのプライバシー設定取得
           const { data: target } = await supabase
             .from("profiles")
             .select("is_private")
@@ -1302,18 +1304,15 @@
             .single();
 
           if (target?.is_private) {
-            // フォローリクエスト
-            const { error } = await supabase.from("follow_requests").insert({
-              follower_id: currentUser.id,
-              following_id: userId,
-            });
+            const { error } = await sendFollowRequest(
+              supabase,
+              currentUser.id,
+              userId
+            );
 
             if (!error) {
               followRequests.add(userId);
-              button.textContent = "リクエスト済み";
-              button.classList.remove("text-blue-600", "border-blue-600");
-              button.classList.add("follow-requested");
-              button.classList.add("text-gray-600", "border-gray-600");
+              updateFollowButton(button, false, true);
               await supabase.from("notifications").insert({
                 user_id: userId,
                 type: "follow_request",
@@ -1323,15 +1322,15 @@
               });
             }
           } else {
-            // フォロー
-            const { error } = await supabase.from("follows").insert({
-              follower_id: currentUser.id,
-              following_id: userId,
-            });
+            const { error } = await followUser(
+              supabase,
+              currentUser.id,
+              userId
+            );
 
             if (!error) {
               followingUsers.add(userId);
-              button.textContent = "フォロー中";
+              updateFollowButton(button, true, false);
 
               await supabase.from("notifications").insert({
                 user_id: userId,
