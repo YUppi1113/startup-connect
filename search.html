@@ -37,6 +37,13 @@
     </style>
   </head>
   <body class="bg-gray-50 min-h-screen">
+    <!-- ヘッダー -->
+    <script>
+      const hXhr = new XMLHttpRequest();
+      hXhr.open("GET", "partials/header.html", false);
+      hXhr.send(null);
+      document.write(hXhr.responseText);
+    </script>
  
     <!-- メインコンテンツ -->
     <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
