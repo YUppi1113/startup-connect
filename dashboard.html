@@ -44,9 +44,15 @@
         left: 1.5rem;
         border-width: 8px;
         border-style: solid;
-        border-color: #f3f4f6 transparent transparent transparent;
+    border-color: #f3f4f6 transparent transparent transparent;
       }
     </style>
+    <script type="module">
+      import { showToast } from "./js/toast.js";
+      import { registerPush } from "./js/push.js";
+      window.showToast = showToast;
+      window.registerPush = registerPush;
+    </script>
   </head>
   <body class="bg-gray-50 dark:bg-dark-bg dark:text-dark-text min-h-screen">
     <!-- ヘッダー -->
@@ -525,6 +531,23 @@
         await checkAuth();
         await loadDashboardData();
         setupRealtimeSubscriptions();
+
+        if (window.registerPush && window.__ENV__ && window.__ENV__.PUSH_VAPID_PUBLIC_KEY) {
+          const { data: subs } = await supabase
+            .from("push_subscriptions")
+            .select("id")
+            .eq("user_id", currentUser.id);
+          if (!subs || subs.length === 0) {
+            if (Notification.permission === "granted") {
+              await window.registerPush(currentUser.id);
+            } else if (window.showToast) {
+              window.showToast(
+                "通知が無効です。設定から有効にしてください。",
+                "info"
+              );
+            }
+          }
+        }
 
         if (!localStorage.getItem("introShown")) {
           openModal("intro-modal");
