@@ -36,9 +36,11 @@
 
     <div id="footer-placeholder"></div>
 
-    <script>
+    <script type="module">
       const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.__ENV__;
       const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      const { addComment } = await import('./js/post.js');
+      window.addComment = addComment;
       let currentUser = null;
       let pageUser = null;
 
@@ -66,7 +68,9 @@
 
         let query = supabase
           .from("posts")
-          .select("*, profiles(id, first_name, last_name, profile_image_url)")
+          .select(
+            "*, profiles(id, first_name, last_name, profile_image_url), post_comments(id, content, created_at, profiles!post_comments_user_id_fkey(id, first_name, last_name, profile_image_url))"
+          )
           .order("created_at", { ascending: false });
 
         if (pageUser) {
@@ -98,8 +102,27 @@
             const images = (post.image_urls || [])
               .map((url) => `<img loading="lazy" src="${url}" class="mt-2 rounded-md">`)
               .join("");
+            const comments = (post.post_comments || [])
+              .map(
+                (c) => `
+                <div class="flex items-start space-x-2 mt-2 text-sm">
+                  <img loading="lazy" src="${
+                    c.profiles?.profile_image_url || "/api/placeholder/24/24"
+                  }" class="w-6 h-6 rounded-full object-cover" />
+                  <div>
+                    <p class="font-medium">${c.profiles?.last_name || ""} ${
+      c.profiles?.first_name || ""
+    } <span class="text-xs text-gray-500 ml-1">${new Date(c.created_at).toLocaleDateString(
+      "ja-JP"
+    )}</span></p>
+                    <p>${c.content}</p>
+                  </div>
+                </div>
+              `
+              )
+              .join("");
             return `
-          <div class="px-6 py-4">
+          <div class="px-6 py-4" data-post-id="${post.id}">
             <div class="flex items-start space-x-3">
               <img loading="lazy" class="h-8 w-8 rounded-full object-cover" src="${
                 post.profiles?.profile_image_url || "/api/placeholder/32/32"
@@ -111,11 +134,65 @@
                 <p class="whitespace-pre-wrap mt-1">${post.content}</p>
                 ${images}
                 <p class="text-xs text-gray-500 mt-1">${new Date(post.created_at).toLocaleString("ja-JP")}</p>
+                <div class="text-sm text-gray-600 mt-1">コメント <span class="comment-count">${post.comments_count}</span></div>
+                <div class="mt-2 comments">${comments}</div>
+                <form class="comment-form mt-2 flex space-x-2">
+                  <input type="text" class="flex-1 border rounded p-1 comment-input" placeholder="コメントを書く" />
+                  <button type="submit" class="px-2 py-1 bg-blue-600 text-white rounded">送信</button>
+                </form>
               </div>
             </div>
           </div>`;
           })
           .join("");
+
+        attachCommentEvents();
+      }
+
+      async function attachCommentEvents() {
+        document.querySelectorAll('.comment-form').forEach((form) => {
+          form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const postEl = form.closest('[data-post-id]');
+            const postId = postEl.dataset.postId;
+            const input = form.querySelector('.comment-input');
+            const text = input.value.trim();
+            if (!text) return;
+            await addComment(postId, text);
+            input.value = '';
+            const { data: post } = await supabase
+              .from('posts')
+              .select('comments_count')
+              .eq('id', postId)
+              .single();
+            postEl.querySelector('.comment-count').textContent = post.comments_count;
+            const { data: comments } = await supabase
+              .from('post_comments')
+              .select('id, content, created_at, profiles!post_comments_user_id_fkey(id, first_name, last_name, profile_image_url)')
+              .eq('post_id', postId)
+              .order('created_at', { ascending: true });
+            const commentsHtml = (comments || [])
+              .map(
+                (c) => `
+                <div class="flex items-start space-x-2 mt-2 text-sm">
+                  <img loading="lazy" src="${
+                    c.profiles?.profile_image_url || "/api/placeholder/24/24"
+                  }" class="w-6 h-6 rounded-full object-cover" />
+                  <div>
+                    <p class="font-medium">${c.profiles?.last_name || ""} ${
+      c.profiles?.first_name || ""
+    } <span class="text-xs text-gray-500 ml-1">${new Date(c.created_at).toLocaleDateString(
+      "ja-JP"
+    )}</span></p>
+                    <p>${c.content}</p>
+                  </div>
+                </div>
+              `
+              )
+              .join('');
+            postEl.querySelector('.comments').innerHTML = commentsHtml;
+          });
+        });
       }
     </script>
     <script src="js/theme.js"></script>
