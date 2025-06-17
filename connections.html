@@ -46,6 +46,7 @@
 
       let currentUser = null;
       let followingSet = new Set();
+      let followRequestSet = new Set();
       const locationNames = {
         hokkaido: "北海道",
         aomori: "青森県",
@@ -104,6 +105,7 @@
         const view = params.get('view');
         if (!profileUser) return;
         await loadFollowingSet();
+        await loadFollowRequests();
         await loadFollowers(profileUser);
         await loadFollowing(profileUser);
         if (view === 'following') {
@@ -138,6 +140,14 @@
         followingSet = new Set((data || []).map((f) => f.following_id));
       }
 
+      async function loadFollowRequests() {
+        const { data } = await supabase
+          .from('follow_requests')
+          .select('following_id')
+          .eq('follower_id', currentUser.id);
+        followRequestSet = new Set((data || []).map((r) => r.following_id));
+      }
+
       async function loadFollowers(userId) {
         const { data } = await supabase
           .from('follows')
@@ -163,8 +173,9 @@
 
       function createCard(profile) {
         const isFollowing = followingSet.has(profile.id);
-        const btnClass = isFollowing ? 'text-gray-600 border-gray-600' : 'text-blue-600 border-blue-600';
-        const btnText = isFollowing ? 'フォロー中' : 'フォローする';
+        const isRequested = followRequestSet.has(profile.id);
+        const btnClass = isFollowing || isRequested ? 'text-gray-600 border-gray-600' : 'text-blue-600 border-blue-600';
+        const btnText = isFollowing ? 'フォロー中' : isRequested ? 'リクエスト済み' : 'フォローする';
         const showBtn = currentUser && currentUser.id !== profile.id;
         return `
           <div class="flex items-center space-x-4">
@@ -180,9 +191,26 @@
       async function toggleFollow(userId) {
         const button = document.querySelector(`[data-user-id="${userId}"]`);
         const isFollowing = followingSet.has(userId);
+        const isRequested = followRequestSet.has(userId);
         button.disabled = true;
-        if (isFollowing) {
-          const { error } = await supabase.from('follows').delete().eq('follower_id', currentUser.id).eq('following_id', userId);
+        if (isRequested) {
+          const { error } = await supabase
+            .from('follow_requests')
+            .delete()
+            .eq('follower_id', currentUser.id)
+            .eq('following_id', userId);
+          if (!error) {
+            followRequestSet.delete(userId);
+            button.textContent = 'フォローする';
+            button.classList.remove('text-gray-600', 'border-gray-600');
+            button.classList.add('text-blue-600', 'border-blue-600');
+          }
+        } else if (isFollowing) {
+          const { error } = await supabase
+            .from('follows')
+            .delete()
+            .eq('follower_id', currentUser.id)
+            .eq('following_id', userId);
           if (!error) {
             followingSet.delete(userId);
             button.textContent = 'フォローする';
@@ -190,19 +218,48 @@
             button.classList.add('text-blue-600', 'border-blue-600');
           }
         } else {
-          const { error } = await supabase.from('follows').insert({ follower_id: currentUser.id, following_id: userId });
-          if (!error) {
-            followingSet.add(userId);
-            button.textContent = 'フォロー中';
-            button.classList.remove('text-blue-600', 'border-blue-600');
-            button.classList.add('text-gray-600', 'border-gray-600');
-            await supabase.from('notifications').insert({
-              user_id: userId,
-              type: 'follow',
-              title: '新しいフォロワー',
-              content: `${document.getElementById('current-user-name').textContent}さんがあなたをフォローしました`,
-              related_id: currentUser.id,
+          const { data: target } = await supabase
+            .from('profiles')
+            .select('is_private')
+            .eq('id', userId)
+            .single();
+
+          if (target?.is_private) {
+            const { error } = await supabase.from('follow_requests').insert({
+              follower_id: currentUser.id,
+              following_id: userId,
             });
+            if (!error) {
+              followRequestSet.add(userId);
+              button.textContent = 'リクエスト済み';
+              button.classList.remove('text-blue-600', 'border-blue-600');
+              button.classList.add('text-gray-600', 'border-gray-600');
+              await supabase.from('notifications').insert({
+                user_id: userId,
+                type: 'follow_request',
+                title: 'フォローリクエスト',
+                content: `${document.getElementById('current-user-name').textContent}さんからフォローリクエストが届きました`,
+                related_id: currentUser.id,
+              });
+            }
+          } else {
+            const { error } = await supabase.from('follows').insert({
+              follower_id: currentUser.id,
+              following_id: userId,
+            });
+            if (!error) {
+              followingSet.add(userId);
+              button.textContent = 'フォロー中';
+              button.classList.remove('text-blue-600', 'border-blue-600');
+              button.classList.add('text-gray-600', 'border-gray-600');
+              await supabase.from('notifications').insert({
+                user_id: userId,
+                type: 'follow',
+                title: '新しいフォロワー',
+                content: `${document.getElementById('current-user-name').textContent}さんがあなたをフォローしました`,
+                related_id: currentUser.id,
+              });
+            }
           }
         }
         button.disabled = false;

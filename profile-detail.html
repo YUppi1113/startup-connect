@@ -405,6 +405,7 @@
       let profileUserData = null;
       let startupInfo = null;
       let isFollowing = false;
+      let isRequested = false;
       let followerCount = 0;
       let followingCount = 0;
       let projects = [];
@@ -653,6 +654,18 @@
           .single();
 
         isFollowing = !!follow;
+
+        if (!isFollowing) {
+          const { data: request } = await supabase
+            .from("follow_requests")
+            .select("*")
+            .eq("follower_id", currentUser.id)
+            .eq("following_id", profileUser)
+            .single();
+          isRequested = !!request;
+        } else {
+          isRequested = false;
+        }
         updateFollowButton();
       }
 
@@ -661,6 +674,10 @@
         const followBtn = document.getElementById("follow-btn");
         if (isFollowing) {
           followBtn.textContent = "フォロー中";
+          followBtn.classList.remove("bg-blue-600", "hover:bg-blue-700");
+          followBtn.classList.add("bg-gray-600", "hover:bg-gray-700");
+        } else if (isRequested) {
+          followBtn.textContent = "リクエスト済み";
           followBtn.classList.remove("bg-blue-600", "hover:bg-blue-700");
           followBtn.classList.add("bg-gray-600", "hover:bg-gray-700");
         } else {
@@ -1184,7 +1201,15 @@
         if (profileUser === currentUser.id) return;
 
         try {
-          if (isFollowing) {
+          if (isRequested) {
+            await supabase
+              .from("follow_requests")
+              .delete()
+              .eq("follower_id", currentUser.id)
+              .eq("following_id", profileUser);
+
+            isRequested = false;
+          } else if (isFollowing) {
             // アンフォロー
             await supabase
               .from("follows")
@@ -1195,23 +1220,45 @@
             isFollowing = false;
             followerCount--;
           } else {
-            // フォロー
-            await supabase.from("follows").insert({
-              follower_id: currentUser.id,
-              following_id: profileUser,
-            });
+            const { data: target } = await supabase
+              .from("profiles")
+              .select("is_private")
+              .eq("id", profileUser)
+              .single();
 
-            // 通知作成
-            await supabase.from("notifications").insert({
-              user_id: profileUser,
-              type: "follow",
-              title: "新しいフォロワー",
-              content: `${currentUserProfile.last_name} ${currentUserProfile.first_name}さんがあなたをフォローしました`,
-              related_id: currentUser.id,
-            });
+            if (target?.is_private) {
+              await supabase.from("follow_requests").insert({
+                follower_id: currentUser.id,
+                following_id: profileUser,
+              });
 
-            isFollowing = true;
-            followerCount++;
+              await supabase.from("notifications").insert({
+                user_id: profileUser,
+                type: "follow_request",
+                title: "フォローリクエスト",
+                content: `${currentUserProfile.last_name} ${currentUserProfile.first_name}さんからフォローリクエストが届きました`,
+                related_id: currentUser.id,
+              });
+
+              isRequested = true;
+            } else {
+              // フォロー
+              await supabase.from("follows").insert({
+                follower_id: currentUser.id,
+                following_id: profileUser,
+              });
+
+              await supabase.from("notifications").insert({
+                user_id: profileUser,
+                type: "follow",
+                title: "新しいフォロワー",
+                content: `${currentUserProfile.last_name} ${currentUserProfile.first_name}さんがあなたをフォローしました`,
+                related_id: currentUser.id,
+              });
+
+              isFollowing = true;
+              followerCount++;
+            }
           }
 
           updateFollowButton();
