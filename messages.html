@@ -712,6 +712,7 @@
       let currentMessages = [];
       let selectedRecipient = null;
       let typingTimeout = null;
+      const typingChannel = supabase.channel("typing-channel");
 
       // 地域名マッピング
       const locationNames = {
@@ -1426,6 +1427,29 @@
             }
           )
           .subscribe();
+
+        typingChannel
+          .on('broadcast', { event: 'typing' }, (payload) => {
+            if (
+              payload.sender_id !== currentUser.id &&
+              currentChatUser &&
+              payload.sender_id === currentChatUser.id &&
+              payload.receiver_id === currentUser.id
+            ) {
+              document.getElementById('typing-user-avatar').src =
+                payload.avatar_url || '/api/placeholder/32/32';
+              document
+                .getElementById('typing-indicator')
+                .classList.remove('hidden');
+              clearTimeout(typingTimeout);
+              typingTimeout = setTimeout(() => {
+                document
+                  .getElementById('typing-indicator')
+                  .classList.add('hidden');
+              }, 2000);
+            }
+          })
+          .subscribe();
       }
 
       // ユーティリティ関数
@@ -1537,6 +1561,27 @@
           const content = input.value.trim();
           if (content) {
             sendMessage(content);
+          }
+        });
+
+      document
+        .getElementById("message-input")
+        .addEventListener("input", function () {
+          const receiverId = currentChatUser
+            ? currentChatUser.id
+            : selectedRecipient
+            ? selectedRecipient.id
+            : null;
+          if (receiverId && this.value.trim()) {
+            typingChannel.send({
+              type: "broadcast",
+              event: "typing",
+              payload: {
+                sender_id: currentUser.id,
+                receiver_id: receiverId,
+                avatar_url: userProfile?.profile_image_url,
+              },
+            });
           }
         });
 

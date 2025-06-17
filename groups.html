@@ -319,6 +319,25 @@
                 <!-- メッセージがここに動的に生成される -->
               </div>
 
+              <!-- タイピングインジケーター -->
+              <div id="typing-indicator" class="hidden px-4 py-2">
+                <div class="flex items-start">
+                  <img loading="lazy"
+                    id="typing-user-avatar"
+                    class="h-8 w-8 rounded-full object-cover mr-2"
+                    src="/api/placeholder/32/32"
+                    alt=""
+                  />
+                  <div class="bg-gray-100 rounded-lg px-3 py-2">
+                    <div class="flex space-x-1">
+                      <div class="w-2 h-2 rounded-full bg-gray-500 animate-bounce"></div>
+                      <div class="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style="animation-delay: 0.2s"></div>
+                      <div class="w-2 h-2 rounded-full bg-gray-500 animate-bounce" style="animation-delay: 0.4s"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <!-- メッセージ入力エリア -->
               <div class="border-t border-gray-200 p-4">
                 <div class="flex items-center">
@@ -756,6 +775,8 @@
       let currentMessages = [];
       let selectedMembers = [];
       let groupMembers = new Map();
+      let typingTimeout = null;
+      const typingChannel = supabase.channel("typing-channel");
 
       // 地域名マッピング
       const locationNames = {
@@ -1615,6 +1636,28 @@
           )
           .subscribe();
 
+        typingChannel
+          .on('broadcast', { event: 'typing' }, (payload) => {
+            if (
+              payload.user_id !== currentUser.id &&
+              currentGroup &&
+              payload.group_id === currentGroup.id
+            ) {
+              document.getElementById('typing-user-avatar').src =
+                payload.avatar_url || '/api/placeholder/32/32';
+              document
+                .getElementById('typing-indicator')
+                .classList.remove('hidden');
+              clearTimeout(typingTimeout);
+              typingTimeout = setTimeout(() => {
+                document
+                  .getElementById('typing-indicator')
+                  .classList.add('hidden');
+              }, 2000);
+            }
+          })
+          .subscribe();
+
         // グループメンバーのリアルタイム監視
         supabase
           .channel("group-members-channel")
@@ -1768,6 +1811,22 @@
           const content = input.value.trim();
           if (content) {
             sendMessage(content);
+          }
+        });
+
+      document
+        .getElementById("message-input")
+        .addEventListener("input", function () {
+          if (currentGroup && this.value.trim()) {
+            typingChannel.send({
+              type: "broadcast",
+              event: "typing",
+              payload: {
+                user_id: currentUser.id,
+                group_id: currentGroup.id,
+                avatar_url: userProfile?.profile_image_url,
+              },
+            });
           }
         });
 
