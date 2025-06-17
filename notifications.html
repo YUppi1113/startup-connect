@@ -1088,7 +1088,40 @@
       }
 
       async function declineGroup(groupId) {
-        alert("グループへの参加を辞退しました。");
+        const notification = notifications.find(
+          (n) => n.type === "group_invite" && n.related_id === groupId
+        );
+        const notificationElement = notification
+          ? document.querySelector(`[data-notification-id="${notification.id}"]`)
+          : null;
+        if (notificationElement) {
+          notificationElement.classList.add("fade-out");
+        }
+
+        const { error } = await supabase
+          .from("notifications")
+          .delete()
+          .eq("user_id", currentUser.id)
+          .eq("type", "group_invite")
+          .eq("related_id", groupId);
+
+        if (error) {
+          console.error("Error declining group invite:", error);
+          if (notificationElement) {
+            notificationElement.classList.remove("fade-out");
+          }
+          return;
+        }
+
+        // TODO: Optionally notify the inviter about the decline if inviter info is available
+
+        setTimeout(() => {
+          notifications = notifications.filter(
+            (n) => !(n.type === "group_invite" && n.related_id === groupId)
+          );
+          applyFilter();
+          updateUnreadBadges();
+        }, 300);
       }
 
       // イベントリスナー設定
