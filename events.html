@@ -70,7 +70,7 @@
 
       <!-- フィルターセクション -->
       <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-4">
           <div>
             <label
               for="event-type"
@@ -123,6 +123,15 @@
               <option value="this-month">今月</option>
               <option value="next-month">来月</option>
             </select>
+          </div>
+          <div>
+            <label for="event-keyword" class="block text-sm font-medium text-gray-700 mb-1">キーワード</label>
+            <input
+              type="text"
+              id="event-keyword"
+              class="w-full border border-gray-300 rounded-md py-2 px-3 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="タイトルや説明で検索"
+            />
           </div>
           <div class="flex items-end">
             <button
@@ -1267,11 +1276,13 @@
         const typeFilter = document.getElementById("event-type").value;
         const locationFilter = document.getElementById("event-location-filter").value;
         const dateFilter = document.getElementById("event-date-filter").value;
+        const keywordFilter = document.getElementById("event-keyword").value.trim();
 
         const filteredEvents = applyFilterEvents(allEvents, {
           type: typeFilter,
           location: locationFilter,
           date: dateFilter,
+          keyword: keywordFilter,
         });
 
         displayEvents(filteredEvents);
@@ -1490,9 +1501,10 @@
         .addEventListener("click", filterEvents);
 
       // フィルター変更時の自動検索
-      ["event-type", "event-location-filter", "event-date-filter"].forEach(
+      ["event-type", "event-location-filter", "event-date-filter", "event-keyword"].forEach(
         (id) => {
-          document.getElementById(id).addEventListener("change", filterEvents);
+          const eventType = id === "event-keyword" ? "input" : "change";
+          document.getElementById(id).addEventListener(eventType, filterEvents);
         }
       );
 

@@ -1,4 +1,4 @@
-export function filterEvents(allEvents, { type = '', location = '', date = '' } = {}) {
+export function filterEvents(allEvents, { type = '', location = '', date = '', keyword = '' } = {}) {
   let filtered = allEvents;
 
   if (type) {
@@ -42,6 +42,14 @@ export function filterEvents(allEvents, { type = '', location = '', date = '' } 
           return true;
       }
     });
+  }
+
+  if (keyword) {
+    const kw = keyword.toLowerCase();
+    filtered = filtered.filter(event => (
+      (event.title && event.title.toLowerCase().includes(kw)) ||
+      (event.description && event.description.toLowerCase().includes(kw))
+    ));
   }
 
   return filtered;
