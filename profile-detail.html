@@ -1193,7 +1193,6 @@
               .eq("following_id", profileUser);
 
             isFollowing = false;
-            followerCount--;
           } else {
             // フォロー
             await supabase.from("follows").insert({
@@ -1211,10 +1210,10 @@
             });
 
             isFollowing = true;
-            followerCount++;
           }
 
           updateFollowButton();
+          await loadConnectionStats(); // 最新のフォロー数を取得
           await loadConnections(); // つながり情報を更新
         } catch (error) {
           console.error("Error toggling follow:", error);
