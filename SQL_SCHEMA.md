@@ -112,6 +112,16 @@ CREATE INDEX idx_group_messages_group   ON public.group_messages(group_id);
 CREATE INDEX idx_group_messages_created ON public.group_messages(created_at DESC);
 CREATE INDEX idx_group_messages_user    ON public.group_messages(user_id);
 
+-- 4-3b) Group Message Reads
+CREATE TABLE public.group_message_reads (
+  message_id uuid REFERENCES public.group_messages(id) ON DELETE CASCADE,
+  user_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE,
+  read_at timestamptz DEFAULT now(),
+  PRIMARY KEY (message_id, user_id)
+);
+CREATE INDEX idx_group_message_reads_message ON public.group_message_reads(message_id);
+CREATE INDEX idx_group_message_reads_user    ON public.group_message_reads(user_id);
+
 -- 4-4) Group Members
 CREATE TABLE public.group_members (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
