@@ -5,4 +5,13 @@
   "testimonials": "Testimonials",
   "login": "Login",
   "getStarted": "Get Started"
+  ,"home": "Home"
+  ,"search": "Search"
+  ,"messages": "Messages"
+  ,"groups": "Groups"
+  ,"events": "Events"
+  ,"guide": "Guide"
+  ,"profile": "Profile"
+  ,"settings": "Settings"
+  ,"logout": "Logout"
 }
