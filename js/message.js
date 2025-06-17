@@ -18,3 +18,39 @@ export async function sendMessage(supabase, message) {
   }
   return true;
 }
+
+export async function updateDirectMessage(supabase, id, updates) {
+  const { error } = await supabase
+    .from('direct_messages')
+    .update(updates)
+    .eq('id', id);
+  if (error) throw new Error('Failed to update message');
+  return true;
+}
+
+export async function deleteDirectMessage(supabase, id) {
+  const { error } = await supabase
+    .from('direct_messages')
+    .delete()
+    .eq('id', id);
+  if (error) throw new Error('Failed to delete message');
+  return true;
+}
+
+export async function updateGroupMessage(supabase, id, updates) {
+  const { error } = await supabase
+    .from('group_messages')
+    .update(updates)
+    .eq('id', id);
+  if (error) throw new Error('Failed to update group message');
+  return true;
+}
+
+export async function deleteGroupMessage(supabase, id) {
+  const { error } = await supabase
+    .from('group_messages')
+    .delete()
+    .eq('id', id);
+  if (error) throw new Error('Failed to delete group message');
+  return true;
+}
