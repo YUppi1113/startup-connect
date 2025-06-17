@@ -1038,7 +1038,8 @@
         const { data } = await supabase
           .from("follow_requests")
           .select("target_id")
-          .eq("requester_id", currentUser.id);
+          .eq("requester_id", currentUser.id)
+          .eq("status", "pending");
 
         if (data) {
           followRequests = new Set(data.map((r) => r.target_id));
