@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="referrer" content="no-referrer" />
+    <title>フォローリクエスト - スタートアップコネクト</title>
+    <link rel="stylesheet" href="styles/styles.css" />
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+    <style>
+      body {
+        font-family: "Noto Sans JP", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 min-h-screen">
+    <!-- ヘッダー -->
+    <script>
+      const hXhr = new XMLHttpRequest();
+      hXhr.open("GET", "partials/header.html", false);
+      hXhr.send(null);
+      document.write(hXhr.responseText);
+    </script>
+
+    <main class="max-w-3xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <h1 class="text-2xl font-bold mb-6">フォローリクエスト</h1>
+      <div id="received-section" class="mb-10">
+        <h2 class="text-xl font-medium mb-4">受信リクエスト (<span id="received-count">0</span>)</h2>
+        <div id="received-list" class="space-y-4"></div>
+      </div>
+      <div id="sent-section" class="mb-10">
+        <h2 class="text-xl font-medium mb-4">送信リクエスト (<span id="sent-count">0</span>)</h2>
+        <div id="sent-list" class="space-y-4"></div>
+      </div>
+    </main>
+
+    <script>
+      const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.__ENV__;
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      let currentUser = null;
+      let userProfile = null;
+      const locationNames = {
+        hokkaido: "北海道",
+        aomori: "青森県",
+        iwate: "岩手県",
+        miyagi: "宮城県",
+        akita: "秋田県",
+        yamagata: "山形県",
+        fukushima: "福島県",
+        ibaraki: "茨城県",
+        tochigi: "栃木県",
+        gunma: "群馬県",
+        saitama: "埼玉県",
+        chiba: "千葉県",
+        tokyo: "東京都",
+        kanagawa: "神奈川県",
+        niigata: "新潟県",
+        toyama: "富山県",
+        ishikawa: "石川県",
+        fukui: "福井県",
+        yamanashi: "山梨県",
+        nagano: "長野県",
+        gifu: "岐阜県",
+        shizuoka: "静岡県",
+        aichi: "愛知県",
+        mie: "三重県",
+        shiga: "滋賀県",
+        kyoto: "京都府",
+        osaka: "大阪府",
+        hyogo: "兵庫県",
+        nara: "奈良県",
+        wakayama: "和歌山県",
+        tottori: "鳥取県",
+        shimane: "島根県",
+        okayama: "岡山県",
+        hiroshima: "広島県",
+        yamaguchi: "山口県",
+        tokushima: "徳島県",
+        kagawa: "香川県",
+        ehime: "愛媛県",
+        kochi: "高知県",
+        fukuoka: "福岡県",
+        saga: "佐賀県",
+        nagasaki: "長崎県",
+        kumamoto: "熊本県",
+        oita: "大分県",
+        miyazaki: "宮崎県",
+        kagoshima: "鹿児島県",
+        okinawa: "沖縄県",
+      };
+
+      window.addEventListener('load', async () => {
+        await checkAuth();
+        await loadRequests();
+      });
+      async function checkAuth() {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          window.location.href = "login.html";
+          return;
+        }
+        currentUser = user;
+        await loadCurrentUserProfile();
+      }
+      async function loadCurrentUserProfile() {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", currentUser.id)
+          .single();
+        if (profile) {
+          userProfile = profile;
+          updateUserInfo(profile);
+        }
+      }
+
+      function updateUserInfo(profile) {
+        document.getElementById("user-name").textContent = `${profile.last_name} ${profile.first_name}`;
+        document.getElementById("user-location").textContent = locationNames[profile.location] || profile.location;
+        if (profile.profile_image_url) {
+          document.getElementById("user-avatar").src = profile.profile_image_url;
+        }
+      }
+
+
+
+      async function loadRequests() {
+        const { data: received } = await supabase
+          .from('follow_requests')
+          .select('id, follower_id, requester:profiles!follow_requests_follower_id_fkey(*)')
+          .eq('following_id', currentUser.id)
+          .eq('status', 'pending');
+
+        const { data: sent } = await supabase
+          .from('follow_requests')
+          .select('id, following_id, target:profiles!follow_requests_following_id_fkey(*)')
+          .eq('follower_id', currentUser.id)
+          .eq('status', 'pending');
+
+        document.getElementById('received-count').textContent = received ? received.length : 0;
+        document.getElementById('sent-count').textContent = sent ? sent.length : 0;
+
+        renderRequests(received || [], 'received-list', 'received');
+        renderRequests(sent || [], 'sent-list', 'sent');
+      }
+
+      function renderRequests(list, containerId, role) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = list.map(r => createCard(r, role)).join('');
+      }
+
+      function createCard(req, role) {
+        const profile = role === 'received' ? req.requester : req.target;
+        const actions =
+          role === 'received'
+            ? `<button onclick="approveFollowRequest('${req.follower_id}')" class="bg-blue-600 text-white rounded-md px-3 py-1 text-sm mr-2">承認</button>
+               <button onclick="rejectFollowRequest('${req.follower_id}')" class="border border-gray-300 text-gray-700 rounded-md px-3 py-1 text-sm">拒否</button>`
+            : `<button onclick="cancelRequest('${req.following_id}')" class="border border-red-600 text-red-600 rounded-md px-3 py-1 text-sm">キャンセル</button>`;
+        return `
+          <div class="flex items-center space-x-4">
+            <img loading="lazy" src="${profile.profile_image_url || '/api/placeholder/48/48'}" class="h-12 w-12 rounded-full object-cover" alt="${profile.last_name} ${profile.first_name}">
+            <div class="flex-1">
+              <a href="profile-detail.html?user=${profile.id}" class="font-medium text-gray-900 hover:text-blue-600">${profile.last_name} ${profile.first_name}</a>
+              <p class="text-sm text-gray-500">${locationNames[profile.location] || profile.location}</p>
+            </div>
+            ${actions}
+          </div>`;
+      }
+
+      async function cancelRequest(userId) {
+        if (!confirm('このリクエストをキャンセルしますか？')) return;
+        const { error } = await supabase
+          .from('follow_requests')
+          .delete()
+          .eq('follower_id', currentUser.id)
+          .eq('following_id', userId);
+        if (error) {
+          console.error('cancel request error', error);
+          return;
+        }
+        await loadRequests();
+      }
+
+      async function approveFollowRequest(userId) {
+        let { error } = await supabase
+          .from('follow_requests')
+          .update({ status: 'approved' })
+          .eq('follower_id', userId)
+          .eq('following_id', currentUser.id);
+
+        if (error) {
+          console.error('Error updating follow request:', error);
+          return;
+        }
+
+        ({ error } = await supabase.from('follows').insert({
+          follower_id: userId,
+          following_id: currentUser.id,
+        }));
+
+        if (!error) {
+          await supabase
+            .from('follow_requests')
+            .delete()
+            .eq('follower_id', userId)
+            .eq('following_id', currentUser.id);
+
+          await supabase
+            .from('notifications')
+            .insert({
+              user_id: userId,
+              type: 'follow_request_accepted',
+              title: 'フォロー承認',
+              content: `${userProfile.last_name} ${userProfile.first_name}さんがあなたのフォローリクエストを承認しました`,
+              related_id: currentUser.id,
+            });
+
+          alert('フォローリクエストを承認しました');
+          await loadRequests();
+        }
+      }
+
+      async function rejectFollowRequest(userId) {
+        let { error } = await supabase
+          .from('follow_requests')
+          .update({ status: 'rejected' })
+          .eq('follower_id', userId)
+          .eq('following_id', currentUser.id);
+
+        if (error) {
+          console.error('Error rejecting follow request:', error);
+          return;
+        }
+
+        await supabase
+          .from('follow_requests')
+          .delete()
+          .eq('follower_id', userId)
+          .eq('following_id', currentUser.id);
+
+        alert('フォローリクエストを拒否しました');
+        await loadRequests();
+      }
+    </script>
+  </body>
+</html>
