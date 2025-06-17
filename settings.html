@@ -1260,10 +1260,10 @@
         // モバイルメニュー
         document
           .querySelector(".mobile-menu-button")
-          .addEventListener("click", () => {
-          const menu = document.getElementById("mobile-menu");
-          const expanded = menu.classList.toggle("hidden") ? false : true;
-          this.setAttribute("aria-expanded", expanded);
+          .addEventListener("click", function () {
+            const menu = document.getElementById("mobile-menu");
+            const expanded = menu.classList.toggle("hidden") ? false : true;
+            this.setAttribute("aria-expanded", expanded);
           });
 
         // ウィンドウクリックでメニューを閉じる
