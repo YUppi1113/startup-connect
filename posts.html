@@ -36,9 +36,15 @@
 
     <div id="footer-placeholder"></div>
 
-    <script>
+    <script type="module">
       const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.__ENV__;
       const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      const {
+        toggleLike,
+        toggleBookmark,
+        updateLikeButton,
+        updateBookmarkButton,
+      } = await import('./js/post.js');
       let currentUser = null;
       let pageUser = null;
 
@@ -87,6 +93,22 @@
 
         const { data: posts } = await query.limit(20);
 
+        const { data: likedPosts } = await supabase
+          .from("post_likes")
+          .select("post_id")
+          .eq("user_id", currentUser.id);
+        const likedSet = new Set(
+          likedPosts ? likedPosts.map((p) => p.post_id) : []
+        );
+
+        const { data: bookmarkedPosts } = await supabase
+          .from("post_bookmarks")
+          .select("post_id")
+          .eq("user_id", currentUser.id);
+        const bookmarkedSet = new Set(
+          bookmarkedPosts ? bookmarkedPosts.map((b) => b.post_id) : []
+        );
+
         if (!posts || posts.length === 0) {
           container.innerHTML =
             '<div class="px-6 py-8 text-center text-gray-500"><p class="text-sm">まだ投稿がありません</p></div>';
@@ -98,8 +120,10 @@
             const images = (post.image_urls || [])
               .map((url) => `<img loading="lazy" src="${url}" class="mt-2 rounded-md">`)
               .join("");
+            const liked = likedSet.has(post.id);
+            const bookmarked = bookmarkedSet.has(post.id);
             return `
-          <div class="px-6 py-4">
+          <div class="px-6 py-4" data-id="${post.id}">
             <div class="flex items-start space-x-3">
               <img loading="lazy" class="h-8 w-8 rounded-full object-cover" src="${
                 post.profiles?.profile_image_url || "/api/placeholder/32/32"
@@ -111,11 +135,44 @@
                 <p class="whitespace-pre-wrap mt-1">${post.content}</p>
                 ${images}
                 <p class="text-xs text-gray-500 mt-1">${new Date(post.created_at).toLocaleString("ja-JP")}</p>
+                <div class="mt-2 flex items-center space-x-4 text-sm">
+                  <button class="like-btn ${liked ? 'text-blue-600' : 'text-gray-600'}" data-id="${post.id}" aria-pressed="${liked}">${liked ? 'いいね済み' : 'いいね'}</button>
+                  <span class="likes-count">${post.likes_count}</span>
+                  <button class="bookmark-btn ${bookmarked ? 'text-blue-600' : 'text-gray-600'}" data-id="${post.id}" aria-pressed="${bookmarked}">${bookmarked ? '保存済み' : '保存'}</button>
+                </div>
               </div>
             </div>
           </div>`;
           })
           .join("");
+
+        container.querySelectorAll('.like-btn').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            btn.disabled = true;
+            const postId = btn.dataset.id;
+            const countEl = btn.parentElement.querySelector('.likes-count');
+            const { liked, likesCount } = await toggleLike(
+              supabase,
+              postId,
+              currentUser.id
+            );
+            updateLikeButton(btn, liked);
+            if (countEl) countEl.textContent = likesCount;
+          });
+        });
+
+        container.querySelectorAll('.bookmark-btn').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            btn.disabled = true;
+            const postId = btn.dataset.id;
+            const { bookmarked } = await toggleBookmark(
+              supabase,
+              postId,
+              currentUser.id
+            );
+            updateBookmarkButton(btn, bookmarked);
+          });
+        });
       }
     </script>
     <script src="js/theme.js"></script>

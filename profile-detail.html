@@ -391,7 +391,7 @@
   document.write(fXhr.responseText);
 </script>
 
-    <script>
+    <script type="module">
       // Supabase設定
       const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.__ENV__;
       const supabase = window.supabase.createClient(
@@ -407,6 +407,13 @@
         cancelFollowRequest,
         updateFollowButton,
       } = await import('./js/follow.js');
+
+      const {
+        toggleLike,
+        toggleBookmark,
+        updateLikeButton,
+        updateBookmarkButton,
+      } = await import('./js/post.js');
 
       // グローバル変数
       let currentUser = null;
@@ -1132,6 +1139,20 @@
           .order("created_at", { ascending: false })
           .limit(10);
 
+        const { data: likedPosts } = await supabase
+          .from("post_likes")
+          .select("post_id")
+          .eq("user_id", currentUser.id);
+        const likedSet = new Set(likedPosts ? likedPosts.map((p) => p.post_id) : []);
+
+        const { data: bookmarkedPosts } = await supabase
+          .from("post_bookmarks")
+          .select("post_id")
+          .eq("user_id", currentUser.id);
+        const bookmarkedSet = new Set(
+          bookmarkedPosts ? bookmarkedPosts.map((b) => b.post_id) : []
+        );
+
         const container = document.getElementById("posts-content");
         if (!posts || posts.length === 0) {
           container.innerHTML = `<svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg><p class="mt-2 text-sm">投稿情報はまだありません</p>`;
@@ -1162,16 +1183,21 @@
               `
               )
               .join("");
+            const liked = likedSet.has(post.id);
+            const bookmarked = bookmarkedSet.has(post.id);
             return `
-              <div class="border-b border-gray-200 py-4">
+              <div class="border-b border-gray-200 py-4" data-id="${post.id}">
                 <p class="whitespace-pre-wrap">${post.content}</p>
                 ${images}
                 <div class="text-sm text-gray-500 mt-1">${new Date(
                   post.created_at
                 ).toLocaleString("ja-JP")}</div>
-                <div class="text-sm text-gray-600 mt-1">いいね ${
-                  post.likes_count
-                } ・ コメント ${post.comments_count}</div>
+                <div class="text-sm text-gray-600 mt-1 flex items-center space-x-4">
+                  <button class="like-btn ${liked ? 'text-blue-600' : 'text-gray-600'}" data-id="${post.id}" aria-pressed="${liked}">${liked ? 'いいね済み' : 'いいね'}</button>
+                  <span class="likes-count">${post.likes_count}</span>
+                  <span>コメント ${post.comments_count}</span>
+                  <button class="bookmark-btn ${bookmarked ? 'text-blue-600' : 'text-gray-600'}" data-id="${post.id}" aria-pressed="${bookmarked}">${bookmarked ? '保存済み' : '保存'}</button>
+                </div>
                 <div class="mt-2">${comments}</div>
               </div>`;
           })
@@ -1179,6 +1205,34 @@
 
         container.classList.remove("text-center", "text-gray-500", "py-8");
         container.innerHTML = html;
+
+        container.querySelectorAll('.like-btn').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            btn.disabled = true;
+            const postId = btn.dataset.id;
+            const countEl = btn.parentElement.querySelector('.likes-count');
+            const { liked, likesCount } = await toggleLike(
+              supabase,
+              postId,
+              currentUser.id
+            );
+            updateLikeButton(btn, liked);
+            if (countEl) countEl.textContent = likesCount;
+          });
+        });
+
+        container.querySelectorAll('.bookmark-btn').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            btn.disabled = true;
+            const postId = btn.dataset.id;
+            const { bookmarked } = await toggleBookmark(
+              supabase,
+              postId,
+              currentUser.id
+            );
+            updateBookmarkButton(btn, bookmarked);
+          });
+        });
       }
 
       // フォロー/アンフォロー処理
