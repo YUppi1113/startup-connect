@@ -53,28 +53,7 @@
         <span class="block sm:inline" id="error-text"></span>
       </div>
 
-      <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <h2 class="text-lg font-semibold text-gray-800 mb-2">新規投稿</h2>
-        <form id="profile-post-form" class="space-y-2">
-          <textarea
-            id="profile-post-content"
-            class="w-full border border-gray-300 rounded p-2"
-            rows="3"
-            placeholder="いまどうしてる？"
-            required
-          ></textarea>
-          <input
-            type="file"
-            id="profile-post-images"
-            accept="image/*"
-            multiple
-            class="block"
-          />
-          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">
-            投稿する
-          </button>
-        </form>
-      </div>
+
 
       <div class="bg-white rounded-lg shadow-sm">
         <form id="profile-form">
@@ -572,44 +551,6 @@
         </form>
         </div>
 
-        <!-- 新規投稿フォーム -->
-        <div class="bg-white rounded-lg shadow-sm mt-8 p-6">
-          <h2 class="text-lg font-semibold text-gray-800 mb-4">新規投稿</h2>
-          <form id="post-form" class="space-y-4">
-            <textarea
-              id="post-content"
-              rows="4"
-              class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="今考えていることをシェアしましょう"
-              required
-            ></textarea>
-            <div class="flex items-center space-x-4">
-              <div class="relative">
-                <img loading="lazy"
-                  id="post-image-preview"
-                  src=""
-                  alt=""
-                  class="w-24 h-24 rounded-md object-cover hidden"
-                />
-              </div>
-              <label
-                class="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition duration-200"
-              >
-                画像を選択
-                <input type="file" id="post-image-input" class="hidden" accept="image/*" />
-              </label>
-            </div>
-            <div class="text-right">
-              <button
-                type="submit"
-                id="post-submit"
-                class="px-6 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 transition duration-200"
-              >
-                投稿する
-              </button>
-            </div>
-          </form>
-        </div>
       </main>
 
     <!-- フッター -->
@@ -878,27 +819,6 @@
           }
         });
 
-      // 投稿画像のプレビュー
-      document
-        .getElementById("post-image-input")
-        .addEventListener("change", function (e) {
-          const file = e.target.files[0];
-          if (file) {
-            if (file.size > 2 * 1024 * 1024) {
-              showError("画像ファイルは2MB以下にしてください。");
-              e.target.value = "";
-              return;
-            }
-            postImageFile = file;
-            const reader = new FileReader();
-            reader.onload = function (ev) {
-              const img = document.getElementById("post-image-preview");
-              img.src = ev.target.result;
-              img.classList.remove("hidden");
-            };
-            reader.readAsDataURL(file);
-          }
-        });
 
       // フォーム送信処理
       document
@@ -1118,52 +1038,6 @@
         }, 5000);
       }
 
-      // 投稿フォーム送信
-      document
-        .getElementById("post-form")
-        .addEventListener("submit", async function (e) {
-          e.preventDefault();
-          const submitBtn = document.getElementById("post-submit");
-          submitBtn.disabled = true;
-          submitBtn.textContent = "投稿中...";
-          try {
-            let imageUrl = null;
-            if (postImageFile) {
-              const fileExt = postImageFile.name.split(".").pop();
-              const fileName = `${currentUser.id}_${Date.now()}.${fileExt}`;
-              const filePath = `posts/${currentUser.id}/${fileName}`;
-              const { error: uploadError } = await supabase.storage
-                .from("post-images")
-                .upload(filePath, postImageFile);
-              if (uploadError) throw uploadError;
-              const { data } = supabase.storage
-                .from("post-images")
-                .getPublicUrl(filePath);
-              imageUrl = data.publicUrl;
-            }
-
-            const { error } = await supabase.from("posts").insert({
-              user_id: currentUser.id,
-              content: document.getElementById("post-content").value,
-              image_urls: imageUrl ? [imageUrl] : [],
-            });
-            if (error) throw error;
-
-            document.getElementById("post-content").value = "";
-            document.getElementById("post-image-input").value = "";
-            const preview = document.getElementById("post-image-preview");
-            preview.src = "";
-            preview.classList.add("hidden");
-            postImageFile = null;
-            showSuccess();
-          } catch (err) {
-            console.error("post create", err);
-            showError("投稿に失敗しました");
-          } finally {
-            submitBtn.disabled = false;
-            submitBtn.textContent = "投稿する";
-          }
-        });
 
       // イベントリスナー設定
       document
@@ -1186,47 +1060,6 @@
         }
       });
 
-      async function uploadPostFile(file) {
-        const ext = file.name.split(".").pop();
-        const fileName = `${currentUser.id}_${Date.now()}.${ext}`;
-        const filePath = `posts/${fileName}`;
-        const { error } = await supabase.storage
-          .from("post-images")
-          .upload(filePath, file);
-        if (error) throw error;
-        const { data } = supabase.storage
-          .from("post-images")
-          .getPublicUrl(filePath);
-        return data.publicUrl;
-      }
-
-      document
-        .getElementById("profile-post-form")
-        .addEventListener("submit", async (e) => {
-          e.preventDefault();
-          const content = document
-            .getElementById("profile-post-content")
-            .value.trim();
-          if (!content) return;
-          const files = Array.from(
-            document.getElementById("profile-post-images").files
-          );
-          const urls = [];
-          for (const file of files) {
-            const url = await uploadPostFile(file);
-            urls.push(url);
-          }
-          const { error } = await supabase
-            .from("posts")
-            .insert({ user_id: currentUser.id, content, image_urls: urls });
-          if (!error) {
-            document.getElementById("profile-post-content").value = "";
-            document.getElementById("profile-post-images").value = "";
-            alert("投稿が完了しました");
-          } else {
-            alert("投稿に失敗しました");
-          }
-        });
 
       // ログアウト
       document
