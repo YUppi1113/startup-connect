@@ -8,7 +8,8 @@
     "lint": "eslint .",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "build": "node generate-config.js",
-    "build:css": "tailwindcss -i ./styles/input.css -o ./styles/styles.css --minify"
+    "build:css": "tailwindcss -i ./styles/input.css -o ./styles/styles.css --minify",
+    "build:legacy": "node transpile-supabase.js && npx babel js --out-dir legacy/js --presets=@babel/preset-env"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.5",
@@ -22,6 +23,9 @@
     "jest": "^29.7.0",
     "tailwindcss": "^3.4.4",
     "postcss": "^8.4.38",
-    "autoprefixer": "^10.4.18"
+    "autoprefixer": "^10.4.18",
+    "@babel/cli": "^7.23.0",
+    "@babel/core": "^7.23.0",
+    "@babel/preset-env": "^7.23.0"
   }
 }
