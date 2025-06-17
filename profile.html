@@ -635,7 +635,6 @@
       let startupInfo = null;
       let profileImageFile = null;
       let projects = [];
-      let projectsToDelete = [];
 
       // 地域名マッピング
       const locationNames = {
@@ -843,14 +842,7 @@
               <label class="block text-sm font-medium">リンク</label>
               <input type="url" name="project_url" class="w-full px-3 py-2 border border-gray-300 rounded-md" value="${project.project_url || ""}">
             </div>
-            <button type="button" class="remove-project text-red-600 text-sm mt-2">削除</button>
         `;
-        div.querySelector(".remove-project").addEventListener("click", () => {
-          if (div.dataset.id) {
-            projectsToDelete.push(div.dataset.id);
-          }
-          div.remove();
-        });
         return div;
       }
 
@@ -1040,7 +1032,9 @@
             const projectForms = document.querySelectorAll(".project-entry");
             const upserts = [];
             projectForms.forEach((div) => {
+              if (!div.dataset.id) return;
               const data = {
+                id: div.dataset.id,
                 user_id: currentUser.id,
                 title: div.querySelector('input[name="title"]').value,
                 description:
@@ -1052,7 +1046,6 @@
                 project_url:
                   div.querySelector('input[name="project_url"]').value || null,
               };
-              if (div.dataset.id) data.id = div.dataset.id;
               upserts.push(data);
             });
 
@@ -1065,10 +1058,6 @@
               }
             }
 
-            for (const id of projectsToDelete) {
-              await supabase.from("projects").delete().eq("id", id);
-            }
-            projectsToDelete = [];
 
             const embedText = [
               document.getElementById("bio").value,
