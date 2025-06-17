@@ -50,12 +50,8 @@
   </head>
   <body class="bg-gray-50 dark:bg-dark-bg dark:text-dark-text min-h-screen">
     <!-- ヘッダー -->
-    <script>
-      const hXhr = new XMLHttpRequest();
-      hXhr.open("GET", "partials/header.html", false);
-      hXhr.send(null);
-      document.write(hXhr.responseText);
-    </script>
+    <div id="header-placeholder"></div>
+    <script src="js/loadPartials.js"></script>
 
 
     <!-- メインコンテンツ -->
@@ -373,12 +369,7 @@
     </div>
 
     <!-- フッター -->
-    <script>
-      const fXhr = new XMLHttpRequest();
-      fXhr.open('GET', 'partials/footer.html', false);
-      fXhr.send(null);
-      document.write(fXhr.responseText);
-    </script>
+    <div id="footer-placeholder"></div>
 
     <script>
       // Supabase設定
@@ -466,6 +457,71 @@
 
       // ページ読み込み時の初期化
       window.addEventListener("load", async () => {
+        await loadHeaderFooter();
+        // ヘッダー関連のイベント
+        document
+          .querySelector(".mobile-menu-button")
+          ?.addEventListener("click", function () {
+            const menu = document.getElementById("mobile-menu");
+            const expanded = menu.classList.toggle("hidden") ? false : true;
+            this.setAttribute("aria-expanded", expanded);
+          });
+
+        document
+          .getElementById("user-menu-button")
+          ?.addEventListener("click", function () {
+            const menu = document.getElementById("user-menu");
+            const expanded = menu.classList.toggle("hidden") ? false : true;
+            this.setAttribute("aria-expanded", expanded);
+          });
+
+        window.addEventListener("click", function (e) {
+          const btn = document.getElementById("user-menu-button");
+          if (btn && !btn.contains(e.target)) {
+            document.getElementById("user-menu")?.classList.add("hidden");
+            btn.setAttribute("aria-expanded", false);
+          }
+        });
+
+        document
+          .getElementById("logout-link")
+          ?.addEventListener("click", async (e) => {
+            e.preventDefault();
+            await supabase.auth.signOut();
+            window.location.href = "login.html?message=logout";
+          });
+
+        document
+          .querySelector(".logout-link-mobile")
+          ?.addEventListener("click", async (e) => {
+            e.preventDefault();
+            await supabase.auth.signOut();
+            window.location.href = "login.html?message=logout";
+          });
+
+        document.getElementById("guide-link")?.addEventListener("click", (e) => {
+          e.preventDefault();
+          guideIndex = 0;
+          showGuideStep(guideIndex);
+          openModal("guide-modal", e.currentTarget);
+        });
+        document
+          .getElementById("guide-link-mobile")
+          ?.addEventListener("click", (e) => {
+            e.preventDefault();
+            guideIndex = 0;
+            showGuideStep(guideIndex);
+            openModal("guide-modal", e.currentTarget);
+        });
+        document
+          .getElementById("guide-link-footer")
+          ?.addEventListener("click", (e) => {
+            e.preventDefault();
+            guideIndex = 0;
+            showGuideStep(guideIndex);
+            openModal("guide-modal", e.currentTarget);
+        });
+
         await checkAuth();
         await loadDashboardData();
         setupRealtimeSubscriptions();
@@ -1077,69 +1133,6 @@
         return date.toLocaleDateString("ja-JP");
       }
 
-      // イベントリスナー
-      document
-        .querySelector(".mobile-menu-button")
-        .addEventListener("click", function () {
-          const menu = document.getElementById("mobile-menu");
-          const expanded = menu.classList.toggle("hidden") ? false : true;
-          this.setAttribute("aria-expanded", expanded);
-        });
-
-      document
-        .getElementById("user-menu-button")
-        .addEventListener("click", function () {
-          const menu = document.getElementById("user-menu");
-          const expanded = menu.classList.toggle("hidden") ? false : true;
-          this.setAttribute("aria-expanded", expanded);
-        });
-
-      window.addEventListener("click", function (e) {
-        if (!document.getElementById("user-menu-button").contains(e.target)) {
-          document.getElementById("user-menu").classList.add("hidden");
-          document.getElementById("user-menu-button").setAttribute("aria-expanded", false);
-        }
-      });
-
-      // ログアウト
-      document
-        .getElementById("logout-link")
-        .addEventListener("click", async (e) => {
-          e.preventDefault();
-          await supabase.auth.signOut();
-          window.location.href = "login.html?message=logout";
-        });
-
-      document
-        .querySelector(".logout-link-mobile")
-        .addEventListener("click", async (e) => {
-          e.preventDefault();
-          await supabase.auth.signOut();
-          window.location.href = "login.html?message=logout";
-        });
-
-      document.getElementById("guide-link").addEventListener("click", (e) => {
-        e.preventDefault();
-        guideIndex = 0;
-        showGuideStep(guideIndex);
-        openModal("guide-modal", e.currentTarget);
-      });
-      document
-        .getElementById("guide-link-mobile")
-        .addEventListener("click", (e) => {
-          e.preventDefault();
-          guideIndex = 0;
-          showGuideStep(guideIndex);
-          openModal("guide-modal", e.currentTarget);
-      });
-      document
-        .getElementById("guide-link-footer")
-        .addEventListener("click", (e) => {
-          e.preventDefault();
-          guideIndex = 0;
-          showGuideStep(guideIndex);
-          openModal("guide-modal", e.currentTarget);
-      });
       const guideSteps = [
         "プロフィールを作成してあなたのスキルや経験を登録します。",
         "検索機能でパートナーを探し、気になる相手にメッセージを送りましょう。",
