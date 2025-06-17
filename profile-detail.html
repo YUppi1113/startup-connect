@@ -1258,8 +1258,8 @@
             type: "report",
             title: "ユーザー通報",
             content: `${currentUserProfile.last_name} ${currentUserProfile.first_name}さんが${profileUserData.last_name} ${profileUserData.first_name}さんを通報しました。理由: ${reason}`,
-            related_id: profileUser,
-          });
+            related_id: currentUser.id,
+            });
 
           alert("通報を受け付けました。ご報告ありがとうございます。");
         } catch (error) {

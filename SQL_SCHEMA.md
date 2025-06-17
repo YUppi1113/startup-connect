@@ -122,6 +122,17 @@ CREATE TABLE public.group_message_reads (
 CREATE INDEX idx_group_message_reads_message ON public.group_message_reads(message_id);
 CREATE INDEX idx_group_message_reads_user    ON public.group_message_reads(user_id);
 
+-- 4-3c) Group Message Reactions
+CREATE TABLE public.group_message_reactions (
+  message_id uuid REFERENCES public.group_messages(id) ON DELETE CASCADE,
+  user_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE,
+  sticker_url text,
+  created_at timestamptz DEFAULT now(),
+  PRIMARY KEY (message_id, user_id)
+);
+CREATE INDEX idx_gm_reactions_msg ON public.group_message_reactions(message_id);
+CREATE INDEX idx_gm_reactions_user ON public.group_message_reactions(user_id);
+
 -- 4-4) Group Members
 CREATE TABLE public.group_members (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -219,6 +230,17 @@ CREATE TABLE public.direct_messages (
 CREATE INDEX idx_direct_messages_sender   ON public.direct_messages(sender_id);
 CREATE INDEX idx_direct_messages_receiver ON public.direct_messages(receiver_id);
 CREATE INDEX idx_direct_messages_created  ON public.direct_messages(created_at DESC);
+
+-- 4-10b) Direct Message Reactions
+CREATE TABLE public.direct_message_reactions (
+  message_id uuid REFERENCES public.direct_messages(id) ON DELETE CASCADE,
+  user_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE,
+  sticker_url text,
+  created_at timestamptz DEFAULT now(),
+  PRIMARY KEY (message_id, user_id)
+);
+CREATE INDEX idx_dm_reactions_msg ON public.direct_message_reactions(message_id);
+CREATE INDEX idx_dm_reactions_user ON public.direct_message_reactions(user_id);
 
 -- 4-11) Projects
 CREATE TABLE public.projects (
@@ -331,7 +353,8 @@ CREATE INDEX idx_notifications_read ON public.notifications(is_read);
 -- Notification types include:
 --  follow, follow_request, follow_back, message,
 --  event, event_reminder, group_invite, group_activity,
---  mention, reaction
+--  mention, reaction, follow_request_accepted,
+--  event_join, event_update, event_cancel, report
 
 -- 4-18) Notification Settings
 CREATE TABLE public.notification_settings (

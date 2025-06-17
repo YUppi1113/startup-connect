@@ -1,4 +1,4 @@
-export function filterEvents(allEvents, { type = '', location = '', date = '', keyword = '' } = {}) {
+export function filterEvents(allEvents, { type = '', location = '', date = '', keyword = '', myEvents = false, userId = null, participatingEventIds = new Set() } = {}) {
   let filtered = allEvents;
 
   if (type) {
@@ -50,6 +50,12 @@ export function filterEvents(allEvents, { type = '', location = '', date = '', k
       (event.title && event.title.toLowerCase().includes(kw)) ||
       (event.description && event.description.toLowerCase().includes(kw))
     ));
+  }
+
+  if (myEvents && userId) {
+    filtered = filtered.filter(event =>
+      event.organizer_id === userId || participatingEventIds.has(event.id)
+    );
   }
 
   return filtered;

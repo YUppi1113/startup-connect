@@ -623,8 +623,20 @@
               -
             </h3>
             <p id="call-status" class="text-gray-600 mt-2">発信中...</p>
+            <video id="local-video" class="w-full rounded mt-4" autoplay muted></video>
+            <video id="remote-video" class="w-full rounded mt-2" autoplay></video>
           </div>
           <div class="flex justify-center space-x-4">
+            <button id="accept-call-btn" class="p-4 bg-green-600 text-white rounded-full hover:bg-green-700 transition duration-200 hidden" title="通話を受ける">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </button>
+            <button id="reject-call-btn" class="p-4 bg-red-600 text-white rounded-full hover:bg-red-700 transition duration-200 hidden" title="拒否">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
             <button
               id="mute-btn"
               class="p-4 bg-gray-200 text-gray-600 rounded-full hover:bg-gray-300 transition duration-200"
@@ -1370,7 +1382,11 @@
       }
 
       // 通話開始
-      function startCall(type) {
+      let peerConnection = null;
+      let callChannel = null;
+      let localStream = null;
+
+      async function startCall(type) {
         if (!currentChatUser) return;
 
         document.getElementById("call-user-avatar").src =
@@ -1378,15 +1394,82 @@
         document.getElementById(
           "call-user-name"
         ).textContent = `${currentChatUser.last_name} ${currentChatUser.first_name}`;
-        document.getElementById("call-status").textContent =
-          type === "video" ? "ビデオ通話を発信中..." : "音声通話を発信中...";
 
-        openModal("call-modal");
+        callChannel = supabase.channel(`call-${[currentUser.id, currentChatUser.id].sort().join('-')}`);
+        callChannel.on('broadcast', { event: 'signal' }, async ({ payload }) => {
+          await handleSignal(payload, type);
+        });
+        await callChannel.subscribe();
 
-        // 模擬的な接続
-        setTimeout(() => {
-          document.getElementById("call-status").textContent = "接続されました";
-        }, 2000);
+        peerConnection = new RTCPeerConnection();
+        peerConnection.onicecandidate = (e) => {
+          if (e.candidate) {
+            callChannel.send({ type: 'broadcast', event: 'signal', payload: { candidate: e.candidate } });
+          }
+        };
+        peerConnection.ontrack = (e) => {
+          document.getElementById('remote-video').srcObject = e.streams[0];
+        };
+
+        localStream = await navigator.mediaDevices.getUserMedia({ video: type === 'video', audio: true });
+        document.getElementById('local-video').srcObject = localStream;
+        localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
+
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+        callChannel.send({ type: 'broadcast', event: 'signal', payload: { offer } });
+
+        openModal('call-modal');
+        document.getElementById('call-status').textContent = '接続中...';
+      }
+
+      async function handleSignal(data, type) {
+        if (data.offer) {
+          // incoming offer
+          window.pendingOffer = data.offer;
+          document.getElementById('call-status').textContent = '着信中...';
+          document.getElementById('accept-call-btn').classList.remove('hidden');
+          document.getElementById('reject-call-btn').classList.remove('hidden');
+          openModal('call-modal');
+        } else if (data.answer) {
+          await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+          document.getElementById('call-status').textContent = '通話中';
+        } else if (data.candidate) {
+          try { await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate)); } catch (e) {}
+        } else if (data.reject) {
+          document.getElementById('call-status').textContent = '拒否されました';
+          setTimeout(() => closeModal('call-modal'), 1000);
+        }
+      }
+
+      async function acceptCall() {
+        document.getElementById('accept-call-btn').classList.add('hidden');
+        document.getElementById('reject-call-btn').classList.add('hidden');
+
+        peerConnection = new RTCPeerConnection();
+        peerConnection.onicecandidate = (e) => {
+          if (e.candidate) {
+            callChannel.send({ type: 'broadcast', event: 'signal', payload: { candidate: e.candidate } });
+          }
+        };
+        peerConnection.ontrack = (e) => {
+          document.getElementById('remote-video').srcObject = e.streams[0];
+        };
+
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        document.getElementById('local-video').srcObject = localStream;
+        localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
+
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(window.pendingOffer));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        callChannel.send({ type: 'broadcast', event: 'signal', payload: { answer } });
+        document.getElementById('call-status').textContent = '通話中';
+      }
+
+      function rejectCall() {
+        callChannel.send({ type: 'broadcast', event: 'signal', payload: { reject: true } });
+        closeModal('call-modal');
       }
 
       // リアルタイム更新設定
@@ -1676,6 +1759,8 @@
         .addEventListener("click", function () {
           closeModal("call-modal");
         });
+      document.getElementById("accept-call-btn").addEventListener("click", acceptCall);
+      document.getElementById("reject-call-btn").addEventListener("click", rejectCall);
 
       // 新規メッセージモーダル
       document
@@ -1831,11 +1916,15 @@
       window.selectConversation = selectConversation;
       window.selectRecipient = selectRecipient;
       window.startCall = startCall;
+      window.acceptCall = acceptCall;
+      window.rejectCall = rejectCall;
     </script>
     <div id="message-menu" class="hidden absolute bg-white border rounded shadow z-50">
       <button id="edit-msg-btn" class="block w-full px-4 py-2 text-left hover:bg-gray-100">編集</button>
       <button id="delete-msg-btn" class="block w-full px-4 py-2 text-left text-red-600 hover:bg-gray-100">削除</button>
+      <button id="react-msg-btn" class="block w-full px-4 py-2 text-left hover:bg-gray-100">リアクション</button>
     </div>
+    <div id="sticker-picker" class="hidden absolute bg-white border rounded shadow z-50 p-2"></div>
     <script>
       let targetMessageId = null;
       function openMessageMenu(event, id) {
@@ -1848,6 +1937,7 @@
       }
       document.addEventListener('click', () => {
         document.getElementById('message-menu').classList.add('hidden');
+        document.getElementById('sticker-picker').classList.add('hidden');
       });
       document.getElementById('edit-msg-btn').addEventListener('click', async () => {
         document.getElementById('message-menu').classList.add('hidden');
@@ -1872,6 +1962,29 @@
           }
         }
       });
+      document.getElementById('react-msg-btn').addEventListener('click', (e) => {
+        const picker = document.getElementById('sticker-picker');
+        const stickers = ['img/stickers/smile.svg','img/stickers/thumbsup.svg','img/stickers/party.svg'];
+        picker.innerHTML = stickers.map(u => `<img src="${u}" class="w-12 h-12 m-1 cursor-pointer" onclick="selectSticker('${u}')">`).join('');
+        picker.style.top = e.clientY + 'px';
+        picker.style.left = e.clientX + 'px';
+        picker.classList.remove('hidden');
+        document.getElementById('message-menu').classList.add('hidden');
+      });
+      window.selectSticker = async function(url) {
+        document.getElementById('sticker-picker').classList.add('hidden');
+        await supabase.from('direct_message_reactions').upsert({ message_id: targetMessageId, user_id: currentUser.id, sticker_url: url });
+        const msg = currentMessages.find(m => m.id === targetMessageId);
+        if (msg && msg.sender_id !== currentUser.id) {
+          await supabase.from('notifications').insert({
+            user_id: msg.sender_id,
+            type: 'reaction',
+            title: 'リアクション',
+            content: `${userProfile.last_name} ${userProfile.first_name}さんがあなたのメッセージにリアクションしました`,
+            related_id: currentUser.id,
+          });
+        }
+      };
     </script>
     <script src="js/theme.js"></script>
     <script src="accessibility.js"></script>
