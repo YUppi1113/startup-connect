@@ -63,6 +63,13 @@
     </script>
   </head>
   <body class="bg-gray-50 min-h-screen">
+    <!-- ヘッダー -->
+    <script>
+  const hXhr = new XMLHttpRequest();
+  hXhr.open("GET","partials/header.html",false);
+  hXhr.send(null);
+  document.write(hXhr.responseText);
+</script>
     <!-- Loading Overlay -->
     <div id="loading-overlay" class="loading-overlay">
       <div class="spinner"></div>
