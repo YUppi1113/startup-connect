@@ -40,6 +40,7 @@
       const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.__ENV__;
       const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       let currentUser = null;
+      let currentUserProfile = null;
       let pageUser = null;
 
       window.addEventListener("load", async () => {
@@ -48,6 +49,7 @@
         pageUser = params.get("user");
         await checkAuth();
         await loadPosts();
+        setupRealtimeSubscriptions();
       });
 
       async function checkAuth() {
@@ -59,6 +61,12 @@
           return;
         }
         currentUser = user;
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("first_name, last_name")
+          .eq("id", currentUser.id)
+          .single();
+        currentUserProfile = profile;
       }
 
       async function loadPosts() {
@@ -99,7 +107,7 @@
               .map((url) => `<img loading="lazy" src="${url}" class="mt-2 rounded-md">`)
               .join("");
             return `
-          <div class="px-6 py-4">
+          <div class="px-6 py-4" id="post-${post.id}">
             <div class="flex items-start space-x-3">
               <img loading="lazy" class="h-8 w-8 rounded-full object-cover" src="${
                 post.profiles?.profile_image_url || "/api/placeholder/32/32"
@@ -111,11 +119,107 @@
                 <p class="whitespace-pre-wrap mt-1">${post.content}</p>
                 ${images}
                 <p class="text-xs text-gray-500 mt-1">${new Date(post.created_at).toLocaleString("ja-JP")}</p>
+                <div class="text-sm text-gray-600 mt-1">いいね ${post.likes_count} ・ コメント ${post.comments_count}</div>
+                <button class="text-blue-600 text-xs mr-2" onclick="likePost('${post.id}','${post.user_id}')">いいね</button>
+                <div class="mt-2">
+                  <input type="text" id="comment-${post.id}" class="border rounded p-1 text-sm w-full" placeholder="コメントを入力">
+                  <button class="text-blue-600 text-xs mt-1" onclick="submitComment('${post.id}','${post.user_id}')">送信</button>
+                </div>
               </div>
             </div>
           </div>`;
           })
           .join("");
+      }
+
+      async function likePost(postId, authorId) {
+        const { error } = await supabase.from("post_likes").insert({
+          user_id: currentUser.id,
+          post_id: postId,
+        });
+        if (!error && authorId !== currentUser.id) {
+          await supabase.from("notifications").insert({
+            user_id: authorId,
+            type: "reaction",
+            title: "いいね",
+            content: `${currentUserProfile.last_name} ${currentUserProfile.first_name}さんがあなたの投稿にいいねしました`,
+            related_id: postId,
+          });
+        }
+      }
+
+      async function submitComment(postId, authorId) {
+        const input = document.getElementById(`comment-${postId}`);
+        const text = input.value.trim();
+        if (!text) return;
+        const { error } = await supabase.from("post_comments").insert({
+          user_id: currentUser.id,
+          post_id: postId,
+          content: text,
+        });
+        if (!error) {
+          input.value = "";
+          if (authorId !== currentUser.id) {
+            await supabase.from("notifications").insert({
+              user_id: authorId,
+              type: "comment",
+              title: "コメント",
+              content: `${currentUserProfile.last_name} ${currentUserProfile.first_name}さんがあなたの投稿にコメントしました`,
+              related_id: postId,
+            });
+          }
+
+          const mentionRegex = /@([0-9a-fA-F-]{36})/g;
+          let match;
+          while ((match = mentionRegex.exec(text)) !== null) {
+            const mentionedId = match[1];
+            if (mentionedId !== currentUser.id) {
+              await supabase.from("notifications").insert({
+                user_id: mentionedId,
+                type: "mention",
+                title: "メンション",
+                content: `${currentUserProfile.last_name} ${currentUserProfile.first_name}さんがあなたをメンションしました`,
+                related_id: postId,
+              });
+            }
+          }
+        }
+      }
+
+      function setupRealtimeSubscriptions() {
+        supabase
+          .channel("posts")
+          .on(
+            "postgres_changes",
+            { event: "INSERT", schema: "public", table: "posts" },
+            () => loadPosts()
+          )
+          .on(
+            "postgres_changes",
+            { event: "DELETE", schema: "public", table: "posts" },
+            () => loadPosts()
+          )
+          .on(
+            "postgres_changes",
+            { event: "INSERT", schema: "public", table: "post_likes" },
+            () => loadPosts()
+          )
+          .on(
+            "postgres_changes",
+            { event: "DELETE", schema: "public", table: "post_likes" },
+            () => loadPosts()
+          )
+          .on(
+            "postgres_changes",
+            { event: "INSERT", schema: "public", table: "post_comments" },
+            () => loadPosts()
+          )
+          .on(
+            "postgres_changes",
+            { event: "DELETE", schema: "public", table: "post_comments" },
+            () => loadPosts()
+          )
+          .subscribe();
       }
     </script>
     <script src="js/theme.js"></script>
