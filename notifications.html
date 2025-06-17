@@ -615,6 +615,16 @@
               : "";
             break;
 
+          case "follow_request_rejected":
+            icon = `<div class="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center">
+                        <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </div>`;
+            content = notification.content;
+            actions = `<a href="profile-detail.html?user=${notification.related_id}" class="text-blue-600 hover:text-blue-800 text-xs font-medium">プロフィールを見る</a>`;
+            break;
+
           case "message":
             const sender = relatedUsers.get(notification.related_id);
             icon = sender
@@ -1046,6 +1056,33 @@
           .delete()
           .eq("follower_id", userId)
           .eq("following_id", currentUser.id);
+
+        const { data: notif } = await supabase
+          .from("notifications")
+          .insert({
+            user_id: userId,
+            type: "follow_request_rejected",
+            title: "フォロー拒否",
+            content: `${userProfile.last_name} ${userProfile.first_name}さんがあなたのフォローリクエストを拒否しました`,
+            related_id: currentUser.id,
+          })
+          .select()
+          .single();
+
+        if (notif) {
+          await fetch("/api/send_push", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              user_id: userId,
+              title: notif.title,
+              body: notif.content,
+              url: `profile-detail.html?user=${currentUser.id}`,
+              notification_id: notif.id,
+              event: "follow_request_rejected",
+            }),
+          });
+        }
 
         alert("フォローリクエストを拒否しました");
         loadNotifications();
