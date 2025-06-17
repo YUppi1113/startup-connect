@@ -935,6 +935,35 @@
         });
 
         if (!error) {
+          // 承認通知を作成
+          const { data: notif } = await supabase
+            .from("notifications")
+            .insert({
+              user_id: userId,
+              type: "follow_request_accepted",
+              title: "フォロー承認",
+              content: `${userProfile.last_name} ${userProfile.first_name}さんがあなたのフォローリクエストを承認しました`,
+              related_id: currentUser.id,
+            })
+            .select()
+            .single();
+
+          // プッシュ通知を送信
+          if (notif) {
+            await fetch("/api/send_push", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                user_id: userId,
+                title: notif.title,
+                body: notif.content,
+                url: `profile-detail.html?user=${currentUser.id}`,
+                notification_id: notif.id,
+                event: "follow_request_accepted",
+              }),
+            });
+          }
+
           alert("フォローしました！");
           loadNotifications();
         }

@@ -109,7 +109,7 @@ app.get('/api/recommendations', async (req, res) => {
 
 
 app.post('/api/send_push', async (req, res) => {
-  const { user_id, title, body, url, notification_id } = req.body;
+  const { user_id, title, body, url, notification_id, event } = req.body;
   if (!user_id) return res.status(400).json({ error: 'missing user_id' });
   if (!process.env.PUSH_VAPID_PUBLIC_KEY || !process.env.PUSH_VAPID_PRIVATE_KEY) {
     return res.json({ status: 'push disabled' });
@@ -127,7 +127,7 @@ app.post('/api/send_push', async (req, res) => {
       try {
         await webpush.sendNotification(
           subscription,
-          JSON.stringify({ title, body, url, id: notification_id })
+          JSON.stringify({ title, body, url, id: notification_id, event })
         );
       } catch (err) {
         console.error('push error', err);
