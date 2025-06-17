@@ -69,7 +69,8 @@ CREATE TABLE public.profiles (
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now(),
   phone varchar(20),
-  timezone varchar(50) DEFAULT 'Asia/Tokyo'
+  timezone varchar(50) DEFAULT 'Asia/Tokyo',
+  is_private boolean DEFAULT false
 );
 CREATE INDEX idx_profiles_user_id ON public.profiles(id);
 CREATE TRIGGER create_user_settings_trigger
