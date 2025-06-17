@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="referrer" content="no-referrer" />
+    <title>フィード - スタートアップコネクト</title>
+    <link rel="stylesheet" href="styles/styles.css" />
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Noto Sans JP", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 min-h-screen">
+    <div id="header-placeholder"></div>
+    <script src="js/loadPartials.js"></script>
+
+    <main class="max-w-3xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <h1 class="text-2xl font-bold text-gray-800 mb-6">フィード</h1>
+      <div id="posts-container" class="bg-white rounded-lg divide-y divide-gray-200">
+        <div class="px-6 py-8 text-center text-gray-500">
+          <div class="h-4 bg-gray-200 rounded w-3/4 mx-auto mb-2"></div>
+          <div class="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
+        </div>
+      </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script>
+      const { SUPABASE_URL, SUPABASE_ANON_KEY } = window.__ENV__;
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      let currentUser = null;
+      let currentPage = 0;
+      const itemsPerPage = 20;
+      let isLoading = false;
+      let endReached = false;
+
+      window.addEventListener("load", async () => {
+        await loadHeaderFooter();
+        await checkAuth();
+        await loadPosts();
+        window.addEventListener("scroll", async () => {
+          if (
+            window.innerHeight + window.scrollY >=
+              document.body.offsetHeight - 100 &&
+            !isLoading &&
+            !endReached
+          ) {
+            await loadPosts(true);
+          }
+        });
+      });
+
+      async function checkAuth() {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) {
+          window.location.href = "login.html";
+          return;
+        }
+        currentUser = user;
+      }
+
+      async function loadPosts(append = false) {
+        if (isLoading || endReached) return;
+        isLoading = true;
+        const container = document.getElementById("posts-container");
+
+        const { data: follows } = await supabase
+          .from("follows")
+          .select("following_id")
+          .eq("follower_id", currentUser.id);
+        const ids = follows ? follows.map((f) => f.following_id) : [];
+        ids.push(currentUser.id);
+
+        const start = currentPage * itemsPerPage;
+        const end = start + itemsPerPage - 1;
+
+        const { data: posts } = await supabase
+          .from("posts")
+          .select("*, profiles(id, first_name, last_name, profile_image_url)")
+          .in("user_id", ids)
+          .order("created_at", { ascending: false })
+          .range(start, end);
+
+        if (!posts || posts.length === 0) {
+          if (!append && currentPage === 0) {
+            container.innerHTML =
+              '<div class="px-6 py-8 text-center text-gray-500"><p class="text-sm">まだ投稿がありません</p></div>';
+          }
+          endReached = true;
+          isLoading = false;
+          return;
+        }
+
+        const html = posts
+          .map((post) => {
+            const images = (post.image_urls || [])
+              .map((url) => `<img loading="lazy" src="${url}" class="mt-2 rounded-md">`)
+              .join("");
+            return `
+          <div class="px-6 py-4">
+            <div class="flex items-start space-x-3">
+              <img loading="lazy" class="h-8 w-8 rounded-full object-cover" src="${
+                post.profiles?.profile_image_url || "/api/placeholder/32/32"
+              }" alt="${post.profiles?.last_name || ""} ${post.profiles?.first_name || ""}">
+              <div class="flex-1">
+                <a href="profile-detail.html?user=${post.user_id}" class="font-medium text-gray-900 hover:underline">${
+              post.profiles?.last_name || ""
+            } ${post.profiles?.first_name || ""}</a>
+                <p class="whitespace-pre-wrap mt-1">${post.content}</p>
+                ${images}
+                <p class="text-xs text-gray-500 mt-1">${new Date(post.created_at).toLocaleString("ja-JP")}</p>
+              </div>
+            </div>
+          </div>`;
+          })
+          .join("");
+
+        if (append) {
+          container.insertAdjacentHTML("beforeend", html);
+        } else {
+          container.innerHTML = html;
+        }
+
+        if (posts.length < itemsPerPage) {
+          endReached = true;
+        } else {
+          currentPage += 1;
+        }
+
+        isLoading = false;
+      }
+    </script>
+    <script src="js/theme.js"></script>
+    <script src="accessibility.js"></script>
+  </body>
+</html>
