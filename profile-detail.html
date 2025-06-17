@@ -26,7 +26,7 @@
   </head>
   <body class="bg-gray-50 min-h-screen">
     <!-- ヘッダー -->
-    <script>
+    <script type="module">
       const hXhr = new XMLHttpRequest();
       hXhr.open("GET", "partials/header.html", false);
       hXhr.send(null);
@@ -107,6 +107,7 @@
               <div class="mt-4 sm:mt-0 flex space-x-2">
                 <button
                   id="follow-btn"
+                  data-style="profile"
                   class="bg-blue-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-blue-700 transition duration-200"
                 >
                   <span class="hidden sm:inline">フォローする</span>
@@ -398,6 +399,15 @@
         SUPABASE_ANON_KEY
       );
 
+      const {
+        checkFollowStatus: checkFollowStatusFn,
+        sendFollowRequest,
+        followUser,
+        unfollowUser,
+        cancelFollowRequest,
+        updateFollowButton,
+      } = await import('./js/follow.js');
+
       // グローバル変数
       let currentUser = null;
       let currentUserProfile = null;
@@ -646,46 +656,21 @@
           return;
         }
 
-        const { data: follow } = await supabase
-          .from("follows")
-          .select("*")
-          .eq("follower_id", currentUser.id)
-          .eq("following_id", profileUser)
-          .single();
-
-        isFollowing = !!follow;
-
-        if (!isFollowing) {
-          const { data: request } = await supabase
-            .from("follow_requests")
-            .select("*")
-            .eq("follower_id", currentUser.id)
-            .eq("following_id", profileUser)
-            .single();
-          isRequested = !!request;
-        } else {
-          isRequested = false;
-        }
-        updateFollowButton();
+        const status = await checkFollowStatusFn(
+          supabase,
+          currentUser.id,
+          profileUser
+        );
+        isFollowing = status.isFollowing;
+        isRequested = status.isRequested;
+        updateFollowButton(
+          document.getElementById("follow-btn"),
+          isFollowing,
+          isRequested
+        );
       }
 
-      // フォローボタン更新
-      function updateFollowButton() {
-        const followBtn = document.getElementById("follow-btn");
-        if (isFollowing) {
-          followBtn.textContent = "フォロー中";
-          followBtn.classList.remove("bg-blue-600", "hover:bg-blue-700", "follow-requested");
-          followBtn.classList.add("bg-gray-600", "hover:bg-gray-700");
-        } else if (isRequested) {
-          followBtn.textContent = "リクエスト済み";
-          followBtn.classList.remove("bg-blue-600", "hover:bg-blue-700");
-          followBtn.classList.add("bg-gray-600", "hover:bg-gray-700", "follow-requested");
-        } else {
-          followBtn.textContent = "フォローする";
-          followBtn.classList.remove("bg-gray-600", "hover:bg-gray-700", "follow-requested");
-          followBtn.classList.add("bg-blue-600", "hover:bg-blue-700");
-        }
-      }
+      // フォローボタン更新関数は follow.js から読み込み
 
       // つながり統計読み込み
       async function loadConnectionStats() {
@@ -1201,22 +1186,14 @@
         if (profileUser === currentUser.id) return;
 
         try {
-          if (isRequested) {
-            await supabase
-              .from("follow_requests")
-              .delete()
-              .eq("follower_id", currentUser.id)
-              .eq("following_id", profileUser);
+          const button = document.getElementById("follow-btn");
+          button.disabled = true;
 
+          if (isRequested) {
+            await cancelFollowRequest(supabase, currentUser.id, profileUser);
             isRequested = false;
           } else if (isFollowing) {
-            // アンフォロー
-            await supabase
-              .from("follows")
-              .delete()
-              .eq("follower_id", currentUser.id)
-              .eq("following_id", profileUser);
-
+            await unfollowUser(supabase, currentUser.id, profileUser);
             isFollowing = false;
             followerCount--;
           } else {
@@ -1227,10 +1204,7 @@
               .single();
 
             if (target?.is_private) {
-              await supabase.from("follow_requests").insert({
-                follower_id: currentUser.id,
-                following_id: profileUser,
-              });
+              await sendFollowRequest(supabase, currentUser.id, profileUser);
 
               await supabase.from("notifications").insert({
                 user_id: profileUser,
@@ -1242,11 +1216,7 @@
 
               isRequested = true;
             } else {
-              // フォロー
-              await supabase.from("follows").insert({
-                follower_id: currentUser.id,
-                following_id: profileUser,
-              });
+              await followUser(supabase, currentUser.id, profileUser);
 
               await supabase.from("notifications").insert({
                 user_id: profileUser,
@@ -1261,9 +1231,10 @@
             }
           }
 
-          updateFollowButton();
+          updateFollowButton(button, isFollowing, isRequested);
           await loadConnections(); // つながり情報を更新
           await loadConnectionStats();
+          button.disabled = false;
         } catch (error) {
           console.error("Error toggling follow:", error);
           alert("フォロー状態の変更に失敗しました");
