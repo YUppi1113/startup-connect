@@ -154,7 +154,8 @@
             <h2 class="font-semibold mb-2">参加者 (${participants.length})</h2>
             <div class="flex -space-x-2">${participantAvatars}</div>
           </div>
-          <div id="action-area"></div>
+          <div id="action-area" class="mb-4"></div>
+          <button id="add-calendar-btn" class="px-4 py-2 border border-blue-600 text-blue-600 rounded-lg">カレンダーに追加</button>
         `;
 
         const actionArea = document.getElementById('action-area');
@@ -170,6 +171,10 @@
               document.getElementById('join-btn').addEventListener('click', () => joinEvent(eventData.id));
             }
           }
+        }
+        const calBtn = document.getElementById('add-calendar-btn');
+        if (calBtn && window.downloadICS) {
+          calBtn.addEventListener('click', () => window.downloadICS(eventData));
         }
       }
 
@@ -233,6 +238,10 @@
         await supabase.auth.signOut();
         window.location.href = 'login.html?message=logout';
       });
+    </script>
+    <script type="module">
+      import { downloadICS } from './js/ics.js';
+      window.downloadICS = downloadICS;
     </script>
   </body>
 </html>
