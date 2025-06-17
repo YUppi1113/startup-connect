@@ -21,9 +21,9 @@
     </style>
     <script type="module">
       import { showToast } from "./js/toast.js";
-      import { createPost } from "./js/post.js";
+      import { createPost, addComment, toggleLike, toggleBookmark, subscribeToPostChanges } from "./js/post.js";
       window.showToast = showToast;
-      window.createPost = createPost;
+      window.createPost = createPost; window.addComment = addComment; window.toggleLike = toggleLike; window.toggleBookmark = toggleBookmark; window.subscribeToPostChanges = subscribeToPostChanges;
     </script>
   </head>
   <body class="bg-gray-50 min-h-screen">
@@ -97,7 +97,9 @@
 
         let query = supabase
           .from("posts")
-          .select("*, profiles(id, first_name, last_name, profile_image_url)")
+          .select(
+            "*, profiles(id, first_name, last_name, profile_image_url), post_comments(id, content, created_at, profiles!post_comments_user_id_fkey(id, first_name, last_name, profile_image_url))"
+          )
           .order("created_at", { ascending: false });
 
         if (pageUser) {
@@ -124,13 +126,50 @@
           return;
         }
 
+        const ids = posts.map((p) => p.id);
+        const [{ data: likes }, { data: bookmarks }] = await Promise.all([
+          supabase
+            .from("post_likes")
+            .select("post_id")
+            .eq("user_id", currentUser.id)
+            .in("post_id", ids),
+          supabase
+            .from("post_bookmarks")
+            .select("post_id")
+            .eq("user_id", currentUser.id)
+            .in("post_id", ids),
+        ]);
+        const likedIds = likes ? likes.map((l) => l.post_id) : [];
+        const bookmarkedIds = bookmarks ? bookmarks.map((b) => b.post_id) : [];
+
         container.innerHTML = posts
           .map((post) => {
             const images = (post.image_urls || [])
               .map((url) => `<img loading="lazy" src="${url}" class="mt-2 rounded-md">`)
               .join("");
+            const comments = (post.post_comments || [])
+              .map(
+                (c) => `
+                <div class="flex items-start space-x-2 mt-2 text-sm">
+                  <img loading="lazy" src="${
+                    c.profiles?.profile_image_url || "/api/placeholder/24/24"
+                  }" class="w-6 h-6 rounded-full object-cover" />
+                  <div>
+                    <p class="font-medium">${c.profiles?.last_name || ""} ${
+      c.profiles?.first_name || ""
+    } <span class="text-xs text-gray-500 ml-1">${new Date(c.created_at).toLocaleDateString(
+      "ja-JP"
+    )}</span></p>
+                    <p>${c.content}</p>
+                  </div>
+                </div>
+              `
+              )
+              .join("");
+            const liked = likedIds.includes(post.id);
+            const bookmarked = bookmarkedIds.includes(post.id);
             return `
-          <div class="px-6 py-4">
+          <div class="px-6 py-4" data-post="${post.id}">
             <div class="flex items-start space-x-3">
               <img loading="lazy" class="h-8 w-8 rounded-full object-cover" src="${
                 post.profiles?.profile_image_url || "/api/placeholder/32/32"
@@ -141,12 +180,23 @@
             } ${post.profiles?.first_name || ""}</a>
                 <p class="whitespace-pre-wrap mt-1">${post.content}</p>
                 ${images}
-                <p class="text-xs text-gray-500 mt-1">${new Date(post.created_at).toLocaleString("ja-JP")}</p>
+                <div class="flex space-x-4 text-sm text-gray-600 mt-1">
+                  <button class="like-btn" data-id="${post.id}" aria-pressed="${liked}">❤️ <span>${post.likes_count}</span></button>
+                  <button class="bookmark-btn" data-id="${post.id}" aria-pressed="${bookmarked}">🔖</button>
+                  <span>コメント ${post.comments_count}</span>
+                </div>
+                <div class="mt-2 space-y-2 comment-list">${comments}</div>
+                <div class="mt-2 flex space-x-2">
+                  <input data-comment-input="${post.id}" class="comment-input flex-1 border rounded p-1 text-sm" placeholder="コメントを入力">
+                  <button data-comment-submit="${post.id}" class="comment-submit text-blue-600 text-sm">送信</button>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">${new Date(post.created_at).toLocaleString('ja-JP')}</p>
               </div>
             </div>
           </div>`;
           })
           .join("");
+        attachPostEvents();
       }
 
       const MAX_TEXT = 280;
@@ -177,6 +227,43 @@
           window.showToast && window.showToast("投稿に失敗しました", "error");
         }
       }
+
+      function attachPostEvents() {
+        document.querySelectorAll('.like-btn').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const postId = btn.dataset.id;
+            const res = await window.toggleLike(supabase, postId);
+            btn.setAttribute('aria-pressed', res.liked);
+            btn.querySelector('span').textContent = res.count;
+          });
+        });
+        document.querySelectorAll('.bookmark-btn').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const postId = btn.dataset.id;
+            const on = await window.toggleBookmark(supabase, postId);
+            btn.setAttribute('aria-pressed', on);
+          });
+        });
+        document.querySelectorAll('.comment-submit').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const postId = btn.dataset.id;
+            const input = document.querySelector(`[data-comment-input="${postId}"]`);
+            const text = input.value.trim();
+            if (!text) return;
+            await window.addComment(supabase, postId, text);
+            input.value = '';
+            await loadPosts();
+          });
+        });
+      }
+
+      window.subscribeToPostChanges(supabase, {
+        insert: loadPosts,
+        delete: loadPosts,
+        likeInsert: loadPosts,
+        likeDelete: loadPosts,
+        commentInsert: loadPosts,
+      });
     </script>
     <script src="js/theme.js"></script>
     <script src="accessibility.js"></script>
