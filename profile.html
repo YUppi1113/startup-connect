@@ -53,11 +53,6 @@
         <span class="block sm:inline" id="error-text"></span>
       </div>
 
-      <div id="projects-preview" class="bg-white rounded-lg shadow-sm p-6 mb-6 hidden">
-        <h2 class="text-lg font-semibold text-gray-800 mb-2">プロジェクト</h2>
-        <div id="projects-preview-content"></div>
-      </div>
-
       <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
         <h2 class="text-lg font-semibold text-gray-800 mb-2">新規投稿</h2>
         <form id="profile-post-form" class="space-y-2">
@@ -754,7 +749,6 @@
 
         projects = projectList || [];
         renderProjects();
-        renderProjectsPreview();
       }
 
       // ユーザー情報更新
@@ -866,15 +860,6 @@
         projects.forEach((p) => container.appendChild(createProjectForm(p)));
       }
 
-      function renderProjectsPreview() {
-        if (!projects || projects.length === 0) return;
-        const preview = projects
-          .slice(0, 3)
-          .map((p) => `<div class="mb-2"><span class="font-medium">${p.title}</span></div>`)
-          .join("");
-        document.getElementById("projects-preview-content").innerHTML = preview;
-        document.getElementById("projects-preview").classList.remove("hidden");
-      }
 
       // プロフィール画像のプレビュー
       document
