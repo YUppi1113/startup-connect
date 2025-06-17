@@ -1241,7 +1241,11 @@
                     }')" data-user-id="${
           user.id
         }" class="follow-button ${
-          isFollowing || isRequested ? 'text-gray-600 border-gray-600' : 'text-blue-600 border-blue-600'
+          isFollowing
+            ? 'text-gray-600 border-gray-600'
+            : isRequested
+            ? 'follow-requested'
+            : 'text-blue-600 border-blue-600'
         } rounded-md px-3 py-1 text-sm hover:bg-blue-50">
                         ${isFollowing ? "フォロー中" : isRequested ? "リクエスト済み" : "フォローする"}
                     </button>
@@ -1273,6 +1277,7 @@
           if (!error) {
             followRequests.delete(userId);
             button.textContent = "フォローする";
+            button.classList.remove("follow-requested");
             button.classList.remove("text-gray-600", "border-gray-600");
             button.classList.add("text-blue-600", "border-blue-600");
           }
@@ -1307,6 +1312,7 @@
               followRequests.add(userId);
               button.textContent = "リクエスト済み";
               button.classList.remove("text-blue-600", "border-blue-600");
+              button.classList.add("follow-requested");
               button.classList.add("text-gray-600", "border-gray-600");
               await supabase.from("notifications").insert({
                 user_id: userId,

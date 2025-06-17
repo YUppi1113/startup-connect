@@ -174,7 +174,11 @@
       function createCard(profile) {
         const isFollowing = followingSet.has(profile.id);
         const isRequested = followRequestSet.has(profile.id);
-        const btnClass = isFollowing || isRequested ? 'text-gray-600 border-gray-600' : 'text-blue-600 border-blue-600';
+        const btnClass = isFollowing
+          ? 'text-gray-600 border-gray-600'
+          : isRequested
+          ? 'follow-requested'
+          : 'text-blue-600 border-blue-600';
         const btnText = isFollowing ? 'フォロー中' : isRequested ? 'リクエスト済み' : 'フォローする';
         const showBtn = currentUser && currentUser.id !== profile.id;
         return `
@@ -202,6 +206,7 @@
           if (!error) {
             followRequestSet.delete(userId);
             button.textContent = 'フォローする';
+            button.classList.remove('follow-requested');
             button.classList.remove('text-gray-600', 'border-gray-600');
             button.classList.add('text-blue-600', 'border-blue-600');
           }
@@ -233,6 +238,7 @@
               followRequestSet.add(userId);
               button.textContent = 'リクエスト済み';
               button.classList.remove('text-blue-600', 'border-blue-600');
+              button.classList.add('follow-requested');
               button.classList.add('text-gray-600', 'border-gray-600');
               await supabase.from('notifications').insert({
                 user_id: userId,

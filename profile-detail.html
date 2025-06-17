@@ -674,15 +674,15 @@
         const followBtn = document.getElementById("follow-btn");
         if (isFollowing) {
           followBtn.textContent = "フォロー中";
-          followBtn.classList.remove("bg-blue-600", "hover:bg-blue-700");
+          followBtn.classList.remove("bg-blue-600", "hover:bg-blue-700", "follow-requested");
           followBtn.classList.add("bg-gray-600", "hover:bg-gray-700");
         } else if (isRequested) {
           followBtn.textContent = "リクエスト済み";
           followBtn.classList.remove("bg-blue-600", "hover:bg-blue-700");
-          followBtn.classList.add("bg-gray-600", "hover:bg-gray-700");
+          followBtn.classList.add("bg-gray-600", "hover:bg-gray-700", "follow-requested");
         } else {
           followBtn.textContent = "フォローする";
-          followBtn.classList.remove("bg-gray-600", "hover:bg-gray-700");
+          followBtn.classList.remove("bg-gray-600", "hover:bg-gray-700", "follow-requested");
           followBtn.classList.add("bg-blue-600", "hover:bg-blue-700");
         }
       }
@@ -1263,6 +1263,7 @@
 
           updateFollowButton();
           await loadConnections(); // つながり情報を更新
+          await loadConnectionStats();
         } catch (error) {
           console.error("Error toggling follow:", error);
           alert("フォロー状態の変更に失敗しました");
