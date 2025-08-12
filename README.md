@@ -5,7 +5,8 @@ AI-powered matching to streamline building a startup team.
 
 ## Setup
 
-1. Create a `.env` file with your Supabase and OpenAI credentials:
+1. Create a `.env` file with your Supabase and OpenAI credentials. The previous
+   Supabase key has been revoked; store your new credentials **only** in this file:
 
    ```env
    SUPABASE_URL=<your-supabase-url>
@@ -16,11 +17,15 @@ AI-powered matching to streamline building a startup team.
    To enable optional push notifications, also provide `PUSH_VAPID_PUBLIC_KEY`
    and `PUSH_VAPID_PRIVATE_KEY`.
 
-2. Generate `config.js` from the template:
+2. Run the build script to generate `config.js`:
 
    ```bash
-    npm run build
-    ```
+   npm run build
+   ```
+
+   This executes `generate-config.js`, which reads the values from `.env` and
+   writes a `config.js` file. The generated file is ignored by Git and must be
+   regenerated whenever environment variables change.
 
 3. *(Optional)* Build ES5-compatible scripts for older browsers:
 
