@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import OpenAI from "openai";
 import webpush from 'web-push';
 import dotenv from 'dotenv';
+import rateLimit from 'express-rate-limit';
 
 dotenv.config();
 
@@ -25,6 +26,28 @@ const supabase = createClient(
   process.env.SUPABASE_ANON_KEY
 );
 
+// Middleware to validate Supabase session tokens
+async function verifyAuth(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ error: 'missing Authorization header' });
+  }
+  const token = authHeader.replace('Bearer ', '');
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (error || !user) {
+      return res.status(401).json({ error: 'invalid or expired token' });
+    }
+    req.user = user;
+    next();
+  } catch (err) {
+    console.error('auth error', err);
+    res.status(500).json({ error: 'auth failed' });
+  }
+}
+
+// Apply auth middleware to all API routes except placeholder
+app.use(verifyAuth);
 if (process.env.PUSH_VAPID_PUBLIC_KEY && process.env.PUSH_VAPID_PRIVATE_KEY) {
   webpush.setVapidDetails(
     'mailto:example@example.com',
@@ -46,7 +69,21 @@ async function computeEmbedding(text) {
   return data[0].embedding;
 }
 
-app.post('/api/compute_embedding', async (req, res) => {
+const computeEmbeddingLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+const sendPushLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+app.post('/api/compute_embedding', computeEmbeddingLimiter, async (req, res) => {
   const { user_id, profile_text } = req.body;
   if (!user_id || !profile_text) {
     return res.status(400).json({ error: 'missing parameters' });
@@ -108,7 +145,7 @@ app.get('/api/recommendations', async (req, res) => {
 });
 
 
-app.post('/api/send_push', async (req, res) => {
+app.post('/api/send_push', sendPushLimiter, async (req, res) => {
   const { user_id, title, body, url, notification_id, event } = req.body;
   if (!user_id) return res.status(400).json({ error: 'missing user_id' });
   if (!process.env.PUSH_VAPID_PUBLIC_KEY || !process.env.PUSH_VAPID_PRIVATE_KEY) {
