@@ -101,7 +101,10 @@ app.post('/api/compute_embedding', computeEmbeddingLimiter, async (req, res) => 
   }
 });
 
-function cosineSimilarity(a, b) {
+export function cosineSimilarity(a, b) {
+  if (a.length !== b.length) {
+    throw new Error('Vector length mismatch');
+  }
   let dot = 0;
   let normA = 0;
   let normB = 0;
@@ -110,6 +113,7 @@ function cosineSimilarity(a, b) {
     normA += a[i] * a[i];
     normB += b[i] * b[i];
   }
+  if (normA === 0 || normB === 0) return 0;
   return dot / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
@@ -190,6 +194,10 @@ app.post('/mark_notification', async (req, res) => {
 });
 
 const port = process.env.PORT || 3001;
-app.listen(port, () => {
-  console.log(`Embedding service running on port ${port}`);
-});
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(port, () => {
+    console.log(`Embedding service running on port ${port}`);
+  });
+}
+
+export default app;
