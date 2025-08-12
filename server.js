@@ -46,8 +46,13 @@ async function verifyAuth(req, res, next) {
   }
 }
 
+// Basic health check endpoint
+app.get('/', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
 // Apply auth middleware to all API routes except placeholder
-app.use(verifyAuth);
+app.use('/api', verifyAuth);
 if (process.env.PUSH_VAPID_PUBLIC_KEY && process.env.PUSH_VAPID_PRIVATE_KEY) {
   webpush.setVapidDetails(
     'mailto:example@example.com',
